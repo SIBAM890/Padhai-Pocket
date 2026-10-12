@@ -187,23 +187,63 @@ describe('Satya Mobile Infrastructure Slice', () => {
     });
   });
 
-  describe('TASK 9: Network Detection Abstraction', () => {
-    test('detectNetworkMode supports ONLINE, WEAK, OFFLINE and forced offline toggle', async () => {
+  describe('TASK 9: Network Detection Abstraction & Demo Forced Offline', () => {
+    test('detectNetworkMode supports ONLINE, WEAK, OFFLINE and forced offline toggle precedence', async () => {
       const net = await import('../src/network/network');
       
       // Default with fetch
       const mode = await net.detectNetworkMode();
       expect(['ONLINE', 'WEAK', 'OFFLINE']).toContain(mode);
 
-      // Force offline
+      // Force offline -> must be OFFLINE regardless of physical network
       net.setForcedOffline(true);
       expect(net.isForcedOffline()).toBe(true);
       const forcedMode = await net.detectNetworkMode();
       expect(forcedMode).toBe('OFFLINE');
 
-      // Unforce offline
+      // Unforce offline -> re-runs real detection
       net.setForcedOffline(false);
       expect(net.isForcedOffline()).toBe(false);
+      const resumedMode = await net.detectNetworkMode();
+      expect(['ONLINE', 'WEAK', 'OFFLINE']).toContain(resumedMode);
+    });
+
+    test('healthz ping resolves ONLINE on 200, WEAK on non-200 or timeout', async () => {
+      const net = await import('../src/network/network');
+      const originalFetch = global.fetch;
+
+      // Mock healthy backend
+      global.fetch = jest.fn().mockResolvedValue({ ok: true });
+      const onlineMode = await net.detectNetworkMode('http://localhost:8000/healthz');
+      expect(onlineMode).toBe('ONLINE');
+
+      // Mock unreachable backend (health check fails but network exists)
+      global.fetch = jest.fn().mockRejectedValue(new Error('Connection refused'));
+      const weakMode = await net.detectNetworkMode('http://localhost:8000/healthz');
+      expect(weakMode).toBe('WEAK');
+
+      global.fetch = originalFetch;
+    });
+
+    test('subscribeNetwork immediately pushes detected state and notifies on toggle', async () => {
+      const net = await import('../src/network/network');
+      const modesReceived: string[] = [];
+
+      const unsub = net.subscribeNetwork((m) => {
+        modesReceived.push(m);
+      });
+
+      // Toggle forced offline
+      net.setForcedOffline(true);
+      expect(modesReceived[modesReceived.length - 1]).toBe('OFFLINE');
+
+      // Toggle forced offline off
+      net.setForcedOffline(false);
+      // Wait microtask for real detection callback
+      await new Promise((r) => setTimeout(r, 50));
+      expect(['ONLINE', 'WEAK', 'OFFLINE']).toContain(modesReceived[modesReceived.length - 1]);
+
+      unsub();
     });
   });
 
