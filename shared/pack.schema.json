@@ -1,0 +1,202 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PadhaiPocketContentPack",
+  "description": "Content pack format (PRD v4.0 §7.5)",
+  "type": "object",
+  "required": [
+    "pack_version",
+    "manifest",
+    "chapter",
+    "chunks",
+    "terms",
+    "items"
+  ],
+  "properties": {
+    "pack_version": {
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "manifest": {
+      "type": "object",
+      "required": ["sha256", "built_at"],
+      "properties": {
+        "sha256": {
+          "type": "string"
+        },
+        "built_at": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chapter": {
+      "type": "object",
+      "required": ["subject", "class", "chapter_no"],
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "class": {
+          "type": "integer",
+          "enum": [9]
+        },
+        "chapter_no": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chunks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "chunk_id",
+          "title_or",
+          "odia_text",
+          "terms",
+          "source_page",
+          "status",
+          "reviewed_by"
+        ],
+        "properties": {
+          "chunk_id": {
+            "type": "string",
+            "pattern": "^BSE9-[A-Z]+-[A-Z]+-S[0-9]{2}$",
+            "description": "Format: BSE9-PHYS-MOTION-S02 (no chapter number)"
+          },
+          "title_or": {
+            "type": "string"
+          },
+          "odia_text": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_page": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "reviewed", "approved", "demo_approved"]
+          },
+          "reviewed_by": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "term_id",
+          "en",
+          "odia_from_textbook",
+          "kui",
+          "validated_by",
+          "dialect",
+          "status"
+        ],
+        "properties": {
+          "term_id": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          },
+          "odia_from_textbook": {
+            "type": "string"
+          },
+          "kui": {
+            "type": "object",
+            "required": ["description", "script", "audio"],
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "script": {
+                "type": "string"
+              },
+              "audio": {
+                "type": ["string", "null"]
+              }
+            },
+            "additionalProperties": false
+          },
+          "validated_by": {
+            "type": ["string", "null"]
+          },
+          "dialect": {
+            "type": ["string", "null"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "validated", "approved"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "concept_id",
+          "set",
+          "modality",
+          "stem",
+          "options",
+          "correct",
+          "audio",
+          "misconception_tag"
+        ],
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "concept_id": {
+            "type": "string"
+          },
+          "set": {
+            "type": "string",
+            "enum": ["A", "B", "C"]
+          },
+          "modality": {
+            "type": "string",
+            "enum": ["P", "A", "T", "W", "TX", "PX", "MCQ"]
+          },
+          "stem": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "correct": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "audio": {
+            "type": ["string", "null"]
+          },
+          "misconception_tag": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,270 @@
+{
+  "description": "Probe decision vectors, resolution outcomes, null-audio cases, finalLabel sequences, and determinism seeded orders (PRD v4.0 §4.4, §4.5, §4.9, §4.10)",
+  "patterns_to_candidate": [
+    {
+      "pattern": [1, 1, 1],
+      "candidate": "RESOLVED",
+      "targeted_confirmation": null,
+      "description": "Passed all modalities P=1, A=1, T=1"
+    },
+    {
+      "pattern": [1, 1, 0],
+      "candidate": "READING_GAP_CANDIDATE",
+      "targeted_confirmation": "TX",
+      "description": "Passed P and A, failed T"
+    },
+    {
+      "pattern": [1, 0, 0],
+      "candidate": "LANGUAGE_OR_TERM_GAP_CANDIDATE",
+      "targeted_confirmation": "W",
+      "description": "Passed P, failed A and T"
+    },
+    {
+      "pattern": [0, 0, 0],
+      "candidate": "CONCEPT_GAP_CANDIDATE",
+      "targeted_confirmation": "PX",
+      "description": "Failed P, A, and T"
+    },
+    {
+      "pattern": [0, 1, 1],
+      "candidate": "INCONSISTENT",
+      "targeted_confirmation": null,
+      "description": "Other pattern: failed visual but passed audio and text"
+    },
+    {
+      "pattern": [0, 1, 0],
+      "candidate": "INCONSISTENT",
+      "targeted_confirmation": null,
+      "description": "Other pattern: passed audio only"
+    },
+    {
+      "pattern": [0, 0, 1],
+      "candidate": "INCONSISTENT",
+      "targeted_confirmation": null,
+      "description": "Other pattern: passed text only"
+    },
+    {
+      "pattern": [1, 0, 1],
+      "candidate": "INCONSISTENT",
+      "targeted_confirmation": null,
+      "description": "Known blind spot: failed audio only (acoustics / noisy room / TTS artifact confound)"
+    }
+  ],
+  "candidate_confirmation_to_label": [
+    {
+      "candidate": "LANGUAGE_OR_TERM_GAP_CANDIDATE",
+      "confirm_passed": false,
+      "expected_label": "TERM_GAP",
+      "confirmation_type": "W",
+      "description": "Fails direct word-meaning check (W) -> confirmed TERM_GAP"
+    },
+    {
+      "candidate": "LANGUAGE_OR_TERM_GAP_CANDIDATE",
+      "confirm_passed": true,
+      "expected_label": "LISTENING_OR_COMPREHENSION",
+      "confirmation_type": "W",
+      "description": "Passes direct word-meaning check (W) -> LISTENING_OR_COMPREHENSION"
+    },
+    {
+      "candidate": "READING_GAP_CANDIDATE",
+      "confirm_passed": false,
+      "expected_label": "READING_GAP",
+      "confirmation_type": "TX",
+      "description": "Fails second text item (TX) -> confirmed READING_GAP"
+    },
+    {
+      "candidate": "READING_GAP_CANDIDATE",
+      "confirm_passed": true,
+      "expected_label": "INCONSISTENT",
+      "confirmation_type": "TX",
+      "description": "Passes second text item (TX) -> initial reading failure was inconsistent/slip"
+    },
+    {
+      "candidate": "CONCEPT_GAP_CANDIDATE",
+      "confirm_passed": false,
+      "expected_label": "CONCEPT_GAP",
+      "confirmation_type": "PX",
+      "description": "Fails second picture item (PX) -> confirmed CONCEPT_GAP"
+    },
+    {
+      "candidate": "CONCEPT_GAP_CANDIDATE",
+      "confirm_passed": true,
+      "expected_label": "INCONSISTENT",
+      "confirmation_type": "PX",
+      "description": "Passes second picture item (PX) -> initial concept failure was inconsistent/slip"
+    }
+  ],
+  "null_audio_cases": [
+    {
+      "pattern": [1, null, 1],
+      "expected_candidate": "INCONSISTENT",
+      "reason": "AUDIO_UNAVAILABLE",
+      "description": "Audio unavailable with P=1, T=1"
+    },
+    {
+      "pattern": [1, null, 0],
+      "expected_candidate": "INCONSISTENT",
+      "reason": "AUDIO_UNAVAILABLE",
+      "description": "Audio unavailable with P=1, T=0"
+    },
+    {
+      "pattern": [0, null, 0],
+      "expected_candidate": "INCONSISTENT",
+      "reason": "AUDIO_UNAVAILABLE",
+      "description": "Audio unavailable with P=0, T=0"
+    },
+    {
+      "pattern": [0, null, 1],
+      "expected_candidate": "INCONSISTENT",
+      "reason": "AUDIO_UNAVAILABLE",
+      "description": "Audio unavailable with P=0, T=1"
+    }
+  ],
+  "final_label_sequences": [
+    {
+      "description": "[TERM, TERM] -> confirmed 2/2 in production (threshold=2)",
+      "sets": ["TERM_GAP", "TERM_GAP"],
+      "threshold": 2,
+      "expected": {
+        "done": true,
+        "label": "TERM_GAP",
+        "status": "confirmed",
+        "agreement": "2/2"
+      }
+    },
+    {
+      "description": "[TERM, READING, TERM] -> confirmed 2/3 in production (threshold=2)",
+      "sets": ["TERM_GAP", "READING_GAP", "TERM_GAP"],
+      "threshold": 2,
+      "expected": {
+        "done": true,
+        "label": "TERM_GAP",
+        "status": "confirmed",
+        "agreement": "2/3"
+      }
+    },
+    {
+      "description": "[INCONSISTENT x 3] -> abstained in production (threshold=2)",
+      "sets": ["INCONSISTENT", "INCONSISTENT", "INCONSISTENT"],
+      "threshold": 2,
+      "expected": {
+        "done": true,
+        "label": "INCONSISTENT",
+        "status": "abstained",
+        "agreement": "0/3"
+      }
+    },
+    {
+      "description": "Clean first set RESOLVED in production -> confirmed 1/1",
+      "sets": ["RESOLVED"],
+      "threshold": 2,
+      "expected": {
+        "done": true,
+        "label": "RESOLVED",
+        "status": "confirmed",
+        "agreement": "1/1"
+      }
+    },
+    {
+      "description": "Demo mode (threshold=1) with first set TERM_GAP -> provisional 1/1",
+      "sets": ["TERM_GAP"],
+      "threshold": 1,
+      "expected": {
+        "done": true,
+        "label": "TERM_GAP",
+        "status": "provisional",
+        "agreement": "1/1"
+      }
+    },
+    {
+      "description": "Demo mode (threshold=1) with first set INCONSISTENT -> done: false",
+      "sets": ["INCONSISTENT"],
+      "threshold": 1,
+      "expected": {
+        "done": false
+      }
+    },
+    {
+      "description": "Demo mode (threshold=1) [INCONSISTENT, TERM_GAP] -> provisional 1/2",
+      "sets": ["INCONSISTENT", "TERM_GAP"],
+      "threshold": 1,
+      "expected": {
+        "done": true,
+        "label": "TERM_GAP",
+        "status": "provisional",
+        "agreement": "1/2"
+      }
+    },
+    {
+      "description": "Production (threshold=2) 1 set non-resolved -> done: false",
+      "sets": ["TERM_GAP"],
+      "threshold": 2,
+      "expected": {
+        "done": false
+      }
+    },
+    {
+      "description": "Production (threshold=2) 2 conflicting sets -> done: false",
+      "sets": ["TERM_GAP", "CONCEPT_GAP"],
+      "threshold": 2,
+      "expected": {
+        "done": false
+      }
+    },
+    {
+      "description": "Production (threshold=2) 3 conflicting sets -> abstained 0/3",
+      "sets": ["TERM_GAP", "CONCEPT_GAP", "READING_GAP"],
+      "threshold": 2,
+      "expected": {
+        "done": true,
+        "label": "INCONSISTENT",
+        "status": "abstained",
+        "agreement": "0/3"
+      }
+    }
+  ],
+  "seeded_orders": [
+    {
+      "profile_id": "prof_demo_01",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "seed": 1806635391,
+      "order": ["T", "A", "P"]
+    },
+    {
+      "profile_id": "prof_demo_01",
+      "concept_id": "distance_vs_displacement",
+      "set": "B",
+      "seed": 3861694576,
+      "order": ["A", "T", "P"]
+    },
+    {
+      "profile_id": "prof_demo_01",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "seed": 3787510126,
+      "order": ["P", "A", "T"]
+    },
+    {
+      "profile_id": "prof_demo_02",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "seed": 261969372,
+      "order": ["T", "A", "P"]
+    },
+    {
+      "profile_id": "prof_demo_02",
+      "concept_id": "distance_vs_displacement",
+      "set": "B",
+      "seed": 3595333803,
+      "order": ["P", "A", "T"]
+    },
+    {
+      "profile_id": "prof_demo_02",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "seed": 1036361710,
+      "order": ["T", "P", "A"]
+    }
+  ]
+}

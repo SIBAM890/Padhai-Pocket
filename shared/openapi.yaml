@@ -1,0 +1,369 @@
+openapi: 3.0.3
+info:
+  title: Padhai Pocket Backend API
+  description: Backend and Sync API for offline-resilient diagnostic agent (PRD v4.0 §7.3, §7.4)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local / development server
+paths:
+  /healthz:
+    get:
+      summary: Network-mode probe
+      description: "Returns {ok: true} only. Used for ping / connectivity checks without authentication."
+      responses:
+        '200':
+          description: Service is healthy and online
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - ok
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                additionalProperties: false
+
+  /v1/devices/register:
+    post:
+      summary: Device registration
+      description: Validates single-use registration code (24h expiry, rate-limited), issues device token once, and server stores only token hash.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - device_id
+              properties:
+                code:
+                  type: string
+                  description: Single-use 24h registration code
+                  example: REG-948201
+                device_id:
+                  type: string
+                  description: Hardware / client device identifier
+                  example: dev_tab_01
+              additionalProperties: false
+      responses:
+        '200':
+          description: Registration successful, returns device bearer token
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - device_id
+                  - token
+                properties:
+                  device_id:
+                    type: string
+                  token:
+                    type: string
+                    description: Bearer token for device sync API calls
+                additionalProperties: false
+        '400':
+          description: Invalid, used, or expired registration code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/sync/events:
+    post:
+      summary: Batch event sync
+      description: Batch upload of learner events from device to backend. Max payload 256 KB, max 200 events per batch.
+      security:
+        - DeviceBearerAuth: []
+      parameters:
+        - name: X-Failure-Mode
+          in: header
+          required: false
+          description: Failure simulation mode for testing (timeout, 500, slow). Honored only in ENV=demo.
+          schema:
+            type: string
+            enum: [timeout, 500, slow]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - device_id
+                - events
+              properties:
+                device_id:
+                  type: string
+                  example: dev_tab_01
+                events:
+                  type: array
+                  maxItems: 200
+                  items:
+                    $ref: '#/components/schemas/Event'
+              additionalProperties: false
+      responses:
+        '200':
+          description: Sync batch results
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - acked
+                  - duplicates
+                  - rejected
+                properties:
+                  acked:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                  duplicates:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                  rejected:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - event_id
+                        - reason
+                      properties:
+                        event_id:
+                          type: string
+                        reason:
+                          type: string
+                      additionalProperties: false
+                additionalProperties: false
+        '401':
+          description: Missing or invalid device bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Device revoked or device_id mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Payload exceeds 256 KB limit or > 200 events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/summary:
+    get:
+      summary: Teacher summary
+      description: Returns aggregated label counts and current mastery for the authenticated device's profiles.
+      security:
+        - DeviceBearerAuth: []
+      responses:
+        '200':
+          description: Aggregated diagnostic summary from synced events
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - device_id
+                  - profiles
+                properties:
+                  device_id:
+                    type: string
+                  profiles:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - profile_id
+                        - labels
+                        - mastery
+                      properties:
+                        profile_id:
+                          type: string
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: integer
+                        mastery:
+                          type: object
+                          additionalProperties:
+                            type: number
+                      additionalProperties: false
+                additionalProperties: false
+        '401':
+          description: Unauthorized device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/profiles/{id}:
+    delete:
+      summary: Server-side profile purge
+      description: GDPR / DPDP Act 2023 compliant audit-logged purge of a student profile and all associated server-side events for that device.
+      security:
+        - DeviceBearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Pseudonymous profile_id to delete
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Profile successfully purged and logged
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - ok
+                  - profile_id
+                  - purged_events_count
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  profile_id:
+                    type: string
+                  purged_events_count:
+                    type: integer
+                additionalProperties: false
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Profile not found or not owned by device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    DeviceBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
+      additionalProperties: false
+
+    Event:
+      type: object
+      required:
+        - schema_version
+        - event_id
+        - profile_id
+        - seq
+        - ts
+        - origin
+        - node
+        - action
+        - input_hash
+        - output
+        - network_mode
+        - engine_version
+        - pack_hash
+      properties:
+        schema_version:
+          type: string
+          enum: ["1.1"]
+        event_id:
+          type: string
+          format: uuid
+        device_id:
+          type: string
+        profile_id:
+          type: string
+        session_id:
+          type: string
+          format: uuid
+        episode_id:
+          type: string
+          nullable: true
+        seq:
+          type: integer
+          minimum: 1
+        ts:
+          type: string
+          format: date-time
+        origin:
+          type: string
+          enum: [device, server]
+        node:
+          type: string
+          enum:
+            - PLAN
+            - TOOL
+            - OBSERVE
+            - PROBE
+            - CONFIRM
+            - REFLECT
+            - ACT
+            - MASTERY
+            - FALLBACK
+            - NETWORK
+            - SYNC
+            - CONSENT
+            - SESSION
+            - ERROR
+            - PURGE
+        action:
+          type: string
+        input_hash:
+          type: string
+          pattern: '^[0-9a-f]{12}$'
+        output:
+          type: object
+        latency_ms:
+          type: integer
+        network_mode:
+          type: string
+          enum: [ONLINE, WEAK, OFFLINE]
+        agreement:
+          type: string
+          nullable: true
+        confirm_threshold:
+          type: integer
+          enum: [1, 2]
+        mastery_before:
+          type: number
+        mastery_after:
+          type: number
+        engine_version:
+          type: string
+        pack_hash:
+          type: string
+          pattern: '^[0-9a-f]{12}$'
+      additionalProperties: false

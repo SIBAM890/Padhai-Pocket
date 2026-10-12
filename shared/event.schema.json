@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PadhaiPocketEvent",
+  "description": "Immutable learning event schema (PRD v4.0 §7.1)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "profile_id",
+    "seq",
+    "ts",
+    "origin",
+    "node",
+    "action",
+    "input_hash",
+    "output",
+    "network_mode",
+    "engine_version",
+    "pack_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.1"]
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "device_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "episode_id": {
+      "type": ["string", "null"]
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Strictly increasing sequence number per profile_id"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "origin": {
+      "type": "string",
+      "enum": ["device", "server"]
+    },
+    "node": {
+      "type": "string",
+      "enum": [
+        "PLAN",
+        "TOOL",
+        "OBSERVE",
+        "PROBE",
+        "CONFIRM",
+        "REFLECT",
+        "ACT",
+        "MASTERY",
+        "FALLBACK",
+        "NETWORK",
+        "SYNC",
+        "CONSENT",
+        "SESSION",
+        "ERROR",
+        "PURGE"
+      ]
+    },
+    "action": {
+      "type": "string"
+    },
+    "input_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$",
+      "description": "First 12 hex chars of SHA-256 over canonical JSON (sorted keys, no whitespace, UTF-8)"
+    },
+    "output": {
+      "type": "object",
+      "description": "Payload ≤ 2 KB; never contains names, free text typed or spoken by a child, or transcripts"
+    },
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "network_mode": {
+      "type": "string",
+      "enum": ["ONLINE", "WEAK", "OFFLINE"]
+    },
+    "agreement": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]+/[0-9]+$"
+    },
+    "confirm_threshold": {
+      "type": "integer",
+      "enum": [1, 2]
+    },
+    "mastery_before": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "mastery_after": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "pack_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$"
+    }
+  },
+  "additionalProperties": false
+}

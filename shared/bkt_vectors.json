@@ -1,0 +1,83 @@
+{
+  "description": "BKT golden update vectors and chains (PRD v4.0 §5.1). Chained at full precision, compared with tolerance 5e-5 against 4-decimal expectations.",
+  "parameters": {
+    "s": 0.10,
+    "g": 0.25,
+    "t_concept": 0.15,
+    "t_term": 0.10,
+    "tolerance": 0.00005
+  },
+  "vectors": [
+    {
+      "id": "C-1",
+      "model_type": "concept",
+      "start": 0.42,
+      "t": 0.15,
+      "steps": [
+        {
+          "observation": "wrong",
+          "correct": false,
+          "expected_rounded": 0.2248
+        }
+      ],
+      "description": "0.42 + wrong -> 0.2248"
+    },
+    {
+      "id": "C-2",
+      "model_type": "concept",
+      "start": 0.42,
+      "t": 0.15,
+      "steps": [
+        {
+          "observation": "correct",
+          "correct": true,
+          "expected_rounded": 0.7643
+        }
+      ],
+      "description": "0.42 + correct -> 0.7643"
+    },
+    {
+      "id": "C-3",
+      "model_type": "concept",
+      "start": 0.42,
+      "t": 0.15,
+      "steps": [
+        {
+          "observation": "wrong",
+          "correct": false,
+          "expected_rounded": 0.2248
+        },
+        {
+          "observation": "correct",
+          "correct": true,
+          "expected_rounded": 0.5842
+        },
+        {
+          "observation": "correct",
+          "correct": true,
+          "expected_rounded": 0.8597
+        }
+      ],
+      "description": "C-3 chain: 0.42 -> wrong -> correct -> correct -> 0.2248, 0.5842, 0.8597"
+    },
+    {
+      "id": "T-1",
+      "model_type": "term",
+      "start": 0.40,
+      "t": 0.10,
+      "steps": [
+        {
+          "observation": "wrong",
+          "correct": false,
+          "expected_rounded": 0.1735
+        },
+        {
+          "observation": "correct",
+          "correct": true,
+          "expected_rounded": 0.4873
+        }
+      ],
+      "description": "T-1: 0.40 term -> wrong -> correct -> 0.1735, 0.4873"
+    }
+  ]
+}
