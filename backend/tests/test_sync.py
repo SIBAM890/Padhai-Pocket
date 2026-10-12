@@ -22,7 +22,7 @@ from httpx import AsyncClient, ASGITransport
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND_DIR))
 
-from main import app, storage, seed_registration_code
+from main import app, demo_storage, seed_registration_code
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def anyio_backend():
 
 @pytest.fixture(autouse=True)
 def reset_storage():
-    storage.reset()
+    demo_storage.reset()
     seed_registration_code("REG-CODE-123")
     os.environ["ENV"] = "demo"
 
@@ -84,7 +84,7 @@ async def test_device_registration_and_single_use():
         token = data1["token"]
 
         # Raw token not in storage, only hash
-        assert token not in [d["token_hash"] for d in storage.devices.values()]
+        assert token not in [d["token_hash"] for d in demo_storage.devices.values()]
 
         # Second registration with same code -> 400 (single-use)
         res2 = await client.post(
@@ -162,7 +162,7 @@ async def test_f3_duplicate_event_handling():
         data2 = res2.json()
         assert eid in data2["duplicates"]
         assert len(data2["acked"]) == 0
-        assert len(storage.events) == 1  # exactly one row
+        assert len(demo_storage.events) == 1  # exactly one row
 
 
 @pytest.mark.anyio
@@ -236,7 +236,7 @@ async def test_f2_network_drop_and_retry():
         )
         assert res_fail.status_code == 500
         # Not inserted yet
-        assert ev1["event_id"] not in storage.events
+        assert ev1["event_id"] not in demo_storage.events
 
         # 2. Re-try when network restores
         res_retry = await client.post(
@@ -296,8 +296,8 @@ async def test_summary_and_purge_endpoints():
         assert del_res.status_code == 200
         assert del_res.json()["ok"] is True
         assert del_res.json()["purged_events_count"] == 1
-        assert len(storage.events) == 0
-        assert len(storage.purge_log) == 1
+        assert len(demo_storage.events) == 0
+        assert len(demo_storage.purge_log) == 1
 
 
 def test_s8_schema_rls_sql():

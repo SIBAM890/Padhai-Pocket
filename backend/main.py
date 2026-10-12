@@ -39,9 +39,9 @@ app = FastAPI(
 app.add_middleware(FailureInjectionMiddleware)
 
 # ==============================================================================
-# In-Memory Database / Storage Layer (Backed by Postgres schema semantics)
-# ==============================================================================
-# In test/demo environment, behaves with exact Postgres table constraints:
+# Ephemeral Demo Storage (Option B)
+# Ephemeral demo-only backend. Production uses Supabase; see schema.sql.
+# Matches Postgres table semantics:
 # - UNIQUE (profile_id, seq)
 # - PRIMARY KEY (event_id)
 # - PRIMARY KEY (device_id) with token_hash
@@ -49,7 +49,7 @@ app.add_middleware(FailureInjectionMiddleware)
 # ==============================================================================
 
 
-class Storage:
+class DemoStorage:
     def __init__(self):
         self.devices: Dict[str, Dict[str, Any]] = {}  # device_id -> {token_hash, created_at, revoked_at}
         self.registration_codes: Dict[str, Dict[str, Any]] = {}  # code_hash -> {expires_at, used_at}
@@ -65,7 +65,8 @@ class Storage:
         self.purge_log.clear()
 
 
-storage = Storage()
+demo_storage = DemoStorage()
+
 
 
 def hash_token(token: str) -> str:
@@ -79,7 +80,7 @@ def hash_profile(profile_id: str) -> str:
 def seed_registration_code(code: str, hours_valid: int = 24):
     c_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
     expires_at = datetime.now(timezone.utc) + timedelta(hours=hours_valid)
-    storage.registration_codes[c_hash] = {
+    demo_storage.registration_codes[c_hash] = {
         "expires_at": expires_at,
         "used_at": None,
     }
@@ -101,7 +102,7 @@ def verify_device_token(authorization: Optional[str]) -> str:
     token = authorization.split("Bearer ", 1)[1].strip()
     t_hash = hash_token(token)
 
-    for dev_id, dev_data in storage.devices.items():
+    for dev_id, dev_data in demo_storage.devices.items():
         if dev_data["token_hash"] == t_hash:
             if dev_data.get("revoked_at") is not None:
                 raise HTTPException(
@@ -146,7 +147,7 @@ async def register_device(request: Request):
         )
 
     code_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
-    reg = storage.registration_codes.get(code_hash)
+    reg = demo_storage.registration_codes.get(code_hash)
 
     if not reg:
         raise HTTPException(
@@ -174,7 +175,7 @@ async def register_device(request: Request):
     raw_token = f"tok_{secrets.token_hex(24)}"
     token_h = hash_token(raw_token)
 
-    storage.devices[device_id] = {
+    demo_storage.devices[device_id] = {
         "token_hash": token_h,
         "created_at": now,
         "revoked_at": None,
@@ -236,21 +237,21 @@ async def sync_events(request: Request, authorization: Optional[str] = Header(No
             continue
 
         # 2. Check primary key conflict (event_id) -> Idempotency: duplicate
-        if eid in storage.events:
+        if eid in demo_storage.events:
             duplicates.append(eid)
             continue
 
         # 3. Check (profile_id, seq) uniqueness conflict
         prof_id = ev["profile_id"]
         seq = ev["seq"]
-        existing_eid = storage.profile_seqs.get((prof_id, seq))
+        existing_eid = demo_storage.profile_seqs.get((prof_id, seq))
         if existing_eid and existing_eid != eid:
             rejected.append({"event_id": eid, "reason": "seq_conflict"})
             continue
 
         # 4. Successful insert
-        storage.events[eid] = ev
-        storage.profile_seqs[(prof_id, seq)] = eid
+        demo_storage.events[eid] = ev
+        demo_storage.profile_seqs[(prof_id, seq)] = eid
         acked.append(eid)
 
     return {
@@ -270,7 +271,7 @@ async def get_summary(authorization: Optional[str] = Header(None)):
     # Aggregate events belonging to this device
     profiles_map: Dict[str, Dict[str, Any]] = {}
 
-    for ev in storage.events.values():
+    for ev in demo_storage.events.values():
         if ev.get("device_id") == auth_device_id:
             pid = ev["profile_id"]
             if pid not in profiles_map:
@@ -309,17 +310,17 @@ async def purge_profile(id: str, authorization: Optional[str] = Header(None)):
     # Collect events for profile
     to_delete = [
         eid
-        for eid, ev in storage.events.items()
+        for eid, ev in demo_storage.events.items()
         if ev.get("profile_id") == id and ev.get("device_id") == auth_device_id
     ]
 
     for eid in to_delete:
-        ev = storage.events.pop(eid)
-        storage.profile_seqs.pop((ev["profile_id"], ev["seq"]), None)
+        ev = demo_storage.events.pop(eid)
+        demo_storage.profile_seqs.pop((ev["profile_id"], ev["seq"]), None)
 
     # Log to purge_log
     prof_h = hash_profile(id)
-    storage.purge_log.append({
+    demo_storage.purge_log.append({
         "profile_hash": prof_h,
         "purged_at": datetime.now(timezone.utc),
         "event_count": len(to_delete),
