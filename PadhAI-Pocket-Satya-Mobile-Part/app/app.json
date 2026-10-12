@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "PadhAI Pocket",
+    "slug": "padhai-pocket",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.padhaipocket.app"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-secure-store"
+    ]
+  }
+}
