@@ -1,3 +1,5 @@
+// Minimal type declarations for expo-sqlite.
+// Replace with official types if the package ships them.
 declare module 'expo-sqlite' {
   export interface SQLiteDatabase {
     execAsync(sql: string): Promise<void>;

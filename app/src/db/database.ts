@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import type { PadhaiEvent, StoredEvent, SyncStatus } from '../types/events';
 
-let dbPromise: Promise<SQLite.SQLiteDatabase>;
+let dbPromise: Promise<SQLite.SQLiteDatabase> | undefined;
 
 export function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {

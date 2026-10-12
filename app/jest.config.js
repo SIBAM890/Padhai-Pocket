@@ -4,6 +4,8 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/tests/**/*.test.ts'],
   verbose: true,
+  forceExit: true,
+  detectOpenHandles: false,
   moduleNameMapper: {
     '^react-native$': '<rootDir>/tests/mocks/react-native.js',
     '^@react-native-community/netinfo$': '<rootDir>/tests/mocks/netinfo.js',

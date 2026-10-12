@@ -26,6 +26,10 @@ describe('Satya Mobile Infrastructure Slice', () => {
     if (db.__reset) db.__reset();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('TASK 6: SQLite Local Persistence & Status Lifecycle', () => {
     test('initDatabase creates database and schema successfully', async () => {
       const db = await initDatabase();
