@@ -1,5 +1,5 @@
-import NetInfo, {NetInfoState} from '@react-native-community/netinfo';
-import type {NetworkMode} from '../types/events';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import type { NetworkMode } from '../types/events';
 
 let forcedOffline = false;
 let lastMode: NetworkMode = 'OFFLINE';
@@ -26,7 +26,7 @@ export async function detectNetworkMode(healthUrl?: string): Promise<NetworkMode
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2500);
-    const response = await fetch(healthUrl, {signal: controller.signal});
+    const response = await fetch(healthUrl, { signal: controller.signal });
     clearTimeout(timer);
     lastMode = response.ok ? 'ONLINE' : 'WEAK';
   } catch {
@@ -36,7 +36,7 @@ export async function detectNetworkMode(healthUrl?: string): Promise<NetworkMode
 }
 
 export function subscribeNetwork(listener: (mode: NetworkMode) => void) {
-  return NetInfo.addEventListener(async state => {
+  return NetInfo.addEventListener((state) => {
     if (forcedOffline) return listener('OFFLINE');
     const base = baseMode(state);
     lastMode = base;
@@ -49,10 +49,10 @@ export function setForcedOffline(value: boolean) {
   lastMode = value ? 'OFFLINE' : lastMode;
 }
 
-export function isForcedOffline() {
+export function isForcedOffline(): boolean {
   return forcedOffline;
 }
 
-export function getLastMode() {
+export function getLastMode(): NetworkMode {
   return lastMode;
 }

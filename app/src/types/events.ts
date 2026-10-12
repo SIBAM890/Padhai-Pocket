@@ -2,13 +2,25 @@ export type NetworkMode = 'ONLINE' | 'WEAK' | 'OFFLINE';
 export type SyncStatus = 'PENDING' | 'ACKED' | 'ERROR';
 
 export type EventNode =
-  | 'PLAN' | 'TOOL' | 'OBSERVE' | 'PROBE' | 'CONFIRM' | 'REFLECT'
-  | 'ACT' | 'MASTERY' | 'FALLBACK' | 'NETWORK' | 'SYNC' | 'CONSENT'
-  | 'SESSION' | 'ERROR' | 'PURGE';
+  | 'PLAN'
+  | 'TOOL'
+  | 'OBSERVE'
+  | 'PROBE'
+  | 'CONFIRM'
+  | 'REFLECT'
+  | 'ACT'
+  | 'MASTERY'
+  | 'FALLBACK'
+  | 'NETWORK'
+  | 'SYNC'
+  | 'CONSENT'
+  | 'SESSION'
+  | 'ERROR'
+  | 'PURGE';
 
 export interface PadhaiEvent {
   schema_version: '1.1';
-  event_id: string;
+  event_id: string; // UUID v4 format conforming to shared/event.schema.json & openapi.yaml
   device_id?: string;
   profile_id: string;
   session_id?: string;
