@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { insertEvent, listEvents } from '../db/database';
-import { setForcedOffline, subscribeNetwork } from '../network/network';
+import { useNetworkStatus } from '../network/network';
 import { syncPending } from '../sync/syncClient';
 import type { NetworkMode } from '../types/events';
 import type { RootStackParamList } from '../../App';
@@ -23,6 +23,7 @@ import {
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
+const HEALTH_URL = `${API_URL}/healthz`;
 const DEVICE_ID = 'demo-device-01';
 const PROFILE_ID = 'demo-profile-01';
 const SESSION_ID = '11111111-2222-4333-8444-555555555555';
@@ -36,8 +37,12 @@ function seedFromNow(now: number): number {
 }
 
 export default function LearnScreen({ navigation }: Props) {
-  const [mode, setMode] = useState<NetworkMode>('OFFLINE');
-  const [forcedOffline, setForced] = useState(false);
+  const {
+    networkMode: mode,
+    forcedOffline,
+    setForcedOffline,
+  } = useNetworkStatus(HEALTH_URL);
+
   const [pending, setPending] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [seq, setSeq] = useState(1);
@@ -66,8 +71,6 @@ export default function LearnScreen({ navigation }: Props) {
 
   useEffect(() => {
     refreshPending();
-    const unsubscribe = subscribeNetwork((m) => setMode(m));
-    return unsubscribe;
   }, []);
 
   const question = useMemo(
@@ -113,12 +116,6 @@ export default function LearnScreen({ navigation }: Props) {
     setSeq(engineResult.state.seq);
     setAnswered(true);
     await refreshPending();
-  };
-
-  const toggleOffline = (value: boolean) => {
-    setForced(value);
-    setForcedOffline(value);
-    if (value) setMode('OFFLINE');
   };
 
   const sync = async () => {
@@ -184,7 +181,7 @@ export default function LearnScreen({ navigation }: Props) {
               <Text style={styles.controlTitle}>Airplane-mode demo</Text>
               <Text style={styles.controlSub}>Force the app into OFFLINE mode</Text>
             </View>
-            <Switch value={forcedOffline} onValueChange={toggleOffline} />
+            <Switch value={forcedOffline} onValueChange={setForcedOffline} />
           </View>
           <View style={styles.syncRow}>
             <Text style={styles.pending}>PENDING {pending}</Text>
