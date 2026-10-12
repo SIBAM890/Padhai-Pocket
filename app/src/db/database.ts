@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import type { PadhaiEvent, StoredEvent, SyncStatus } from '../types/events';
 
-let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let dbPromise: Promise<SQLite.SQLiteDatabase>;
 
 export function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
@@ -80,7 +80,19 @@ export async function listEvents(limit = 200): Promise<StoredEvent[]> {
     next_retry_at: number;
   }>(`SELECT * FROM events ORDER BY seq DESC, ts DESC LIMIT ?`, limit);
 
-  return rows.map((row) => ({
+  return rows.map((row: {
+    event_id: string;
+    profile_id: string;
+    seq: number;
+    ts: string;
+    origin: string;
+    node: string;
+    action: string;
+    payload_json: string;
+    sync_status: SyncStatus;
+    retry_count: number;
+    next_retry_at: number;
+  }) => ({
     ...(JSON.parse(row.payload_json) as PadhaiEvent),
     sync_status: row.sync_status,
     retry_count: row.retry_count,
@@ -97,7 +109,7 @@ export async function pendingEvents(limit = 200): Promise<PadhaiEvent[]> {
     Date.now(),
     limit
   );
-  return rows.map((r) => JSON.parse(r.payload_json) as PadhaiEvent);
+  return rows.map((r: { payload_json: string }) => JSON.parse(r.payload_json) as PadhaiEvent);
 }
 
 export async function markAcked(ids: string[]): Promise<void> {

@@ -10,6 +10,25 @@
  *            swap(a[i], a[j])
  */
 
+import * as crypto from 'crypto';
+
+/**
+ * PRD §4.9: compute deterministic probe seed.
+ * seed = uint32 (big-endian first 4 bytes) of SHA-256("<profileId>|<conceptId>|<setId>").
+ * Same learner, same concept, same set → same probe order every session.
+ *
+ * Reference test: computeSeed('prof_demo_01','distance_vs_displacement','A') === 1806635391
+ */
+export function computeSeed(
+  profileId: string,
+  conceptId: string,
+  setId: string
+): number {
+  const key = `${profileId}|${conceptId}|${setId}`;
+  const hash = crypto.createHash('sha256').update(key, 'utf8').digest();
+  return hash.readUInt32BE(0);
+}
+
 /**
  * 32-bit PRNG generating floats in [0, 1)
  */

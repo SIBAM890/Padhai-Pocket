@@ -1,10 +1,6 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "esnext",
-    "lib": [
-      "ES2022"
-    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,12 +9,14 @@
     "resolveJsonModule": true,
     "rootDir": "./",
     "outDir": "./dist",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "allowSyntheticDefaultImports": true,
+    "noEmit": false
   },
   "include": [
     "src/**/*",
     "tests/**/*",
     "App.tsx"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }
+

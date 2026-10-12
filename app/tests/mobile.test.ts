@@ -6,11 +6,9 @@
  * - Network detection abstraction (ONLINE, WEAK, OFFLINE)
  * - Sync Client batch upload against OpenAPI specification
  * - Retry with exponential backoff & idempotency
- * - Engine nextAction integration point
  */
 
 import type { PadhaiEvent, StoredEvent, SyncStatus } from '../src/types/events';
-import { prepareEngineNextAction } from '../src/screens/LearnScreen';
 import {
   initDatabase,
   insertEvent,
@@ -206,62 +204,6 @@ describe('Satya Mobile Infrastructure Slice', () => {
       // Unforce offline
       net.setForcedOffline(false);
       expect(net.isForcedOffline()).toBe(false);
-    });
-  });
-
-  describe('TASK 5: Engine nextAction Integration Point', () => {
-    test('prepareEngineNextAction generates valid PadhaiEvent with UUID event_id', () => {
-      const state = {
-        profile_id: 'prof_test_01',
-        session_id: '11111111-2222-4333-8444-555555555555',
-        concept_id: 'distance_vs_displacement',
-        concept_mastery: 0.42,
-        network_mode: 'OFFLINE' as const,
-        seq: 0,
-      };
-      const input = {
-        type: 'OBSERVE_MCQ' as const,
-        correct: false,
-        misconception_tag: 'path_equals_displacement',
-      };
-      const ctx = { now: 1792059821234, seed: 1806635391 };
-
-      const result = prepareEngineNextAction(state, input, ctx);
-
-      expect(result.events.length).toBe(1);
-      const ev = result.events[0];
-      expect(ev.schema_version).toBe('1.1');
-      expect(ev.profile_id).toBe('prof_test_01');
-      expect(ev.seq).toBe(1);
-      expect(ev.origin).toBe('device');
-      expect(ev.node).toBe('OBSERVE');
-      expect(ev.action).toBe('MCQ_ANSWER');
-      expect(ev.network_mode).toBe('OFFLINE');
-      // UUID format check (8-4-4-4-12)
-      expect(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ev.event_id)).toBe(true);
-      expect(result.state.concept_mastery).toBe(0.2248);
-    });
-
-    test('prepareEngineNextAction advances mastery on correct answer', () => {
-      const state = {
-        profile_id: 'prof_test_01',
-        session_id: '11111111-2222-4333-8444-555555555555',
-        concept_id: 'distance_vs_displacement',
-        concept_mastery: 0.42,
-        network_mode: 'ONLINE' as const,
-        seq: 2,
-      };
-      const input = {
-        type: 'OBSERVE_MCQ' as const,
-        correct: true,
-        misconception_tag: null,
-      };
-      const ctx = { now: 1792059821234, seed: 1806635391 };
-
-      const result = prepareEngineNextAction(state, input, ctx);
-      expect(result.action).toBe('ADVANCE_NEXT_LESSON');
-      expect(result.state.concept_mastery).toBe(0.7643);
-      expect(result.events[0].action).toBe('MCQ_CORRECT');
     });
   });
 

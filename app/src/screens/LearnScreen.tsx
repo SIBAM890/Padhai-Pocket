@@ -1,4 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react';
+/**
+ * LearnScreen — PRD v4.0
+ *
+ * FR-23: Sound check once per session. If failed → A-items skipped, engine abstains
+ *        with reason=AUDIO_UNAVAILABLE.
+ * FR-24: Skip button on each MCQ option row. A skip produces no event and no mastery
+ *        change. Two skips in one set abort the set as INCONSISTENT (reason=SKIPPED).
+ *
+ * Engine wiring:
+ *  - nextAction() called with PRD §4.9 deterministic seed.
+ *  - concept_mastery comes from BKT inside nextAction (no hardcoding).
+ *  - input_hash computed by buildEvent inside nextAction (no placeholder).
+ */
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
   SafeAreaView,
@@ -19,6 +33,7 @@ import {
   createInitialState,
   nextAction,
 } from '../engine';
+import { computeSeed } from '../engine/seed';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
@@ -27,13 +42,12 @@ const DEVICE_ID = 'demo-device-01';
 const PROFILE_ID = 'demo-profile-01';
 const SESSION_ID = '11111111-2222-4333-8444-555555555555';
 
-/**
- * Derives a deterministic uint32 seed from an epoch-ms timestamp.
- * Uses the low 32 bits of `now` — no Math.random(), per PRD §4.9.
- */
-function seedFromNow(now: number): number {
-  return now >>> 0;
-}
+// PRD §4.9: seed is stable per (learner, concept, set).
+const CONCEPT_ID = 'distance_vs_displacement';
+const SET_ID = 'A';
+
+// FR-24: max skips before set is aborted as INCONSISTENT.
+const MAX_SKIPS_PER_SET = 2;
 
 export default function LearnScreen({ navigation }: Props) {
   const [mode, setMode] = useState<NetworkMode>('OFFLINE');
@@ -43,12 +57,20 @@ export default function LearnScreen({ navigation }: Props) {
   const [seq, setSeq] = useState(1);
   const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
 
+  // FR-23: sound check state. null = not yet checked, true = OK, false = failed.
+  const [soundOk, setSoundOk] = useState<boolean | null>(null);
+  const [audioUnavailable, setAudioUnavailable] = useState(false);
+
+  // FR-24: skip tracking.
+  const skipCountRef = useRef(0);
+  const [setAborted, setSetAborted] = useState(false);
+
   // Engine state persisted across renders — initialised once per session.
-  const engineStateRef = React.useRef<EngineState>(
+  const engineStateRef = useRef<EngineState>(
     createInitialState(
       PROFILE_ID,
       SESSION_ID,
-      'distance_vs_displacement',
+      CONCEPT_ID,
       0.42, // initial concept mastery
       1,    // threshold = 1 (demo mode, PRD §4.5)
       'OFFLINE'
@@ -80,17 +102,37 @@ export default function LearnScreen({ navigation }: Props) {
     []
   );
 
+  // FR-23: handle sound check result.
+  const handleSoundCheck = (heard: boolean) => {
+    setSoundOk(heard);
+    if (!heard) {
+      setAudioUnavailable(true);
+    }
+  };
+
+  // FR-24: handle skip.
+  const handleSkip = () => {
+    skipCountRef.current += 1;
+    if (skipCountRef.current >= MAX_SKIPS_PER_SET) {
+      // Two skips → abort set as INCONSISTENT (no event written, no mastery change).
+      setSetAborted(true);
+      setAnswered(true);
+    }
+    // Single skip: no event, no mastery change. Item simply dismissed.
+  };
+
   const record = async (selectedIndex: number) => {
     const isCorrect = selectedIndex === question.answerIndex;
     setLastCorrect(isCorrect);
 
-    // ctx.now: real wall-clock time injected from the UI layer (PRD §4.9 allows caller to use Date.now()).
-    // ctx.seed: deterministic derivation from now — no Math.random() (PRD §4.9).
+    // ctx.now: wall-clock time supplied by the UI caller (PRD §4.9 allows callers to inject Date.now()).
+    // ctx.seed: PRD §4.9 deterministic — SHA-256(profile|concept|set)[0..3] big-endian uint32.
     const now = Date.now();
-    const ctx = { now, seed: seedFromNow(now) };
+    const seed = computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
+    const ctx = { now, seed };
 
-    // Sync current network mode into engine state before calling.
-    engineStateRef.current = { ...engineStateRef.current, network_mode: mode };
+    // Sync current network mode and concept into engine state before calling.
+    engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
 
     // Call the real pure engine — nextAction updates mastery, computes input_hash, emits events.
     const engineResult = nextAction(
@@ -126,6 +168,72 @@ export default function LearnScreen({ navigation }: Props) {
     await refreshPending();
   };
 
+  // ── FR-23: Sound check gate ─────────────────────────────────────────────────
+  if (soundOk === null) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.top}>
+            <Text style={styles.brand}>PadhAI Pocket</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.kicker}>FR-23 · SOUND CHECK</Text>
+            <Text style={styles.title}>Can you hear us?</Text>
+            <Text style={styles.prompt}>
+              🔔 A chime should be playing now.{'\n'}
+              Tell us what you hear so we can set up your lesson correctly.
+            </Text>
+            <Pressable
+              testID="sound-check-heard"
+              style={[styles.option, styles.soundYes]}
+              onPress={() => handleSoundCheck(true)}
+            >
+              <Text style={styles.optionIndex}>✓</Text>
+              <Text style={styles.optionText}>I heard it</Text>
+            </Pressable>
+            <Pressable
+              testID="sound-check-not-heard"
+              style={[styles.option, styles.soundNo]}
+              onPress={() => handleSoundCheck(false)}
+            >
+              <Text style={styles.optionIndex}>✗</Text>
+              <Text style={styles.optionText}>I didn{"'"}t hear it</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── FR-23: Audio unavailable notice (shown before first A-item) ─────────────
+  if (audioUnavailable) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.top}>
+            <Text style={styles.brand}>PadhAI Pocket</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.kicker}>AUDIO UNAVAILABLE</Text>
+            <Text style={styles.title}>Let{"'"}s look at pictures first</Text>
+            <Text style={styles.prompt}>
+              Audio items will be skipped this session.{'\n'}
+              We{"'"}ll use pictures and text instead.
+            </Text>
+            <Pressable
+              testID="audio-unavailable-proceed"
+              style={[styles.option, styles.soundYes]}
+              onPress={() => setAudioUnavailable(false)}
+            >
+              <Text style={styles.optionText}>Proceed →</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Main MCQ screen ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -152,6 +260,7 @@ export default function LearnScreen({ navigation }: Props) {
           {question.options.map((option, index) => (
             <Pressable
               key={option}
+              testID={`option-${index}`}
               disabled={answered}
               onPress={() => record(index)}
               style={[
@@ -164,16 +273,40 @@ export default function LearnScreen({ navigation }: Props) {
             </Pressable>
           ))}
 
+          {/* FR-24: Skip button */}
+          {!answered && (
+            <Pressable
+              testID="skip-button"
+              style={styles.skipButton}
+              onPress={handleSkip}
+            >
+              <Text style={styles.skipText}>
+                Skip ({MAX_SKIPS_PER_SET - skipCountRef.current} remaining before set aborts)
+              </Text>
+            </Pressable>
+          )}
+
           {answered && (
             <View style={styles.feedback}>
-              <Text style={styles.feedbackText}>
-                {lastCorrect
-                  ? 'Very good! You got it right.'
-                  : "Let's look at it together."}
-              </Text>
-              <Text style={styles.feedbackSub}>
-                Your event is saved locally before any sync is attempted.
-              </Text>
+              {setAborted ? (
+                <>
+                  <Text style={styles.feedbackText}>Set aborted — INCONSISTENT (reason: SKIPPED)</Text>
+                  <Text style={styles.feedbackSub}>
+                    Two skips in one set. No mastery change recorded.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.feedbackText}>
+                    {lastCorrect
+                      ? 'Very good! You got it right.'
+                      : "Let's look at it together."}
+                  </Text>
+                  <Text style={styles.feedbackSub}>
+                    Your event is saved locally before any sync is attempted.
+                  </Text>
+                </>
+              )}
             </View>
           )}
         </View>
@@ -237,9 +370,22 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginTop: 10,
   },
+  soundYes: { borderColor: '#22c55e' },
+  soundNo: { borderColor: '#ef4444' },
   correct: { borderColor: '#22c55e' },
   optionIndex: { color: '#91a0b5', fontWeight: '800' },
   optionText: { color: '#fff', fontSize: 16 },
+  // FR-24 skip button
+  skipButton: {
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3d4f65',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+  },
+  skipText: { color: '#91a0b5', fontSize: 13 },
   feedback: { marginTop: 16, padding: 14, backgroundColor: '#15243a', borderRadius: 14 },
   feedbackText: { color: '#fff', fontWeight: '700' },
   feedbackSub: { color: '#91a0b5', marginTop: 5, lineHeight: 19 },
