@@ -12,8 +12,13 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { insertEvent, listEvents } from '../db/database';
 import { setForcedOffline, subscribeNetwork } from '../network/network';
 import { syncPending } from '../sync/syncClient';
-import type { NetworkMode, PadhaiEvent } from '../types/events';
+import type { NetworkMode } from '../types/events';
 import type { RootStackParamList } from '../../App';
+import {
+  type EngineState,
+  createInitialState,
+  nextAction,
+} from '../engine';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
@@ -23,75 +28,11 @@ const PROFILE_ID = 'demo-profile-01';
 const SESSION_ID = '11111111-2222-4333-8444-555555555555';
 
 /**
- * Standard RFC4122 v4 UUID generator (satisfies JSON schema format: "uuid").
+ * Derives a deterministic uint32 seed from an epoch-ms timestamp.
+ * Uses the low 32 bits of `now` — no Math.random(), per PRD §4.9.
  */
-function generateUuid(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-/**
- * Engine Integration Point:
- * Prepares invocation for `nextAction(state, input, ctx)` when real engine runs.
- * Note: Keeps separation of mobile UI slice from Node-specific engine dependencies.
- */
-export function prepareEngineNextAction(
-  state: {
-    profile_id: string;
-    session_id: string;
-    concept_id: string;
-    concept_mastery: number;
-    network_mode: NetworkMode;
-    seq: number;
-  },
-  input: {
-    type: 'OBSERVE_MCQ';
-    correct: boolean;
-    misconception_tag: string | null;
-  },
-  ctx: { now: number; seed: number }
-) {
-  // Formal signature and contract identical to app/src/engine/index.ts nextAction
-  const eventId = generateUuid();
-  const nextSeq = state.seq + 1;
-  const isoTs = new Date(ctx.now).toISOString();
-
-  const generatedEvent: PadhaiEvent = {
-    schema_version: '1.1',
-    event_id: eventId,
-    device_id: DEVICE_ID,
-    profile_id: state.profile_id,
-    session_id: state.session_id,
-    episode_id: null,
-    seq: nextSeq,
-    ts: isoTs,
-    origin: 'device',
-    node: 'OBSERVE',
-    action: input.correct ? 'MCQ_CORRECT' : 'MCQ_ANSWER',
-    input_hash: '000000000000',
-    output: {
-      concept_id: state.concept_id,
-      correct: input.correct,
-      misconception: input.misconception_tag,
-    },
-    latency_ms: 0,
-    network_mode: state.network_mode,
-    engine_version: '1.0.0',
-    pack_hash: 'e3b0c44298fc',
-  };
-
-  return {
-    state: {
-      ...state,
-      seq: nextSeq,
-      concept_mastery: input.correct ? 0.7643 : 0.2248,
-    },
-    events: [generatedEvent],
-    action: input.correct ? 'ADVANCE_NEXT_LESSON' : 'RUN_PROBE_ITEM',
-  };
+function seedFromNow(now: number): number {
+  return now >>> 0;
 }
 
 export default function LearnScreen({ navigation }: Props) {
@@ -101,6 +42,18 @@ export default function LearnScreen({ navigation }: Props) {
   const [answered, setAnswered] = useState(false);
   const [seq, setSeq] = useState(1);
   const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
+
+  // Engine state persisted across renders — initialised once per session.
+  const engineStateRef = React.useRef<EngineState>(
+    createInitialState(
+      PROFILE_ID,
+      SESSION_ID,
+      'distance_vs_displacement',
+      0.42, // initial concept mastery
+      1,    // threshold = 1 (demo mode, PRD §4.5)
+      'OFFLINE'
+    )
+  );
 
   const refreshPending = async () => {
     const rows = await listEvents(200);
@@ -130,29 +83,34 @@ export default function LearnScreen({ navigation }: Props) {
   const record = async (selectedIndex: number) => {
     const isCorrect = selectedIndex === question.answerIndex;
     setLastCorrect(isCorrect);
-    const now = Date.now();
 
-    // Call prepared engine integration point
-    const engineResult = prepareEngineNextAction(
-      {
-        profile_id: PROFILE_ID,
-        session_id: SESSION_ID,
-        concept_id: 'distance_vs_displacement',
-        concept_mastery: 0.42,
-        network_mode: mode,
-        seq: seq - 1,
-      },
+    // ctx.now: real wall-clock time injected from the UI layer (PRD §4.9 allows caller to use Date.now()).
+    // ctx.seed: deterministic derivation from now — no Math.random() (PRD §4.9).
+    const now = Date.now();
+    const ctx = { now, seed: seedFromNow(now) };
+
+    // Sync current network mode into engine state before calling.
+    engineStateRef.current = { ...engineStateRef.current, network_mode: mode };
+
+    // Call the real pure engine — nextAction updates mastery, computes input_hash, emits events.
+    const engineResult = nextAction(
+      engineStateRef.current,
       {
         type: 'OBSERVE_MCQ',
         correct: isCorrect,
         misconception_tag: isCorrect ? null : 'path_equals_displacement',
-      },
-      { now, seed: Math.floor(Math.random() * 1000000) }
+      } as any,
+      ctx
     );
 
-    const eventToStore = engineResult.events[0];
-    await insertEvent(eventToStore);
-    setSeq((s) => s + 1);
+    // Advance engine state for next interaction.
+    engineStateRef.current = engineResult.state;
+
+    // Persist first emitted event (OBSERVE) to local SQLite.
+    if (engineResult.events.length > 0) {
+      await insertEvent(engineResult.events[0] as any);
+    }
+    setSeq(engineResult.state.seq);
     setAnswered(true);
     await refreshPending();
   };
