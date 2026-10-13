@@ -73,7 +73,8 @@ export default function LearnScreen({ navigation }: Props) {
   const [selectedProbeChoice, setSelectedProbeChoice] = useState<string | null>(null);
 
   // Modals (isolated from student navigation)
-  const [setupModalVisible, setSetupModalVisible] = useState(false);
+  // Launches on first open to guide student through Welcome -> Name -> Language -> Subject -> "You're all set!" -> Home
+  const [setupModalVisible, setSetupModalVisible] = useState(true);
   const [teacherModalVisible, setTeacherModalVisible] = useState(false);
   const [judgeToolsVisible, setJudgeToolsVisible] = useState(false);
 

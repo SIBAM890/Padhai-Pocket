@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
-export type SetupStep = 'WELCOME' | 'NAME' | 'LANGUAGE' | 'SUBJECT' | 'READY';
+export type SetupStep = 'WELCOME' | 'NAME' | 'LANGUAGE' | 'SUBJECT' | 'ALL_SET';
 
 interface StudentSetupModalProps {
   visible: boolean;
   onFinish: (name: string, language: string, subject: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
@@ -33,14 +33,14 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
             <Text style={styles.title}>Welcome to PadhAI Pocket</Text>
             <Text style={styles.tagline}>Your learning journey, your way.</Text>
             <Text style={styles.description}>
-              Practice Class 9 science offline, listen in Odia, and build your daily learning habit.
+              Practice Class 9 science offline, listen in your mother tongue, and build your daily learning habit.
             </Text>
 
             <Pressable style={styles.primaryBtn} onPress={() => setStep('NAME')}>
               <Text style={styles.primaryBtnText}>Get Started ➔</Text>
             </Pressable>
 
-            <Pressable style={styles.secondaryBtn} onPress={() => onFinish(name, selectedLanguage, selectedSubject)}>
+            <Pressable style={styles.secondaryBtn} onPress={() => setStep('ALL_SET')}>
               <Text style={styles.secondaryBtnText}>I already have a profile</Text>
             </Pressable>
           </View>
@@ -52,19 +52,19 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
             <View style={styles.iconCircle}>
               <Text style={styles.icon}>👧🏽</Text>
             </View>
-            <Text style={styles.title}>What's your name?</Text>
+            <Text style={styles.title}>Enter your name</Text>
             <Text style={styles.tagline}>ଆପଣଙ୍କ ନାମ କ’ଣ?</Text>
 
             <TextInput
               style={styles.input}
               value={name}
               onChangeText={setName}
-              placeholder="Enter your name"
+              placeholder="e.g. Sunita"
               placeholderTextColor={colors.textDisabled}
             />
 
             <Pressable style={styles.primaryBtn} onPress={() => setStep('LANGUAGE')}>
-              <Text style={styles.primaryBtnText}>Next ➔</Text>
+              <Text style={styles.primaryBtnText}>Continue ➔</Text>
             </Pressable>
           </View>
         );
@@ -75,7 +75,7 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
             <View style={styles.iconCircle}>
               <Text style={styles.icon}>🗣️</Text>
             </View>
-            <Text style={styles.title}>Choose your learning language</Text>
+            <Text style={styles.title}>Choose language</Text>
             <Text style={styles.tagline}>ପଢ଼ିବା ଭାଷା ବାଛନ୍ତୁ</Text>
 
             <View style={styles.optionsRow}>
@@ -96,7 +96,7 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
             </View>
 
             <Pressable style={styles.primaryBtn} onPress={() => setStep('SUBJECT')}>
-              <Text style={styles.primaryBtnText}>Next ➔</Text>
+              <Text style={styles.primaryBtnText}>Continue ➔</Text>
             </Pressable>
           </View>
         );
@@ -107,7 +107,7 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
             <View style={styles.iconCircle}>
               <Text style={styles.icon}>📚</Text>
             </View>
-            <Text style={styles.title}>What would you like to learn?</Text>
+            <Text style={styles.title}>Choose learning preference</Text>
             <Text style={styles.tagline}>କେଉଁ ବିଷୟରୁ ଆରମ୍ଭ କରିବେ?</Text>
 
             <View style={styles.optionsColumn}>
@@ -132,11 +132,29 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
               })}
             </View>
 
+            <Pressable style={styles.primaryBtn} onPress={() => setStep('ALL_SET')}>
+              <Text style={styles.primaryBtnText}>Continue ➔</Text>
+            </Pressable>
+          </View>
+        );
+
+      case 'ALL_SET':
+        return (
+          <View style={styles.stepContent}>
+            <View style={[styles.iconCircle, styles.allSetCircle]}>
+              <Text style={styles.icon}>🎉</Text>
+            </View>
+            <Text style={styles.title}>You're all set, {name}!</Text>
+            <Text style={styles.tagline}>ଆପଣଙ୍କ ଶିକ୍ଷଣ ଯାତ୍ରା ପ୍ରସ୍ତୁତ।</Text>
+            <Text style={styles.description}>
+              We've prepared your Class 9 Physical Science study room with offline saving and voice help.
+            </Text>
+
             <Pressable
               style={styles.primaryBtn}
               onPress={() => onFinish(name, selectedLanguage, selectedSubject)}
             >
-              <Text style={styles.primaryBtnText}>Start Learning Now ➔</Text>
+              <Text style={styles.primaryBtnText}>Go to Home Dashboard ➔</Text>
             </Pressable>
           </View>
         );
@@ -150,10 +168,12 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
     <View style={styles.backdrop}>
       <View style={styles.modalCard}>
         <View style={styles.topBar}>
-          <Text style={styles.headerTitle}>PadhAI Pocket Setup</Text>
-          <Pressable onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeText}>✕</Text>
-          </Pressable>
+          <Text style={styles.headerTitle}>PadhAI Pocket · Student Setup</Text>
+          {onClose && (
+            <Pressable onPress={onClose} style={styles.closeBtn}>
+              <Text style={styles.closeText}>✕</Text>
+            </Pressable>
+          )}
         </View>
 
         {renderContent()}
@@ -165,7 +185,7 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: 'rgba(15, 23, 42, 0.70)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.md,
@@ -211,6 +231,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
+  },
+  allSetCircle: {
+    backgroundColor: colors.secondaryLight,
   },
   icon: {
     fontSize: 32,
