@@ -11,3 +11,5 @@ dist/
 jest.json
 integration_result.json
 9th_Physical_Science105.pdf
+.agents/
+skills-lock.json
