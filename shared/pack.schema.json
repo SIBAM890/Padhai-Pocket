@@ -62,8 +62,8 @@
         "properties": {
           "chunk_id": {
             "type": "string",
-            "pattern": "^BSE9-[A-Z]+-[A-Z]+-S[0-9]{2}$",
-            "description": "Format: BSE9-PHYS-MOTION-S02 (no chapter number)"
+            "pattern": "^BSE9-[A-Z]+-[A-Z]+-S[0-9]{2}(-[0-9]{2})?$",
+            "description": "Format: BSE9-PHYS-MOTION-S02 or sub-chunk BSE9-PHYS-MOTION-S02-01 (no chapter number)"
           },
           "title_or": {
             "type": "string"

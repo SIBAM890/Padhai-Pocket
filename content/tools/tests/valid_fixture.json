@@ -1,0 +1,74 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "",
+    "built_at": ""
+  },
+  "chapter": {
+    "subject": "Physical Science",
+    "class": 9,
+    "chapter_no": "[VERIFY]"
+  },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-PHYS-MOTION-S02",
+      "title_or": "[[ODIA_TITLE]]",
+      "odia_text": "[[ODIA_TEXT]]",
+      "terms": [
+        "T_DISP"
+      ],
+      "source_page": 58,
+      "status": "demo_approved",
+      "reviewed_by": ""
+    }
+  ],
+  "terms": [
+    {
+      "term_id": "T_DISP",
+      "en": "displacement",
+      "odia_from_textbook": "[[ODIA_TERM]]",
+      "kui": {
+        "description": "",
+        "script": "",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    }
+  ],
+  "items": [
+    {
+      "item_id": "P-A",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "modality": "P",
+      "stem": "[[STEM_P_A]]",
+      "options": [
+        "opt1",
+        "opt2",
+        "opt3",
+        "opt4"
+      ],
+      "correct": 0,
+      "audio": "P-A.opus",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "A-A",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "modality": "A",
+      "stem": "[[STEM_A_A]]",
+      "options": [
+        "img_opt1.png",
+        "img_opt2.png",
+        "img_opt3.png",
+        "img_opt4.png"
+      ],
+      "correct": 1,
+      "audio": "A-A.opus",
+      "misconception_tag": null
+    }
+  ]
+}

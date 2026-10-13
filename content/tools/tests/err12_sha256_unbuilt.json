@@ -1,0 +1,15 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "abcdef1234567890abcdef1234567890",
+    "built_at": "2026-10-13T00:00:00Z"
+  },
+  "chapter": {
+    "subject": "Physical Science",
+    "class": 9,
+    "chapter_no": "[VERIFY]"
+  },
+  "chunks": [],
+  "terms": [],
+  "items": []
+}

@@ -1,0 +1,17 @@
+Board: Board of Secondary Education (BSE), Odisha
+Class: 9 (ନବମ ଶ୍ରେଣୀ)
+Subject: Physical Science (ଭୌତିକ ବିଜ୍ଞାନ)
+Chapter: 5 (ପଞ୍ଚମ ଅଧ୍ୟାୟ)
+Chapter Title: ଗତି (MOTION)
+Page Range: 57 - 74
+
+Sections:
+5.1 ଗତି (Motion) [p. 58]
+5.1.1 ଏକ ସରଳରେଖାରେ ଗତି (ସରଳରୈଖିକ ଗତି) (Motion along a Straight Line) [p. 58]
+5.1.2 ସମ ଓ ଅସମ ଗତି (Uniform Motion & Non-Uniform Motion) [p. 59]
+5.2 ବେଗ (Speed) [p. 60]
+5.2.1 ପରିବେଗ (Velocity) [p. 61]
+5.3 ତ୍ୱରଣ (Acceleration) [p. 62]
+5.4 ଗତିର ଲୈଖିକ ବା ଗ୍ରାଫିକାଲ୍ ପରିପ୍ରକାଶ (Graphical Representation of Motion) [p. 63]
+5.5 ଲୈଖିକ ପଦ୍ଧତିରେ ଗତି ସମୀକରଣ ଗୁଡ଼ିକର ନିଗମନ (Derivation of Equations of Motion by Graphical Methods) [p. 67]
+5.6 ସମବୃତ୍ତୀୟ ଗତି (Uniform Circular Motion) [p. 71]

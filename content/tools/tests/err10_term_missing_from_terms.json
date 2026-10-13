@@ -1,0 +1,20 @@
+{
+  "pack_version": "1.0",
+  "manifest": { "sha256": "abc", "built_at": "2026-10-12T20:00:00Z" },
+  "chapter": { "subject": "Physical Science", "class": 9, "chapter_no": "5" },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-PHYS-MOTION-S02",
+      "title_or": "Title",
+      "odia_text": "Text",
+      "terms": [
+        "T_MISSING_TERM_XYZ"
+      ],
+      "source_page": 58,
+      "status": "draft",
+      "reviewed_by": "reviewer"
+    }
+  ],
+  "terms": [],
+  "items": []
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "term_id": "T_DIST",
+    "en": "distance",
+    "odia_from_textbook": "ଦୂରତା",
+    "kui": {
+      "description": "",
+      "script": "",
+      "audio": null
+    },
+    "validated_by": null,
+    "dialect": null,
+    "status": "pending"
+  },
+  {
+    "term_id": "T_DISP",
+    "en": "displacement",
+    "odia_from_textbook": "ବିସ୍ଥାପନ",
+    "kui": {
+      "description": "",
+      "script": "",
+      "audio": null
+    },
+    "validated_by": null,
+    "dialect": null,
+    "status": "pending"
+  },
+  {
+    "term_id": "T_SPEED",
+    "en": "speed",
+    "odia_from_textbook": "ବେଗ",
+    "kui": {
+      "description": "",
+      "script": "",
+      "audio": null
+    },
+    "validated_by": null,
+    "dialect": null,
+    "status": "pending"
+  },
+  {
+    "term_id": "T_VEL",
+    "en": "velocity",
+    "odia_from_textbook": "ପରିବେଗ",
+    "kui": {
+      "description": "",
+      "script": "",
+      "audio": null
+    },
+    "validated_by": null,
+    "dialect": null,
+    "status": "pending"
+  },
+  {
+    "term_id": "T_ACC",
+    "en": "acceleration",
+    "odia_from_textbook": "ତ୍ୱରଣ",
+    "kui": {
+      "description": "",
+      "script": "",
+      "audio": null
+    },
+    "validated_by": null,
+    "dialect": null,
+    "status": "pending"
+  },
+  {
+    "term_id": "T_REST",
+    "en": "rest",
+    "odia_from_textbook": "ସ୍ଥିର / ଗତିଶୀଳ",
+    "kui": {
+      "description": "",
+      "script": "",
+      "audio": null
+    },
+    "validated_by": null,
+    "dialect": null,
+    "status": "pending"
+  }
+]

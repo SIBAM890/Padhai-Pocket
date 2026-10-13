@@ -1,0 +1,27 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "",
+    "built_at": ""
+  },
+  "chapter": {
+    "subject": "Physical Science",
+    "class": 9,
+    "chapter_no": "[VERIFY]"
+  },
+  "chunks": [],
+  "terms": [],
+  "items": [
+    {
+      "item_id": "X-A",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "modality": "INVALID_MODALITY",
+      "stem": "[[STEM]]",
+      "options": ["opt1", "opt2", "opt3", "opt4"],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "",
+    "built_at": ""
+  },
+  "chapter": {
+    "subject": "Physical Science",
+    "class": 9,
+    "chapter_no": "[VERIFY]"
+  },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-PHYS-MOTION-S02",
+      "title_or": "ବିନା ଅନୁମୋଦିତ ଶୀର୍ଷକ",
+      "odia_text": "[[ODIA_TEXT]]",
+      "terms": [],
+      "source_page": 58,
+      "status": "demo_approved",
+      "reviewed_by": ""
+    }
+  ],
+  "terms": [],
+  "items": []
+}

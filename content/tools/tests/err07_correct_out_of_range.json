@@ -1,0 +1,19 @@
+{
+  "pack_version": "1.0",
+  "manifest": { "sha256": "abc", "built_at": "2026-10-12T20:00:00Z" },
+  "chapter": { "subject": "Physical Science", "class": 9, "chapter_no": "5" },
+  "chunks": [],
+  "terms": [],
+  "items": [
+    {
+      "item_id": "P-A",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "modality": "P",
+      "stem": "Question stem",
+      "options": ["opt1", "opt2", "opt3", "opt4"],
+      "correct": 4,
+      "status": "draft"
+    }
+  ]
+}

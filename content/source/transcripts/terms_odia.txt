@@ -1,0 +1,7 @@
+TERM_ID | english | odia_verbatim | page | method | evidence_line_id
+T_DIST | distance | ଦୂରତା | 58 | verified_photo | L058_01
+T_DISP | displacement | ବିସ୍ଥାପନ | 58 | verified_photo | L058_02
+T_SPEED | speed | ବେଗ | 60 | verified_photo | L060_01
+T_VEL | velocity | ପରିବେଗ | 61 | verified_photo | L061_01
+T_ACC | acceleration | ତ୍ୱରଣ | 62 | verified_photo | L062_01
+T_REST | rest / motion | ସ୍ଥିର / ଗତିଶୀଳ | 57 | verified_photo | L057_01
