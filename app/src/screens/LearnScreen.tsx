@@ -34,6 +34,7 @@ import {
   nextAction,
 } from '../engine';
 import { computeSeed } from '../engine/seed';
+import { getHeroChunk, getHeroItem, getPackHash } from '../content/loader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
@@ -95,15 +96,34 @@ export default function LearnScreen({ navigation }: Props) {
     refreshPending();
   }, []);
 
-  const question = useMemo(
-    () => ({
-      title: 'Motion',
-      prompt: 'A student walks 3 m east and then 3 m west. What is the displacement?',
-      options: ['0 m', '3 m', '6 m', '9 m'],
+  // Content from pack — safety fallback if pack fails to load
+  const heroChunk = getHeroChunk();
+  const heroItem = getHeroItem();
+  const packHash = getPackHash();
+
+  const question = useMemo(() => {
+    if (heroChunk && heroItem) {
+      return {
+        title: heroChunk.title,
+        chunkId: heroChunk.chunkId,
+        passage: heroChunk.odiaText,
+        prompt: heroItem.stem,
+        options: heroItem.options,
+        answerIndex: heroItem.correct,
+        misconception: heroItem.misconceptionTag,
+      };
+    }
+    // Fallback (should not happen in demo if pack is built)
+    return {
+      title: 'ଗତି',
+      chunkId: 'BSE9-PHYS-MOTION-S02-02',
+      passage: 'ବସ୍ତୁ ସରଳରେଖାରେ ଗତିକଲେ, ବସ୍ତୁର ସେହି ଗତିକୁ ସରଳରୈଖିକ ଗତି କୁହାଯାଏ ।',
+      prompt: 'ଜଣେ ଛାତ୍ର ୩ ମିଟର ପୂର୍ବକୁ ଯାଇ ପୁଣି ୩ ମିଟର ପଶ୍ଚିମକୁ ଫେରିଲା। ବିସ୍ଥାପନ କେତେ?',
+      options: ['୦ ମିଟର', '୩ ମିଟର', '୬ ମିଟର', '୯ ମିଟର'],
       answerIndex: 0,
-    }),
-    []
-  );
+      misconception: 'path_equals_displacement',
+    };
+  }, [heroChunk, heroItem]);
 
   // FR-23: handle sound check result.
   const handleSoundCheck = (heard: boolean) => {
@@ -143,7 +163,7 @@ export default function LearnScreen({ navigation }: Props) {
       {
         type: 'OBSERVE_MCQ',
         correct: isCorrect,
-        misconception_tag: isCorrect ? null : 'path_equals_displacement',
+        misconception_tag: isCorrect ? null : question.misconception,
       } as any,
       ctx
     );
@@ -151,9 +171,9 @@ export default function LearnScreen({ navigation }: Props) {
     // Advance engine state for next interaction.
     engineStateRef.current = engineResult.state;
 
-    // Persist first emitted event (OBSERVE) to local SQLite.
-    if (engineResult.events.length > 0) {
-      await insertEvent(engineResult.events[0] as any);
+    // Persist ALL emitted events (OBSERVE, PLAN, TOOL, PROBE, REFLECT, ACT, MASTERY, etc.)
+    for (const event of engineResult.events) {
+      await insertEvent(event as any);
     }
     setSeq(engineResult.state.seq);
     setAnswered(true);
@@ -251,7 +271,27 @@ export default function LearnScreen({ navigation }: Props) {
 
         <View style={styles.card}>
           <Text style={styles.kicker}>LEARN</Text>
+
+          {/* Chunk ID badge + pack hash */}
+          <View style={styles.chunkBadge}>
+            <Text style={styles.chunkBadgeText}>
+              {question.chunkId}
+            </Text>
+            <Text style={styles.chunkHashText}>
+              pack {packHash.slice(0, 12)}
+            </Text>
+          </View>
+
           <Text style={styles.title}>{question.title}</Text>
+
+          {/* Passage from content pack */}
+          {question.passage ? (
+            <View style={styles.passageCard}>
+              <Text style={styles.passageLabel}>ପାଠ୍ୟ ଅଂଶ</Text>
+              <Text style={styles.passageText}>{question.passage}</Text>
+            </View>
+          ) : null}
+
           <Text style={styles.prompt}>{question.prompt}</Text>
 
           {question.options.map((option, index) => (
@@ -413,4 +453,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navText: { color: '#fff', fontWeight: '800' },
+  // Content integration styles
+  chunkBadge: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  chunkBadgeText: {
+    fontFamily: 'InterBold',
+    fontSize: 11,
+    color: '#0F4C5C',
+    letterSpacing: 0.5,
+  },
+  chunkHashText: {
+    fontFamily: 'monospace',
+    fontSize: 10,
+    color: '#8A8A8A',
+  },
+  passageCard: {
+    backgroundColor: '#F5EBD0',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: '#C1440E',
+  },
+  passageLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#C1440E',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  passageText: {
+    fontSize: 17,
+    lineHeight: 28,
+    color: '#1A1A1A',
+  },
 });
