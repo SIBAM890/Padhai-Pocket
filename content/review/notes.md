@@ -28,3 +28,13 @@
   - Character encoding inspection: The BSE Odisha physical science PDF uses custom embedded Type 1 fonts (`MSTT31c366`, `MSTT31c374`, `MSTT31c38e`) with `ToUnicode: None`. Extracted text layer contains unmapped raw glyph tokens (`/G40/GFB/G63/G65...`).
   - Per Step B of the Extraction Ladder, automated repair/guessing is strictly prohibited.
   - Per Step C, reading from the high-resolution textbook photos (`p57`, `p58`, `p60`, `p61`) requires explicit user command: `ALLOW VISION READ`.
+
+## 4. Kui Terms Strategy Decision (PRD v4.0 §18 Claim C9)
+- **Decision**: Option A (Ethical & Academic Honesty) formally adopted.
+- **Specification**:
+  - All 6 terms maintain `status: "pending"` with `kui.script: "[VERIFY with speaker]"` and `kui.audio: null` in both `content/motion_pack.json` and `content/glossary.json`.
+  - Zero hallucinated tribal vocabulary or AI-synthesized audio clips are used.
+  - UI slide label enforced verbatim per `content/kui_slide_label.md`:
+    > `Kui starter glossary — text-only in Odia script; native audio pending validation` (0/6 verified).
+  - Child UI presentation: Audio speaker icons are disabled/greyed out with a clear visual tooltip that native recording validation is pending.
+

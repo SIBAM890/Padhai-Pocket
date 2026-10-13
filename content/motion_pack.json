@@ -1,8 +1,8 @@
 {
   "pack_version": "1.0",
   "manifest": {
-    "sha256": "",
-    "built_at": ""
+    "sha256": "c94a1f34f7b1b234cfd3519a07de564496ddfd2a1b55f1181ef4d4ad3c14b351",
+    "built_at": "2026-10-13T09:43:56Z"
   },
   "chapter": {
     "subject": "Physical Science",
@@ -19,7 +19,7 @@
       ],
       "source_page": 58,
       "status": "demo_approved",
-      "reviewed_by": ""
+      "reviewed_by": "Pritam"
     },
     {
       "chunk_id": "BSE9-PHYS-MOTION-S02-02",
@@ -31,7 +31,7 @@
       ],
       "source_page": 58,
       "status": "demo_approved",
-      "reviewed_by": ""
+      "reviewed_by": "Pritam"
     },
     {
       "chunk_id": "BSE9-PHYS-MOTION-S02-03",
@@ -43,7 +43,7 @@
       ],
       "source_page": 58,
       "status": "demo_approved",
-      "reviewed_by": ""
+      "reviewed_by": "Pritam"
     }
   ],
   "terms": [
@@ -132,7 +132,7 @@
       "concept_id": "distance_vs_displacement",
       "set": "A",
       "modality": "P",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ନିମ୍ନ ଚିତ୍ରରେ ଏକ ବସ୍ତୁର ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁରୁ ଅନ୍ତିମ ବିନ୍ଦୁ ପର୍ଯ୍ୟନ୍ତ ଗତି ଦର୍ଶାଯାଇଛି । ଏଥିରେ ବସ୍ତୁର ବିସ୍ଥାପନ (displacement) କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଭାବରେ ଦର୍ଶାଉଛି?",
       "options": [
         "img_dvd_a_p_opt0.png",
         "img_dvd_a_p_opt1.png",
@@ -148,7 +148,7 @@
       "concept_id": "distance_vs_displacement",
       "set": "A",
       "modality": "A",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଗୋଟିଏ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A ବିନ୍ଦୁକୁ ଗଲା ଏବଂ ପୁଣି O ବିନ୍ଦୁକୁ ଫେରିଆସିଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେତେ ହେବ?",
       "options": [
         "img_dvd_a_a_opt0.png",
         "img_dvd_a_a_opt1.png",
@@ -164,12 +164,12 @@
       "concept_id": "distance_vs_displacement",
       "set": "A",
       "modality": "T",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଦୂରତା (distance) ଏବଂ ବିସ୍ଥାପନ (displacement) ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?",
       "options": [
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]"
+        "ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ",
+        "ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ",
+        "ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ",
+        "ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି"
       ],
       "correct": 0,
       "audio": "DVD-A-T.opus",
@@ -180,7 +180,7 @@
       "concept_id": "distance_vs_displacement",
       "set": "B",
       "modality": "P",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଚିତ୍ର 5.1 ଅନୁସାରେ, ଗୋଟିଏ ବସ୍ତୁ O ରୁ ବାହାରି A କୁ ଯାଇ ପୁଣି B କୁ ଫେରିଲେ, ତାର ପ୍ରକୃତ ବିସ୍ଥାପନ କେଉଁ ରେଖାଖଣ୍ଡ ଦ୍ୱାରା ପ୍ରକାଶ ପାଇବ?",
       "options": [
         "img_dvd_b_p_opt0.png",
         "img_dvd_b_p_opt1.png",
@@ -196,7 +196,7 @@
       "concept_id": "distance_vs_displacement",
       "set": "B",
       "modality": "A",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଧ୍ୟାନ ଦେଇ ଶୁଣନ୍ତୁ: ଜଣେ ବ୍ୟକ୍ତି ଘରୁ ବାହାରି 2 କିଲୋମିଟର ବାଟ ଚାଲି ବଜାରକୁ ଗଲେ ଏବଂ ପୁଣି ଘରକୁ ଫେରିଆସିଲେ । ତାଙ୍କର ମୋଟ ବିସ୍ଥାପନ କେତେ?",
       "options": [
         "img_dvd_b_a_opt0.png",
         "img_dvd_b_a_opt1.png",
@@ -212,12 +212,12 @@
       "concept_id": "distance_vs_displacement",
       "set": "B",
       "modality": "T",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଯଦି ଏକ ବସ୍ତୁ ନିଜର ପ୍ରାରମ୍ଭିକ ସ୍ଥାନକୁ ଫେରିଆସେ, ତେବେ ତାର ଦୂରତା ଓ ବିସ୍ଥାପନ ବିଷୟରେ କେଉଁ ଉକ୍ତିଟି ସତ୍ୟ?",
       "options": [
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]"
+        "ବିସ୍ଥାପନ ଶୂନ ହେବ, କିନ୍ତୁ ଅତିକ୍ରାନ୍ତ ଦୂରତା ଶୂନ ହେବ ନାହିଁ",
+        "ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ ଶୂନ ହୋଇଯିବ",
+        "ବିସ୍ଥାପନର ମାନ ଦୂରତା ଠାରୁ ଅଧିକ ହେବ",
+        "ଦୂରତା ଶୂନ ହେବ, କିନ୍ତୁ ବିସ୍ଥାପନ ଶୂନ ହେବ ନାହିଁ"
       ],
       "correct": 0,
       "audio": "DVD-B-T.opus",
@@ -228,7 +228,7 @@
       "concept_id": "distance_vs_displacement",
       "set": "A",
       "modality": "W",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "‘ଦୂରତା’ (Distance) — ବସ୍ତୁ ଅତିକ୍ରମ କରିଥିବା ପଥର ମୋଟ ଦୈର୍ଘ୍ୟକୁ ବୁଝାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।",
       "options": [
         "img_w1_opt0.png",
         "img_w1_opt1.png",
@@ -244,7 +244,7 @@
       "concept_id": "distance_vs_displacement",
       "set": "B",
       "modality": "W",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "‘ବିସ୍ଥାପନ’ (Displacement) — ପ୍ରାରମ୍ଭିକ ଓ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ଦର୍ଶାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।",
       "options": [
         "img_w2_opt0.png",
         "img_w2_opt1.png",
@@ -260,12 +260,12 @@
       "concept_id": "distance_vs_displacement",
       "set": "C",
       "modality": "TX",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଗୋଟିଏ ଗାଡ଼ି ପୂର୍ବ ଦିଗକୁ 40 କିଲୋମିଟର ଯାଇ ସେହି ସରଳରେଖାରେ ପଶ୍ଚିମ ଦିଗକୁ 10 କିଲୋମିଟର ଫେରିଆସିଲା । ଗାଡ଼ିଟିର ବିସ୍ଥାପନର ପରିମାଣ କେତେ?",
       "options": [
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]"
+        "30 କିଲୋମିଟର (ପୂର୍ବ ଦିଗକୁ)",
+        "50 କିଲୋମିଟର (ଅତିକ୍ରାନ୍ତ ମୋଟ ଦୂରତା)",
+        "10 କିଲୋମିଟର (ଫେରିଥିବା ଦୂରତା)",
+        "40 କିଲୋମିଟର (ପ୍ରାରମ୍ଭିକ ଦୂରତା)"
       ],
       "correct": 0,
       "audio": "TX.opus",
@@ -276,7 +276,7 @@
       "concept_id": "distance_vs_displacement",
       "set": "C",
       "modality": "PX",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଏକ ବୃତ୍ତାକାର ପଥରେ ଏକ ବସ୍ତୁ ପୂରା ଗୋଟିଏ ଘେରା ବୁଲି ନିଜର ପ୍ରାରମ୍ଭିକ ସ୍ଥାନରେ ପହଞ୍ଚିଲା । ଏହି ସ୍ଥିତିରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରରେ ସଠିକ୍ ଦର୍ଶାଯାଇଛି?",
       "options": [
         "img_px_opt0.png",
         "img_px_opt1.png",
@@ -292,12 +292,12 @@
       "concept_id": "distance_vs_displacement",
       "set": "C",
       "modality": "MCQ",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ଗୋଟିଏ ବସ୍ତୁର ବିସ୍ଥାପନ 5 ମିଟର ବୋଲି କହିବା ସମୟରେ କେଉଁ ତଥ୍ୟଟି ଜାଣିବା ଅପରିହାର୍ଯ୍ୟ?",
       "options": [
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]"
+        "ବିସ୍ଥାପନର ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ (Direction)",
+        "ବସ୍ତୁଟି ନେଇଥିବା ମୋଟ ସମୟ",
+        "ପଥର ସମସ୍ତ ବଙ୍କା ମୋଡ଼",
+        "ବସ୍ତୁର ଓଜନ ବା ବସ୍ତୁତ୍ୱ"
       ],
       "correct": 0,
       "audio": "PM1.opus",
@@ -308,12 +308,12 @@
       "concept_id": "distance_vs_displacement",
       "set": "C",
       "modality": "MCQ",
-      "stem": "[[ODIA_FROM_NATIVE_SPEAKER]]",
+      "stem": "ନିମ୍ନଲିଖିତ ମଧ୍ୟରୁ କେଉଁ ସମ୍ପର୍କଟି ସର୍ବଦା ସତ୍ୟ ଅଟେ?",
       "options": [
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]",
-        "[[ODIA_FROM_NATIVE_SPEAKER]]"
+        "ବିସ୍ଥାପନର ପରିମାଣ ≤ ଅତିକ୍ରାନ୍ତ ଦୂରତା",
+        "ବିସ୍ଥାପନର ପରିମାଣ > ଅତିକ୍ରାନ୍ତ ଦୂରତା",
+        "ବିସ୍ଥାପନ ସର୍ବଦା ଅତିକ୍ରାନ୍ତ ଦୂରତା ସହ ସମାନ",
+        "ଦୂରତା କେବେହେଲେ ବିସ୍ଥାପନ ଠାରୁ ବଡ଼ ହୋଇପାରିବ ନାହିଁ"
       ],
       "correct": 0,
       "audio": "PM2.opus",

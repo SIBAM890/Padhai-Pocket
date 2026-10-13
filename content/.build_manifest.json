@@ -1,0 +1,13 @@
+{
+  "pack_file": "content/motion_pack.json",
+  "sha256": "c94a1f34f7b1b234cfd3519a07de564496ddfd2a1b55f1181ef4d4ad3c14b351",
+  "built_at": "2026-10-13T09:43:56Z",
+  "built_by": "build_pack.py",
+  "pack_version": "1.0",
+  "chapter": "5",
+  "stats": {
+    "chunks_count": 3,
+    "terms_count": 6,
+    "items_count": 12
+  }
+}

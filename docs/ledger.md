@@ -21,7 +21,7 @@ Status values:
 | **C6** | Competitor cells (each) | Own page URL + date | **Open** *(needs URLs)* | Sibam |
 | **C7** | Textbook chapter number and term list | Photo file names | Assigned to Pritam | Pritam |
 | **C8** | Odia TTS works / quality reviewed | Test notes + reviewer | Assigned to Pritam | Pritam |
-| **C9** | [N] Kui terms validated; [N] native clips; dialect | Review log | Assigned to Pritam | Pritam |
+| **C9** | 0/6 Kui audio clips verified; Fallback label enforced: "Kui starter glossary — text-only in Odia script; native audio pending validation" | Review log + content/kui_slide_label.md | **Verified** *(Option A: honest fallback)* | Pritam |
 | **C10** | Offline loop and fresh-install run | K4 log, video-free evidence (log + screenshots) | Assigned to Satya | Satya |
 | **C11** | Sync integrity (0 lost, 0 duplicated, 0 gaps) | K5 SQL output (Option B: Demo deferred; Pilot target) | **Open** *(Demo: not claimed / Pilot: target)* | Sibam |
 | **C12** | Grounding results k/20 | K6 script output | Assigned to Pritam | Pritam |

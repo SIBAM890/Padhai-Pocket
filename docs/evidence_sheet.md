@@ -42,6 +42,7 @@
 - **C4** (24 languages, primers for 21): **Open** *(Owner: Sibam — awaiting The Hindu 2017 URL)*
 - **C5** (Kui is an MLE language): **Open** *(Owner: Sibam — awaiting NCERT journal URL)*
 - **C6** (Competitor cells): **Open** *(Owner: Sibam — awaiting product page URLs)*
+- **C9** (Kui terms validation & native audio clips): **Verified (Option A: Honest Fallback)** *(Owner: Pritam — 0/6 verified; fallback label enforced per `content/kui_slide_label.md`)*
 - **C11** (Sync integrity 0 lost / 0 duplicated): **Open (Pilot Target)** *(Owner: Sibam — Demo uses in-memory `demo_storage`)*
 - **C13** (Simulated decision reliability): **Measured** *(Owner: Sibam — `eval/sim/report.md` matches §4.8)*
 - **C15** (Prompt injection tests): **Open** *(Owner: Sibam — S1 test suite record)*

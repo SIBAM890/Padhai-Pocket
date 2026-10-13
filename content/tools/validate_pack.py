@@ -313,6 +313,14 @@ def validate_local_rules(
             build_record_path = os.path.join(repo_root, "content", ".build_manifest.json")
             if not os.path.exists(build_record_path):
                 errors.append(f"manifest.sha256 is non-empty ('{sha256_val}') without an approved build script run")
+            else:
+                try:
+                    with open(build_record_path, "r", encoding="utf-8") as bf:
+                        brec = json.load(bf)
+                    if brec.get("sha256") != sha256_val:
+                        errors.append(f"manifest.sha256 is non-empty ('{sha256_val}') without matching build script run (recorded: '{brec.get('sha256')}')")
+                except Exception:
+                    errors.append(f"manifest.sha256 is non-empty ('{sha256_val}') but build record is unreadable")
 
     # 3. Chapter validation
     chapter = pack.get("chapter")
