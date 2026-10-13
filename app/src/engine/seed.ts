@@ -10,7 +10,12 @@
  *            swap(a[i], a[j])
  */
 
-import * as crypto from 'crypto';
+async function sha256First4Bytes(key: string): Promise<Uint8Array> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return new Uint8Array(hashBuffer, 0, 4);
+}
 
 /**
  * PRD §4.9: compute deterministic probe seed.
@@ -19,14 +24,15 @@ import * as crypto from 'crypto';
  *
  * Reference test: computeSeed('prof_demo_01','distance_vs_displacement','A') === 1806635391
  */
-export function computeSeed(
+export async function computeSeed(
   profileId: string,
   conceptId: string,
   setId: string
-): number {
+): Promise<number> {
   const key = `${profileId}|${conceptId}|${setId}`;
-  const hash = crypto.createHash('sha256').update(key, 'utf8').digest();
-  return hash.readUInt32BE(0);
+  const first4 = await sha256First4Bytes(key);
+  // big-endian uint32
+  return (first4[0] << 24) | (first4[1] << 16) | (first4[2] << 8) | first4[3];
 }
 
 /**

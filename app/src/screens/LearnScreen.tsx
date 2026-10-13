@@ -30,10 +30,12 @@ import type { NetworkMode } from '../types/events';
 import type { RootStackParamList } from '../../App';
 import {
   type EngineState,
+  type EngineInput,
   createInitialState,
   nextAction,
 } from '../engine';
-import { computeSeed } from '../engine/seed';
+import { computeSeed, probeOrder } from '../engine/seed';
+import { buildEvent } from '../engine/eventBuilder';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
@@ -70,6 +72,9 @@ export default function LearnScreen({ navigation }: Props) {
   const skipCountRef = useRef(0);
   const [setAborted, setSetAborted] = useState(false);
 
+  // Pre-computed probe order (async, so compute once on mount)
+  const probeOrderRef = useRef<Array<'P' | 'A' | 'T'>>(['P', 'A', 'T']);
+
   // Engine state persisted across renders — initialised once per session.
   const engineStateRef = useRef<EngineState>(
     createInitialState(
@@ -81,6 +86,13 @@ export default function LearnScreen({ navigation }: Props) {
       'OFFLINE'
     )
   );
+
+  // Compute probe order once on mount
+  useEffect(() => {
+    computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID).then((seed) => {
+      probeOrderRef.current = probeOrder(seed);
+    });
+  }, []);
 
   const refreshPending = async () => {
     const rows = await listEvents(200);
@@ -124,37 +136,50 @@ export default function LearnScreen({ navigation }: Props) {
     // Single skip: no event, no mastery change. Item simply dismissed.
   };
 
+  // Reset skip counter when engine advances to a new probe set
+  const resetSkipCounter = () => {
+    skipCountRef.current = 0;
+  };
+
   const record = async (selectedIndex: number) => {
     const isCorrect = selectedIndex === question.answerIndex;
     setLastCorrect(isCorrect);
 
-    // ctx.now: wall-clock time supplied by the UI caller (PRD §4.9 allows callers to inject Date.now()).
-    // ctx.seed: PRD §4.9 deterministic — SHA-256(profile|concept|set)[0..3] big-endian uint32.
     const now = Date.now();
-    const seed = computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
-    const ctx = { now, seed };
+    const seed = await computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
 
     // Sync current network mode and concept into engine state before calling.
     engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
 
+    // Build properly typed input
+    const input: EngineInput = {
+      type: 'OBSERVE_MCQ',
+      correct: isCorrect,
+      misconception_tag: isCorrect ? null : 'path_equals_displacement',
+    };
+
+    const ctx = { now, seed, probeOrder: probeOrderRef.current };
+
     // Call the real pure engine — nextAction updates mastery, computes input_hash, emits events.
-    const engineResult = nextAction(
-      engineStateRef.current,
-      {
-        type: 'OBSERVE_MCQ',
-        correct: isCorrect,
-        misconception_tag: isCorrect ? null : 'path_equals_displacement',
-      } as any,
-      ctx
-    );
+    const engineResult = nextAction(engineStateRef.current, input, ctx);
 
     // Advance engine state for next interaction.
     engineStateRef.current = engineResult.state;
 
-    // Persist first emitted event (OBSERVE) to local SQLite.
-    if (engineResult.events.length > 0) {
-      await insertEvent(engineResult.events[0] as any);
+    // Persist emitted events to local SQLite (buildEvent is now async)
+    for (const ev of engineResult.events) {
+      const builtEvent = await buildEvent(ev);
+      await insertEvent(builtEvent);
     }
+
+    // Reset skip counter if engine moved to a new probe set
+    if (engineResult.action === 'NEXT_PROBE_SET' || engineResult.action === 'RUN_PROBE_ITEM') {
+      // Check if set_id changed
+      if (engineResult.payload?.set && engineResult.payload.set !== SET_ID) {
+        resetSkipCounter();
+      }
+    }
+
     setSeq(engineResult.state.seq);
     setAnswered(true);
     await refreshPending();

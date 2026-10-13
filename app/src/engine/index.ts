@@ -8,7 +8,7 @@
 
 import { Bit, Candidate, Pat, SetLabel, candidateOf, resolve } from './table';
 import { updateConceptMastery, updateTermMastery } from './bkt';
-import { mulberry32, probeOrder } from './seed';
+import { mulberry32, probeOrder, computeSeed } from './seed';
 import { Verdict, finalLabel } from './finalLabel';
 import { EventData, EventNode, buildEvent } from './eventBuilder';
 import { handleOfflineWrongAnswer } from './branch';
@@ -16,6 +16,7 @@ import { handleOfflineWrongAnswer } from './branch';
 export interface EngineContext {
   now: number; // Injected timestamp (epoch ms)
   seed: number; // Injected seed (uint32)
+  probeOrder: Array<'P' | 'A' | 'T'>; // Pre-computed probe order (since computeSeed is async)
 }
 
 export type StepState =
@@ -80,6 +81,11 @@ export interface EngineOutput {
   payload: Record<string, any>;
 }
 
+// Internal event builder input (before hash computation)
+export interface EventDataInput extends Omit<EventData, 'input_hash'> {
+  input_hash?: string;
+}
+
 /**
  * Creates default initial engine state.
  */
@@ -121,25 +127,24 @@ export function createInitialState(
 }
 
 /**
- * Pure state machine transition function.
+ * Pure state machine transition function (async due to Web Crypto for input_hash).
  */
-export function nextAction(
+export async function nextAction(
   state: EngineState,
   input: EngineInput,
   ctx: EngineContext
-): EngineOutput {
-  const nextSeq = state.seq + 1;
+): Promise<EngineOutput> {
   const isoTs = new Date(ctx.now).toISOString();
-  const events: EventData[] = [];
+  const events: EventDataInput[] = [];
 
-  // Helper to append event
+  // Helper to append event (without hash - computed at the end)
   const emit = (
     node: EventNode,
     action: string,
     output: Record<string, any>,
-    overrides?: Partial<EventData>
+    overrides?: Partial<EventDataInput>
   ) => {
-    const ev = buildEvent({
+    const ev: EventDataInput = {
       event_id: `evt-${state.profile_id}-${state.seq + events.length + 1}`,
       profile_id: state.profile_id,
       session_id: state.session_id,
@@ -156,7 +161,7 @@ export function nextAction(
       pack_hash: state.pack_hash,
       confirm_threshold: state.threshold,
       ...overrides,
-    });
+    };
     events.push(ev);
   };
 
@@ -184,22 +189,21 @@ export function nextAction(
     );
 
     if (isCorrect) {
-      return {
+      return finalizeEvents(state, events, {
         state: {
           ...state,
           seq: state.seq + events.length,
           concept_mastery: masteryAfter,
           step: 'EPISODE_DONE',
         },
-        events,
         action: 'ADVANCE_NEXT_LESSON',
         payload: { concept_mastery: masteryAfter },
-      };
+      });
     }
 
     // Wrong answer triggers diagnostic probe episode
     const episodeId = `ep-${ctx.seed}`;
-    const order = probeOrder(ctx.seed);
+    const order = ctx.probeOrder;
 
     emit('PROBE', 'TRIGGER_EVAL', {
       rule: 'B',
@@ -216,7 +220,9 @@ export function nextAction(
       seed: ctx.seed,
     });
 
-    // Check offline decision branch policy
+    // Check offline decision branch policy (PRD §8)
+    // Wrong answer offline -> retry with simpler cached variant, queue revision, lower mastery
+    // Does NOT run probe in offline mode
     if (state.network_mode === 'OFFLINE') {
       const offlineBranch = handleOfflineWrongAnswer(state.concept_id, {
         currentMastery: masteryBefore,
@@ -228,32 +234,30 @@ export function nextAction(
       emit('ACT', offlineBranch.action, {
         tier: offlineBranch.chosenTier,
         queued_revision: state.concept_id,
+        state_changes: offlineBranch.stateChanges,
       });
 
-      return {
-        state: {
-          ...state,
-          seq: state.seq + events.length,
-          episode_id: episodeId,
-          concept_mastery: masteryAfter,
-          step: 'PROBE_ACTIVE',
-          current_set_order: order,
-          current_probe_pattern: [null, null, null],
-          probe_step_index: 0,
-          queued_revisions: offlineBranch.queuedRevisions,
-          chosen_tier: offlineBranch.chosenTier,
-        },
-        events,
-        action: 'RUN_PROBE_ITEM',
-        payload: {
-          modality: order[0],
-          set: state.current_set_id,
-          order,
-        },
+      const offlineState: EngineState = {
+        ...state,
+        seq: state.seq + events.length,
+        episode_id: episodeId,
+        concept_mastery: offlineBranch.nextMastery,
+        step: 'EPISODE_DONE',
+        queued_revisions: offlineBranch.queuedRevisions,
+        chosen_tier: offlineBranch.chosenTier,
       };
+      return finalizeEvents(state, events, {
+        state: offlineState,
+        action: 'OFFLINE_REMEDIATION',
+        payload: {
+          tier: offlineBranch.chosenTier,
+          queued_revision: state.concept_id,
+          state_changes: offlineBranch.stateChanges,
+        },
+      });
     }
 
-    return {
+    return finalizeEvents(state, events, {
       state: {
         ...state,
         seq: state.seq + events.length,
@@ -264,14 +268,13 @@ export function nextAction(
         current_probe_pattern: [null, null, null],
         probe_step_index: 0,
       },
-      events,
       action: 'RUN_PROBE_ITEM',
       payload: {
         modality: order[0],
         set: state.current_set_id,
         order,
       },
-    };
+    });
   }
 
   // Case 2: Observe Probe Item (P, A, T)
@@ -325,7 +328,7 @@ export function nextAction(
 
       if (candidate === 'RESOLVED') {
         const v = finalLabel(['RESOLVED'], state.threshold);
-        return {
+        return finalizeEvents(state, events, {
           state: {
             ...state,
             seq: state.seq + events.length,
@@ -337,31 +340,37 @@ export function nextAction(
             verdict: v,
             step: 'EPISODE_DONE',
           },
-          events,
           action: 'RESOLVED_TRANSFER',
           payload: { candidate: 'RESOLVED', verdict: v },
-        };
+        });
       }
 
       if (candidate === 'INCONSISTENT') {
         const nextSetLabels: SetLabel[] = [...state.set_labels, 'INCONSISTENT'];
         const v = finalLabel(nextSetLabels, state.threshold);
-        return {
+        
+        // If not done, advance to next probe set (A->B->C)
+        const nextSet = v.done 
+          ? state.current_set_id 
+          : state.current_set_id === 'A' ? 'B' : state.current_set_id === 'B' ? 'C' : 'C';
+
+        return finalizeEvents(state, events, {
           state: {
             ...state,
             seq: state.seq + events.length,
             concept_mastery: updatedConceptMastery,
-            current_probe_pattern: newPattern,
+            current_probe_pattern: v.done ? newPattern : [null, null, null],
             current_candidate: 'INCONSISTENT',
             current_set_label: 'INCONSISTENT',
+            current_set_id: nextSet,
             set_labels: nextSetLabels,
             verdict: v,
             step: v.done ? 'EPISODE_DONE' : 'PROBE_ACTIVE',
+            probe_step_index: 0,
           },
-          events,
           action: v.done ? 'SAFE_DEFAULT' : 'NEXT_PROBE_SET',
-          payload: { candidate: 'INCONSISTENT', verdict: v },
-        };
+          payload: { candidate: 'INCONSISTENT', verdict: v, next_set: nextSet },
+        });
       }
 
       // Candidate needs targeted confirmation
@@ -375,7 +384,7 @@ export function nextAction(
         items: state.threshold === 1 ? 1 : 2,
       });
 
-      return {
+      return finalizeEvents(state, events, {
         state: {
           ...state,
           seq: state.seq + events.length,
@@ -384,15 +393,14 @@ export function nextAction(
           current_candidate: candidate,
           step: 'CONFIRM_ACTIVE',
         },
-        events,
         action: 'RUN_CONFIRM_ITEM',
         payload: { candidate, confirmType },
-      };
+      });
     }
 
     // Continue next probe modality
     const nextModality = state.current_set_order[nextProbeIndex];
-    return {
+    return finalizeEvents(state, events, {
       state: {
         ...state,
         seq: state.seq + events.length,
@@ -400,13 +408,12 @@ export function nextAction(
         current_probe_pattern: newPattern,
         probe_step_index: nextProbeIndex,
       },
-      events,
       action: 'RUN_PROBE_ITEM',
       payload: {
         modality: nextModality,
         set: state.current_set_id,
       },
-    };
+    });
   }
 
   // Case 3: Observe Targeted Confirmation Item
@@ -453,7 +460,7 @@ export function nextAction(
         status: v.status,
       });
 
-      return {
+      return finalizeEvents(state, events, {
         state: {
           ...state,
           seq: state.seq + events.length,
@@ -463,10 +470,9 @@ export function nextAction(
           verdict: v,
           step: 'REMEDIATION_ACTIVE',
         },
-        events,
         action: `ACT_${v.label}`,
         payload: { verdict: v },
-      };
+      });
     }
 
     // Need next set
@@ -476,7 +482,7 @@ export function nextAction(
         : state.current_set_id === 'B'
         ? 'C'
         : 'C';
-    return {
+    return finalizeEvents(state, events, {
       state: {
         ...state,
         seq: state.seq + events.length,
@@ -489,25 +495,46 @@ export function nextAction(
         probe_step_index: 0,
         current_probe_pattern: [null, null, null],
       },
-      events,
       action: 'NEXT_PROBE_SET',
       payload: { next_set: nextSet },
-    };
+    });
   }
 
   // Default passthrough
-  return {
+  return finalizeEvents(state, events, {
     state: {
       ...state,
       seq: state.seq + events.length,
     },
-    events,
     action: 'NOOP',
     payload: {},
+  });
+}
+
+/**
+ * Compute input_hash for all events and return final output.
+ */
+async function finalizeEvents(
+  state: EngineState,
+  events: EventDataInput[],
+  output: Omit<EngineOutput, 'events'>
+): Promise<EngineOutput> {
+  const builtEvents: EventData[] = [];
+  for (const ev of events) {
+    builtEvents.push(await buildEvent(ev));
+  }
+  return {
+    ...output,
+    events: builtEvents,
   };
 }
 
 export * from './table';
+export * from './bkt';
+export * from './seed';
+export * from './finalLabel';
+export * from './eventBuilder';
+export * from './branch';
 export * from './bkt';
 export * from './seed';
 export * from './finalLabel';

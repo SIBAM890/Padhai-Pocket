@@ -21,8 +21,8 @@ beforeEach(() => {
   jest.resetModules();
 });
 
-test('computeSeed: prof_demo_01/distance_vs_displacement/A must equal 1806635391', () => {
-  const seed = computeSeed('prof_demo_01', 'distance_vs_displacement', 'A');
+test('computeSeed: prof_demo_01/distance_vs_displacement/A must equal 1806635391', async () => {
+  const seed = await computeSeed('prof_demo_01', 'distance_vs_displacement', 'A');
   expect(seed).toBe(1806635391);
 });
 
@@ -48,7 +48,8 @@ test('Full loop: wrong MCQ produces OBSERVE + MASTERY events, BKT mastery, deter
 
   const ctx = {
     now: 1792059821234,
-    seed: cs('prof_demo_01', 'distance_vs_displacement', 'A'),
+    seed: await cs('prof_demo_01', 'distance_vs_displacement', 'A'),
+    probeOrder: (await import('../src/engine/seed')).probeOrder(await cs('prof_demo_01', 'distance_vs_displacement', 'A')),
   };
 
   expect(ctx.seed).toBe(1806635391); // guard
@@ -59,7 +60,7 @@ test('Full loop: wrong MCQ produces OBSERVE + MASTERY events, BKT mastery, deter
     misconception_tag: 'path_equals_displacement',
   };
 
-  const result = na(state, input, ctx);
+  const result = await na(state, input, ctx);
 
   // Verify required event nodes.
   const nodes: string[] = result.events.map((e: any) => e.node);
@@ -85,21 +86,23 @@ test('Full loop: wrong MCQ produces OBSERVE + MASTERY events, BKT mastery, deter
   expect(stored.every((e: any) => e.sync_status === 'PENDING')).toBe(true);
 
   // Determinism: same inputs produce identical outputs.
-  const result2 = na(state, input, ctx);
+  const result2 = await na(state, input, ctx);
   expect(result2.events.map((e: any) => e.node)).toEqual(nodes);
   expect(result2.state.concept_mastery).toBeCloseTo(result.state.concept_mastery, 4);
 });
 
-test('Full loop: correct MCQ advances lesson, mastery increases', () => {
+test('Full loop: correct MCQ advances lesson, mastery increases', async () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { nextAction: na, createInitialState: cis } = require('../src/engine');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { computeSeed: cs } = require('../src/engine/seed');
+  const { probeOrder } = await import('../src/engine/seed');
 
   const state = cis('prof_demo_01', 'sess_01', 'distance_vs_displacement', 0.42, 1, 'OFFLINE');
-  const ctx = { now: 1792059821234, seed: cs('prof_demo_01', 'distance_vs_displacement', 'A') };
+  const seed = await cs('prof_demo_01', 'distance_vs_displacement', 'A');
+  const ctx = { now: 1792059821234, seed, probeOrder: probeOrder(seed) };
 
-  const result = na(state, { type: 'OBSERVE_MCQ', correct: true, misconception_tag: null }, ctx);
+  const result = await na(state, { type: 'OBSERVE_MCQ', correct: true, misconception_tag: null }, ctx);
 
   expect(result.action).toBe('ADVANCE_NEXT_LESSON');
   // BKT correct: mastery must be > initial 0.42

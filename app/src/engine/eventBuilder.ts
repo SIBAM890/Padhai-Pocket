@@ -3,9 +3,8 @@
  *
  * All events are immutable rows with canonical JSON hashing for input_hash.
  * The input_hash is the first 12 hex chars of SHA-256 over canonical JSON (sorted keys, no whitespace, UTF-8).
+ * Uses Web Crypto API (available in React Native / Expo / browsers).
  */
-
-import * as crypto from 'crypto';
 
 export type EventNode =
   | 'PLAN'
@@ -65,22 +64,27 @@ export function canonicalJson(obj: any): string {
 
 /**
  * First 12 hex chars of SHA-256 over canonical JSON.
+ * Uses Web Crypto API (global `crypto.subtle` in React Native / Expo / browsers).
  */
-export function computeInputHash(rawInput: any): string {
+export async function computeInputHash(rawInput: any): Promise<string> {
   const canon = canonicalJson(rawInput);
-  const hash = crypto.createHash('sha256').update(canon, 'utf8').digest('hex');
-  return hash.substring(0, 12);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(canon);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 12);
 }
 
 /**
  * Builds a validated EventData structure with input_hash computed if missing.
  */
-export function buildEvent(data: EventData, rawInputForHash?: any): EventData {
+export async function buildEvent(data: EventData, rawInputForHash?: any): Promise<EventData> {
   const hash =
     data.input_hash ??
     (rawInputForHash !== undefined
-      ? computeInputHash(rawInputForHash)
-      : computeInputHash({ action: data.action, node: data.node }));
+      ? await computeInputHash(rawInputForHash)
+      : await computeInputHash({ action: data.action, node: data.node }));
 
   return {
     schema_version: '1.1',

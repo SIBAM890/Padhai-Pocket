@@ -277,13 +277,17 @@ components:
           type: string
         detail:
           type: string
-      additionalProperties: false
+        fallback:
+          type: object
+          description: Fallback payload when failure mode is triggered (e.g., cached plan)
+      additionalProperties: true
 
     Event:
       type: object
       required:
         - schema_version
         - event_id
+        - device_id
         - profile_id
         - seq
         - ts
