@@ -12,10 +12,12 @@ import { mulberry32, probeOrder } from './seed';
 import { Verdict, finalLabel } from './finalLabel';
 import { EventData, EventNode, buildEvent } from './eventBuilder';
 import { handleOfflineWrongAnswer } from './branch';
+import { uuidv4 } from '../utils/device';
 
 export interface EngineContext {
   now: number; // Injected timestamp (epoch ms)
   seed: number; // Injected seed (uint32)
+  device_id: string; // Stable device identifier
 }
 
 export type StepState =
@@ -140,7 +142,8 @@ export function nextAction(
     overrides?: Partial<EventData>
   ) => {
     const ev = buildEvent({
-      event_id: `evt-${state.profile_id}-${state.seq + events.length + 1}`,
+      event_id: uuidv4(),
+      device_id: ctx.device_id,
       profile_id: state.profile_id,
       session_id: state.session_id,
       episode_id: state.episode_id,

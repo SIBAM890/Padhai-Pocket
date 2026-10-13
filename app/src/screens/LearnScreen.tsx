@@ -35,12 +35,13 @@ import {
 } from '../engine';
 import { computeSeed } from '../engine/seed';
 import { getHeroChunk, getHeroItem, getPackHash } from '../content/loader';
+import { getDeviceId } from '../utils/device';
+import * as SecureStore from 'expo-secure-store';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
 const HEALTH_URL = `${API_URL}/healthz`;
-const DEVICE_ID = 'demo-device-01';
 const PROFILE_ID = 'demo-profile-01';
 const SESSION_ID = '11111111-2222-4333-8444-555555555555';
 
@@ -62,6 +63,12 @@ export default function LearnScreen({ navigation }: Props) {
   const [answered, setAnswered] = useState(false);
   const [seq, setSeq] = useState(1);
   const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
+  const [deviceId, setDeviceId] = useState<string>('');
+
+  // Initialize device ID on mount
+  useEffect(() => {
+    getDeviceId().then((id) => setDeviceId(id));
+  }, []);
 
   // FR-23: sound check state. null = not yet checked, true = OK, false = failed.
   const [soundOk, setSoundOk] = useState<boolean | null>(null);
@@ -152,7 +159,7 @@ export default function LearnScreen({ navigation }: Props) {
     // ctx.seed: PRD §4.9 deterministic — SHA-256(profile|concept|set)[0..3] big-endian uint32.
     const now = Date.now();
     const seed = computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
-    const ctx = { now, seed };
+    const ctx = { now, seed, device_id: deviceId };
 
     // Sync current network mode and concept into engine state before calling.
     engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
@@ -181,7 +188,9 @@ export default function LearnScreen({ navigation }: Props) {
   };
 
   const sync = async () => {
-    await syncPending({ baseUrl: API_URL, deviceId: DEVICE_ID });
+    // Read token from SecureStore
+    const token = await SecureStore.getItemAsync('device_token');
+    await syncPending({ baseUrl: API_URL, deviceId: deviceId, token: token ?? undefined });
     await refreshPending();
   };
 
