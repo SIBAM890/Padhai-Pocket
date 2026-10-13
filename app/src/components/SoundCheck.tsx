@@ -1,138 +1,114 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
 interface SoundCheckProps {
   onHeard: () => void;
   onCannotHear: () => void;
-  onSkip?: () => void;
 }
 
-export const SoundCheck: React.FC<SoundCheckProps> = ({
-  onHeard,
-  onCannotHear,
-  onSkip,
-}) => {
+export const SoundCheck: React.FC<SoundCheckProps> = ({ onHeard, onCannotHear }) => {
   return (
     <View style={styles.card}>
       <View style={styles.iconCircle}>
-        <Text style={styles.speakerIcon}>🔊</Text>
+        <Text style={styles.icon}>🔊</Text>
       </View>
 
-      <Text style={styles.title}>Can you hear this sound?</Text>
+      <Text style={styles.title}>Can you hear this?</Text>
       <Text style={styles.titleOr}>ତୁମେ ଏହି ଶବ୍ଦଟି ଶୁଣିପାରୁଛ କି?</Text>
-      <Text style={styles.subtitle}>
-        Tap below so we know whether to read questions aloud for you.
+      <Text style={styles.description}>
+        Testing your tablet audio so we can read lessons aloud whenever you want.
       </Text>
 
-      <View style={styles.buttonRow}>
+      <View style={styles.actionsRow}>
         <Pressable
-          style={[styles.button, styles.primaryButton]}
+          style={[styles.btn, styles.primaryBtn]}
           onPress={onHeard}
           accessibilityRole="button"
           accessibilityLabel="I can hear it"
         >
-          <Text style={styles.primaryButtonText}>Yes, I hear it</Text>
+          <Text style={styles.primaryBtnText}>I can hear it</Text>
         </Pressable>
 
         <Pressable
-          style={[styles.button, styles.secondaryButton]}
+          style={[styles.btn, styles.secondaryBtn]}
           onPress={onCannotHear}
           accessibilityRole="button"
-          accessibilityLabel="I cannot hear it"
+          accessibilityLabel="Try another way"
         >
-          <Text style={styles.secondaryButtonText}>I can't hear it</Text>
+          <Text style={styles.secondaryBtnText}>Try another way</Text>
         </Pressable>
       </View>
-
-      {onSkip && (
-        <Pressable onPress={onSkip} style={styles.skipButton}>
-          <Text style={styles.skipText}>Let's look at pictures first</Text>
-        </Pressable>
-      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.card,
   },
   iconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: colors.surfaceElevated,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  speakerIcon: {
-    fontSize: 32,
+  icon: {
+    fontSize: 28,
   },
   title: {
-    ...typography.h3,
+    ...typography.h2,
     color: colors.textPrimary,
     textAlign: 'center',
   },
   titleOr: {
     ...typography.body,
-    color: colors.primaryLight,
-    marginTop: 4,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
     textAlign: 'center',
   },
-  subtitle: {
+  description: {
     ...typography.bodySmall,
     color: colors.textMuted,
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: spacing.sm,
     marginBottom: spacing.lg,
     maxWidth: 280,
   },
-  buttonRow: {
+  actionsRow: {
     flexDirection: 'row',
     gap: spacing.sm + 4,
     width: '100%',
   },
-  button: {
+  btn: {
     flex: 1,
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.button,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
   },
-  primaryButton: {
+  primaryBtn: {
     backgroundColor: colors.primary,
   },
-  primaryButtonText: {
+  primaryBtnText: {
     ...typography.button,
-    color: '#07111f',
   },
-  secondaryButton: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
+  secondaryBtn: {
+    backgroundColor: '#F1F5F9',
   },
-  secondaryButtonText: {
+  secondaryBtnText: {
     ...typography.button,
-    color: colors.textSecondary,
-  },
-  skipButton: {
-    marginTop: spacing.md,
-    padding: spacing.xs,
-  },
-  skipText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textDecorationLine: 'underline',
+    color: colors.textPrimary,
   },
 });

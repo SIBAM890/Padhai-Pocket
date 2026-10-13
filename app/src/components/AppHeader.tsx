@@ -1,31 +1,43 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { colors, typography, spacing } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 import { NetworkBadge } from './NetworkBadge';
 import type { NetworkMode } from '../types/events';
 
 interface AppHeaderProps {
-  title?: string;
-  subtitle?: string;
+  greeting?: string;
+  subgreeting?: string;
+  avatar?: string;
   networkMode: NetworkMode;
   forcedOffline?: boolean;
-  onHelpPress?: () => void;
+  onAvatarPress?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
-  title = 'PadhAI Pocket',
-  subtitle = 'ସୁନୀତାଙ୍କ ପାଠ (Sunita’s Lesson)',
+  greeting = 'Good morning, Sunita',
+  subgreeting = 'Keep learning, one step at a time.',
+  avatar = '👧🏽',
   networkMode,
   forcedOffline,
+  onAvatarPress,
 }) => {
   return (
     <View style={styles.container}>
-      <View style={styles.left}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+      <View style={styles.textContainer}>
+        <Text style={styles.greeting}>{greeting}</Text>
+        <Text style={styles.subgreeting}>{subgreeting}</Text>
       </View>
-      <View style={styles.right}>
+
+      <View style={styles.rightGroup}>
         <NetworkBadge mode={networkMode} forcedOffline={forcedOffline} />
+        <Pressable
+          style={styles.avatarButton}
+          onPress={onAvatarPress}
+          accessibilityRole="button"
+          accessibilityLabel="Learner profile"
+        >
+          <Text style={styles.avatarText}>{avatar}</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -39,19 +51,36 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.md,
   },
-  left: {
+  textContainer: {
     flex: 1,
+    paddingRight: spacing.sm,
   },
-  title: {
+  greeting: {
     ...typography.h2,
     color: colors.textPrimary,
   },
-  subtitle: {
-    ...typography.caption,
+  subgreeting: {
+    ...typography.bodySmall,
     color: colors.textMuted,
     marginTop: 2,
   },
-  right: {
-    alignItems: 'flex-end',
+  rightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  avatarButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.subtle,
+  },
+  avatarText: {
+    fontSize: 22,
   },
 });

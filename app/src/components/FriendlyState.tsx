@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
 export type FriendlyStateType =
   | 'LOADING'
@@ -8,89 +8,53 @@ export type FriendlyStateType =
   | 'AUDIO_UNAVAILABLE'
   | 'OFFLINE_READY'
   | 'CONTENT_UNAVAILABLE'
-  | 'STORAGE_SAFE'
-  | 'TEMPORARY_PROBLEM'
   | 'SKIPPED'
-  | 'RECOVERY';
+  | 'TEMPORARY_PROBLEM';
 
 interface FriendlyStateProps {
   type: FriendlyStateType;
-  customMessage?: string;
-  customMessageOr?: string;
-  actionText?: string;
   onAction?: () => void;
-  onSecondaryAction?: () => void;
-  secondaryActionText?: string;
+  actionText?: string;
 }
 
 export const FriendlyState: React.FC<FriendlyStateProps> = ({
   type,
-  customMessage,
-  customMessageOr,
-  actionText,
   onAction,
-  onSecondaryAction,
-  secondaryActionText,
+  actionText,
 }) => {
   const getConfig = () => {
     switch (type) {
-      case 'LOADING':
-        return {
-          icon: '⏳',
-          title: 'Preparing your lesson...',
-          titleOr: 'ପାଠ ପ୍ରସ୍ତୁତ ହେଉଛି...',
-          description: 'Taking a quick moment to get everything ready for you.',
-          defaultAction: null,
-        };
-      case 'MIC_UNAVAILABLE':
-        return {
-          icon: '🎤',
-          title: 'Microphone is resting',
-          titleOr: 'ମାଇକ୍ରୋଫୋନ କାମ କରୁନାହିଁ',
-          description: "No worries! You can tap any answer option on the screen instead.",
-          defaultAction: 'Tap to Answer',
-        };
       case 'AUDIO_UNAVAILABLE':
         return {
           icon: '🖼️',
           title: "Let's look at pictures first",
           titleOr: 'ଚାଲନ୍ତୁ ପ୍ରଥମେ ଚିତ୍ର ଦେଖିବା',
-          description: 'Sound is resting right now, so we will learn with illustrations.',
-          defaultAction: 'Continue with Pictures',
+          desc: 'Sound is resting right now, so we will learn with illustrations.',
+          btn: 'Continue with Pictures',
         };
-      case 'OFFLINE_READY':
+      case 'MIC_UNAVAILABLE':
         return {
-          icon: '💾',
-          title: 'Learning saved safely on this device',
-          titleOr: 'ଆପଣଙ୍କ ପାଠ ଏହି ଫୋନରେ ସୁରକ୍ଷିତ ଅଛି',
-          description: 'You can practice anytime without internet.',
-          defaultAction: 'Continue Learning',
-        };
-      case 'CONTENT_UNAVAILABLE':
-        return {
-          icon: '📚',
-          title: 'Next lesson is loading',
-          titleOr: 'ପରବର୍ତ୍ତୀ ପାଠ ଲୋଡ୍ ହେଉଛି',
-          description: 'Let us review the concepts we just explored.',
-          defaultAction: 'Review Practice',
+          icon: '👆',
+          title: 'You can tap your answer',
+          titleOr: 'ଉତ୍ତର ବାଛିବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ',
+          desc: 'Voice is optional! Select any choice directly on screen.',
+          btn: 'Got it',
         };
       case 'SKIPPED':
         return {
           icon: '⏭️',
           title: 'Question skipped',
           titleOr: 'ପ୍ରଶ୍ନଟି ଛାଡ଼ିଦିଆଗଲା',
-          description: 'No problem at all! Let us move on to the next concept.',
-          defaultAction: 'Next Question',
+          desc: 'No problem at all! Let us move on to the next concept.',
+          btn: 'Next Question',
         };
-      case 'TEMPORARY_PROBLEM':
-      case 'RECOVERY':
       default:
         return {
           icon: '🌱',
-          title: "Let's take a quick breath",
-          titleOr: 'କିଛି ସମୟ ଅପେକ୍ଷା କରନ୍ତୁ',
-          description: 'We are ready to pick right back up where we left off.',
-          defaultAction: 'Try Again',
+          title: "Let's learn together",
+          titleOr: 'ଆଗକୁ ବଢ଼ିବା',
+          desc: 'Everything is safe on your device.',
+          btn: 'Continue',
         };
     }
   };
@@ -98,24 +62,18 @@ export const FriendlyState: React.FC<FriendlyStateProps> = ({
   const config = getConfig();
 
   return (
-    <View style={styles.container}>
+    <View style={styles.card}>
       <View style={styles.iconCircle}>
-        <Text style={styles.iconText}>{config.icon}</Text>
+        <Text style={styles.icon}>{config.icon}</Text>
       </View>
 
-      <Text style={styles.title}>{customMessage ?? config.title}</Text>
-      <Text style={styles.titleOr}>{customMessageOr ?? config.titleOr}</Text>
-      <Text style={styles.description}>{config.description}</Text>
+      <Text style={styles.title}>{config.title}</Text>
+      <Text style={styles.titleOr}>{config.titleOr}</Text>
+      <Text style={styles.desc}>{config.desc}</Text>
 
-      {(actionText || config.defaultAction) && onAction && (
-        <Pressable style={styles.actionBtn} onPress={onAction} accessibilityRole="button">
-          <Text style={styles.actionText}>{actionText ?? config.defaultAction}</Text>
-        </Pressable>
-      )}
-
-      {secondaryActionText && onSecondaryAction && (
-        <Pressable style={styles.secondaryBtn} onPress={onSecondaryAction}>
-          <Text style={styles.secondaryText}>{secondaryActionText}</Text>
+      {onAction && (
+        <Pressable style={styles.button} onPress={onAction} accessibilityRole="button">
+          <Text style={styles.btnText}>{actionText ?? config.btn}</Text>
         </Pressable>
       )}
     </View>
@@ -123,66 +81,55 @@ export const FriendlyState: React.FC<FriendlyStateProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
     marginVertical: spacing.md,
+    ...shadows.card,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.surfaceElevated,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  iconText: {
-    fontSize: 28,
+  icon: {
+    fontSize: 26,
   },
   title: {
-    ...typography.h3,
+    ...typography.h2,
     color: colors.textPrimary,
     textAlign: 'center',
   },
   titleOr: {
     ...typography.body,
-    color: colors.primaryLight,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
     textAlign: 'center',
-    marginTop: 4,
   },
-  description: {
+  desc: {
     ...typography.bodySmall,
     color: colors.textMuted,
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: spacing.sm,
     marginBottom: spacing.lg,
-    maxWidth: 300,
-    lineHeight: 20,
+    maxWidth: 280,
   },
-  actionBtn: {
+  button: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
-    borderRadius: radius.md,
-    minWidth: 180,
-    alignItems: 'center',
+    borderRadius: radius.button,
   },
-  actionText: {
+  btnText: {
     ...typography.button,
-    color: '#07111f',
-  },
-  secondaryBtn: {
-    marginTop: spacing.md,
-    padding: spacing.xs,
-  },
-  secondaryText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textDecorationLine: 'underline',
   },
 });

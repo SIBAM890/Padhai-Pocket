@@ -1,68 +1,108 @@
 /**
- * PadhAI Pocket Design Tokens & Theme
- * Calm, accessible, low cognitive load, high contrast for Sunita.
+ * PadhAI Pocket Light-First Design System
+ * Modern, clean, calm, accessible, and student-focused.
  */
 
 export const colors = {
-  // Backgrounds
-  background: '#07111f',        // Deep navy / dark blue
-  surface: '#0e1b2d',           // Card surface
-  surfaceElevated: '#15243a',   // Raised surface / input / option
-  surfaceSubtle: '#1b2c45',     // Borders / divider
+  // Primary Backgrounds
+  background: '#F8F9FA',         // Light-first canvas
+  surface: '#FFFFFF',            // Crisp card surfaces
+  surfaceSubtle: '#F1F5F9',      // Input fields, table rows, tag backgrounds
+  surfaceBorder: '#E2E8F0',      // Soft clean dividers
+  surfaceElevated: '#F8FAFC',    // Subtle elevation surface
   
-  // Accents
-  primary: '#10b981',           // Mint / emerald green
-  primaryLight: '#6ee7b7',      // Light mint
-  primaryDark: '#047857',       // Dark emerald
+  // Brand Palettes
+  primary: '#304FFE',            // Deep Blue / Soft Indigo (Refined & Modern)
+  primaryLight: '#E8ECFF',       // Soft indigo tint for pills & highlights
+  primaryDark: '#1A237E',        // Deep indigo headers
   
-  // Secondary / Attention
-  attention: '#f59e0b',         // Warm amber / pending
-  attentionLight: '#fbbf24',    // Light amber
+  // Secondary Brand
+  secondary: '#0F9D8A',          // Calm Teal for learning progress & positive states
+  secondaryLight: '#E6F4F1',     // Soft teal tint
   
-  // Status & Feedback
-  success: '#10b981',           // Correct / complete
-  info: '#38bdf8',              // Info / guidance
-  calmNotice: '#60a5fa',        // Friendly notice (no red panic)
-  subtleBadge: '#1e293b',
+  // Feedback & Accents
+  success: '#22C55E',            // Energetic Green (used sparingly)
+  successLight: '#DCFCE7',
   
-  // Text
-  textPrimary: '#ffffff',       // Pure white headers & options
-  textSecondary: '#d9e2ef',     // Primary body
-  textMuted: '#94a3b8',         // Subtitles & metadata
-  textDisabled: '#475569',      // Inactive
+  accent: '#FF6B5F',             // Warm Coral for milestones & streaks
+  accentLight: '#FFEBEA',
+  
+  warning: '#F59E0B',            // Warm Amber
+  warningLight: '#FEF3C7',
+  attention: '#F59E0B',
+  attentionLight: '#FEF3C7',
+  
+  // Typography Colors
+  textPrimary: '#1E293B',        // Deep Charcoal (never pure black)
+  textSecondary: '#475569',      // Slate Body text
+  textMuted: '#64748B',          // Subtitles & captions
+  textDisabled: '#94A3B8',       // Disabled / inactive labels
+  textOnPrimary: '#FFFFFF',      // High contrast on dark buttons
   
   // Borders
-  border: '#24364f',
-  borderHighlight: '#3b82f6',
-  borderSuccess: '#10b981',
-  borderActive: '#6ee7b7',
+  border: '#E2E8F0',
+  borderFocus: '#304FFE',
+  borderSuccess: '#22C55E',
+  borderTeal: '#0F9D8A',
+
+  // Shadow Tint
+  shadowColor: '#0F172A',
 };
 
 export const typography = {
-  // Scales with high readability and generous line height
-  h1: { fontSize: 28, fontWeight: '800' as const, lineHeight: 36, color: colors.textPrimary },
+  appTitle: { fontSize: 30, fontWeight: '800' as const, lineHeight: 38, color: colors.textPrimary },
+  h1: { fontSize: 26, fontWeight: '800' as const, lineHeight: 34, color: colors.textPrimary },
   h2: { fontSize: 22, fontWeight: '700' as const, lineHeight: 30, color: colors.textPrimary },
   h3: { fontSize: 18, fontWeight: '700' as const, lineHeight: 26, color: colors.textPrimary },
-  bodyLarge: { fontSize: 18, fontWeight: '500' as const, lineHeight: 27, color: colors.textSecondary },
+  cardHeading: { fontSize: 18, fontWeight: '600' as const, lineHeight: 26, color: colors.textPrimary },
+  bodyLarge: { fontSize: 18, fontWeight: '500' as const, lineHeight: 28, color: colors.textPrimary },
   body: { fontSize: 16, fontWeight: '400' as const, lineHeight: 24, color: colors.textSecondary },
   bodySmall: { fontSize: 14, fontWeight: '400' as const, lineHeight: 20, color: colors.textMuted },
-  caption: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16, color: colors.textMuted, letterSpacing: 0.5 },
-  button: { fontSize: 16, fontWeight: '700' as const, color: '#ffffff' },
+  caption: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16, color: colors.textMuted, letterSpacing: 0.4 },
+  button: { fontSize: 16, fontWeight: '700' as const, color: '#FFFFFF' },
   mono: { fontFamily: 'monospace', fontSize: 12, lineHeight: 18 },
 };
 
 export const spacing = {
   xs: 4,
   sm: 8,
-  md: 14,
-  lg: 20,
-  xl: 28,
-  xxl: 36,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
 };
 
 export const radius = {
-  sm: 8,
+  xs: 6,
+  sm: 10,
   md: 14,
   lg: 20,
+  card: 18,
+  hero: 24,
+  button: 14,
   full: 9999,
+};
+
+export const shadows = {
+  subtle: {
+    shadowColor: colors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  card: {
+    shadowColor: colors.shadowColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  hover: {
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 5,
+  },
 };

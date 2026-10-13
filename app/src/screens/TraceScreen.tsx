@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, radius } from '../theme/theme';
 import { TraceTimeline } from '../components/TraceTimeline';
@@ -58,13 +58,20 @@ export default function TraceScreen({ navigation }: any) {
         />
       </ScrollView>
 
-      <BottomNavigation
-        currentTab="Trace"
-        onSelectTab={(tab) => {
-          if (tab === 'Learn') navigation.navigate('Learn');
-          if (tab === 'RawLog') navigation.navigate('RawLog');
-        }}
-      />
+      <View style={styles.navBar}>
+        <Pressable
+          style={styles.navBtn}
+          onPress={() => navigation.navigate('Learn')}
+        >
+          <Text style={styles.navBtnText}>← Back to Learning Home</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.navBtn, styles.navBtnSecondary]}
+          onPress={() => navigation.navigate('RawLog')}
+        >
+          <Text style={styles.navBtnSecondaryText}>View Raw Log ➔</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -96,5 +103,32 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.textMuted,
     marginTop: 4,
+  },
+  navBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  navBtn: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: radius.button,
+    alignItems: 'center',
+  },
+  navBtnText: {
+    ...typography.button,
+    fontSize: 14,
+  },
+  navBtnSecondary: {
+    backgroundColor: '#F1F5F9',
+  },
+  navBtnSecondaryText: {
+    ...typography.button,
+    color: colors.textPrimary,
+    fontSize: 14,
   },
 });

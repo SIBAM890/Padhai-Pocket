@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
-import type { PictureChoice } from './PictureProbe';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+
+interface AudioChoice {
+  id: string;
+  icon?: string;
+  label?: string;
+}
 
 interface AudioProbeProps {
+  title?: string;
+  titleOr?: string;
   prompt: string;
-  promptOr?: string;
-  choices: PictureChoice[];
+  choices: AudioChoice[];
   selectedChoiceId?: string | null;
   onSelect: (choiceId: string) => void;
   onPlayAudio?: () => void;
 }
 
 export const AudioProbe: React.FC<AudioProbeProps> = ({
+  title = 'Listen to the Odia / Kui pronunciation',
+  titleOr = 'ଓଡ଼ିଆ ଉଚ୍ଚାରଣ ଶୁଣନ୍ତୁ',
   prompt,
-  promptOr,
   choices,
   selectedChoiceId,
   onSelect,
@@ -31,13 +38,13 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
   return (
     <View style={styles.card}>
       <View style={styles.badge}>
-        <Text style={styles.badgeText}>AUDIO PROBE (ଶ୍ରବଣ ଯାଞ୍ଚ)</Text>
+        <Text style={styles.badgeText}>AUDIO FIRST ACTIVITY</Text>
       </View>
 
-      <Text style={styles.prompt}>{prompt}</Text>
-      {promptOr && <Text style={styles.promptOr}>{promptOr}</Text>}
+      <Text style={styles.title}>{title}</Text>
+      {titleOr && <Text style={styles.titleOr}>{titleOr}</Text>}
 
-      {/* Primary Audio Player Control */}
+      {/* Audio Trigger button */}
       <Pressable
         style={[styles.audioButton, isPlaying && styles.audioButtonPlaying]}
         onPress={handlePlay}
@@ -46,13 +53,13 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
       >
         <Text style={styles.audioIcon}>{isPlaying ? '🔊' : '▶️'}</Text>
         <Text style={styles.audioLabel}>
-          {isPlaying ? 'Playing in Odia / Kui...' : 'Listen to phrase (ଶୁଣନ୍ତୁ)'}
+          {isPlaying ? 'Playing in Odia / Kui...' : 'Tap to Listen (ଶୁଣନ୍ତୁ)'}
         </Text>
       </Pressable>
 
-      <Text style={styles.instruction}>Select the matching picture below:</Text>
+      <Text style={styles.prompt}>{prompt}</Text>
 
-      {/* Visual icon choices only - no textual barrier */}
+      {/* Visual choices row without text barriers */}
       <View style={styles.choicesRow}>
         {choices.map((choice) => {
           const isSelected = selectedChoiceId === choice.id;
@@ -62,9 +69,8 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
               style={[styles.choiceCard, isSelected && styles.choiceCardSelected]}
               onPress={() => onSelect(choice.id)}
               accessibilityRole="button"
-              accessibilityLabel={choice.label ?? 'Option'}
             >
-              <Text style={styles.choiceIcon}>{choice.visualIcon ?? '📦'}</Text>
+              <Text style={styles.choiceIcon}>{choice.icon ?? '📦'}</Text>
               {choice.label && <Text style={styles.choiceLabel}>{choice.label}</Text>}
             </Pressable>
           );
@@ -76,83 +82,86 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
+    ...shadows.card,
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#1e3a8a',
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm + 2,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-    marginBottom: spacing.sm,
+    borderRadius: radius.xs,
+    marginBottom: spacing.xs,
   },
   badgeText: {
     ...typography.caption,
-    color: colors.info,
+    color: colors.primary,
     fontWeight: '800',
   },
-  prompt: {
-    ...typography.bodyLarge,
+  title: {
+    ...typography.h2,
     color: colors.textPrimary,
-    fontWeight: '700',
+    marginTop: 2,
   },
-  promptOr: {
+  titleOr: {
     ...typography.body,
-    color: colors.textMuted,
-    marginTop: 4,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
   },
   audioButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.card,
     padding: spacing.md,
     marginVertical: spacing.md,
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: colors.border,
     gap: spacing.sm,
   },
   audioButtonPlaying: {
-    backgroundColor: '#064e3b',
-    borderColor: colors.primaryLight,
+    backgroundColor: colors.secondaryLight,
+    borderColor: colors.secondary,
   },
   audioIcon: {
     fontSize: 22,
   },
   audioLabel: {
     ...typography.body,
-    color: colors.textPrimary,
     fontWeight: '700',
+    color: colors.textPrimary,
   },
-  instruction: {
+  prompt: {
     ...typography.caption,
     color: colors.textMuted,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   choicesRow: {
     flexDirection: 'row',
-    gap: spacing.sm + 4,
+    gap: spacing.sm,
   },
   choiceCard: {
     flex: 1,
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     minHeight: 90,
+    ...shadows.subtle,
   },
   choiceCardSelected: {
     borderColor: colors.primary,
-    backgroundColor: '#0a3325',
+    backgroundColor: '#F5F7FF',
   },
   choiceIcon: {
     fontSize: 32,
@@ -160,7 +169,8 @@ const styles = StyleSheet.create({
   },
   choiceLabel: {
     ...typography.caption,
-    color: colors.textSecondary,
     fontWeight: '600',
+    color: colors.textPrimary,
+    textAlign: 'center',
   },
 });

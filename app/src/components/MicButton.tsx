@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
-export type VoiceState = 'IDLE' | 'LISTENING' | 'PROCESSING' | 'VOICE_UNAVAILABLE' | 'TAP_FALLBACK';
+export type VoiceState = 'Ready' | 'Listening' | 'Thinking' | 'Tap instead';
 
 interface MicButtonProps {
   state: VoiceState;
@@ -11,33 +11,29 @@ interface MicButtonProps {
 }
 
 export const MicButton: React.FC<MicButtonProps> = ({
-  state,
+  state = 'Ready',
   onPress,
   onFallbackPress,
 }) => {
-  const isListening = state === 'LISTENING';
-  const isProcessing = state === 'PROCESSING';
-  const isUnavailable = state === 'VOICE_UNAVAILABLE' || state === 'TAP_FALLBACK';
+  const isListening = state === 'Listening';
+  const isThinking = state === 'Thinking';
 
-  const getStatusLabel = () => {
+  const getLabel = () => {
     switch (state) {
-      case 'LISTENING':
+      case 'Listening':
         return 'Listening... Speak your answer';
-      case 'PROCESSING':
-        return 'Thinking...';
-      case 'VOICE_UNAVAILABLE':
-        return 'Microphone unavailable';
-      case 'TAP_FALLBACK':
-        return 'Tap options above instead';
+      case 'Thinking':
+        return 'Processing speech...';
+      case 'Tap instead':
+        return 'Tap options above';
       default:
         return 'Tap to speak your answer';
     }
   };
 
   const getIcon = () => {
-    if (isProcessing) return '⏳';
+    if (isThinking) return '⏳';
     if (isListening) return '🎙️';
-    if (isUnavailable) return '🔇';
     return '🎤';
   };
 
@@ -46,22 +42,21 @@ export const MicButton: React.FC<MicButtonProps> = ({
       <Pressable
         style={[
           styles.button,
-          isListening && styles.listeningButton,
-          isProcessing && styles.processingButton,
-          isUnavailable && styles.unavailableButton,
+          isListening && styles.listeningBtn,
+          isThinking && styles.thinkingBtn,
         ]}
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={getStatusLabel()}
+        accessibilityLabel={getLabel()}
       >
         <Text style={styles.icon}>{getIcon()}</Text>
       </Pressable>
 
-      <Text style={styles.statusText}>{getStatusLabel()}</Text>
+      <Text style={styles.statusLabel}>{getLabel()}</Text>
 
-      {onFallbackPress && !isUnavailable && (
-        <Pressable onPress={onFallbackPress} style={styles.secondaryAction}>
-          <Text style={styles.secondaryText}>Tap answer instead</Text>
+      {onFallbackPress && (
+        <Pressable onPress={onFallbackPress} style={styles.fallbackAction}>
+          <Text style={styles.fallbackText}>Tap answer instead</Text>
         </Pressable>
       )}
     </View>
@@ -74,52 +69,41 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   button: {
-    width: 76,
-    height: 76,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 2.5,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
     borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    ...shadows.card,
   },
-  listeningButton: {
-    backgroundColor: '#047857',
-    borderColor: colors.primaryLight,
+  listeningBtn: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
     transform: [{ scale: 1.05 }],
   },
-  processingButton: {
-    backgroundColor: '#1e3a8a',
-    borderColor: colors.info,
-  },
-  unavailableButton: {
-    backgroundColor: colors.surfaceSubtle,
-    borderColor: colors.border,
-    opacity: 0.7,
+  thinkingBtn: {
+    backgroundColor: colors.secondaryLight,
+    borderColor: colors.secondary,
   },
   icon: {
-    fontSize: 32,
+    fontSize: 28,
   },
-  statusText: {
-    ...typography.body,
-    color: colors.textSecondary,
-    fontWeight: '600',
+  statusLabel: {
+    ...typography.bodySmall,
+    fontWeight: '700',
+    color: colors.textPrimary,
     marginTop: spacing.sm,
-    textAlign: 'center',
   },
-  secondaryAction: {
-    marginTop: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
+  fallbackAction: {
+    marginTop: 4,
+    padding: spacing.xs,
   },
-  secondaryText: {
+  fallbackText: {
     ...typography.caption,
-    color: colors.primaryLight,
+    color: colors.primary,
     textDecorationLine: 'underline',
   },
 });

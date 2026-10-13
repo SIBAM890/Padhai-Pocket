@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
 interface RemediationCardProps {
-  conceptTitle: string;
+  conceptTitle?: string;
   explanation: string;
   explanationOr?: string;
   visualSummary?: string;
@@ -13,9 +13,9 @@ interface RemediationCardProps {
 }
 
 export const RemediationCard: React.FC<RemediationCardProps> = ({
-  conceptTitle,
-  explanation,
-  explanationOr,
+  conceptTitle = 'Understanding Displacement (ବିସ୍ଥାପନ)',
+  explanation = 'Displacement is the straight-line distance between where you started and where you ended. If you walk 3 meters forward and 3 meters backward, you end up right at the starting line: 0 meters!',
+  explanationOr = 'ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।',
   visualSummary = '🚶‍♂️ 3m East  ➔  🚩 Turn  ➔  🚶‍♂️ 3m West  =  0m Difference from start!',
   onListen,
   onTryAgain,
@@ -23,14 +23,13 @@ export const RemediationCard: React.FC<RemediationCardProps> = ({
 }) => {
   return (
     <View style={styles.card}>
-      <View style={styles.headerRow}>
-        <Text style={styles.kicker}>LET'S LEARN THIS TOGETHER</Text>
-        <Text style={styles.starIcon}>💡</Text>
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>LET'S LEARN THIS TOGETHER</Text>
       </View>
 
       <Text style={styles.title}>{conceptTitle}</Text>
 
-      {/* Visual illustration of concept */}
+      {/* Visual illustration box */}
       <View style={styles.visualBox}>
         <Text style={styles.visualText}>{visualSummary}</Text>
       </View>
@@ -38,9 +37,8 @@ export const RemediationCard: React.FC<RemediationCardProps> = ({
       <Text style={styles.explanation}>{explanation}</Text>
       {explanationOr && <Text style={styles.explanationOr}>{explanationOr}</Text>}
 
-      {/* Primary Actions */}
       <View style={styles.actionsColumn}>
-        <Pressable style={styles.listenButton} onPress={onListen}>
+        <Pressable style={styles.listenBtn} onPress={onListen}>
           <Text style={styles.listenIcon}>🔊</Text>
           <Text style={styles.listenText}>Listen in Odia (ଓଡ଼ିଆରେ ଶୁଣନ୍ତୁ)</Text>
         </Pressable>
@@ -61,70 +59,69 @@ export const RemediationCard: React.FC<RemediationCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
+    ...shadows.card,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.xs,
     marginBottom: spacing.xs,
   },
-  kicker: {
-    color: colors.primaryLight,
+  badgeText: {
+    ...typography.caption,
+    color: '#B45309',
     fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 1.2,
-  },
-  starIcon: {
-    fontSize: 20,
   },
   title: {
-    ...typography.h3,
+    ...typography.h2,
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    marginTop: 2,
   },
   visualBox: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
     padding: spacing.md,
-    marginVertical: spacing.sm,
+    marginVertical: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
   },
   visualText: {
-    color: colors.primaryLight,
+    ...typography.caption,
+    color: colors.primary,
     fontWeight: '700',
-    fontSize: 13,
     textAlign: 'center',
   },
   explanation: {
     ...typography.body,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
-    lineHeight: 24,
+    lineHeight: 25,
   },
   explanationOr: {
     ...typography.bodySmall,
-    color: colors.textMuted,
-    marginTop: 6,
-    lineHeight: 20,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 4,
+    lineHeight: 22,
   },
   actionsColumn: {
     marginTop: spacing.lg,
-    gap: spacing.sm + 2,
+    gap: spacing.sm,
   },
-  listenButton: {
+  listenBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#064e3b',
-    borderRadius: radius.md,
+    backgroundColor: colors.secondaryLight,
+    borderRadius: radius.button,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -132,9 +129,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   listenText: {
-    color: colors.primaryLight,
+    ...typography.body,
     fontWeight: '700',
-    fontSize: 15,
+    color: colors.secondary,
   },
   rowButtons: {
     flexDirection: 'row',
@@ -143,19 +140,16 @@ const styles = StyleSheet.create({
   btn: {
     flex: 1,
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.button,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 50,
   },
   tryAgainBtn: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: '#F1F5F9',
   },
   tryAgainText: {
     ...typography.button,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     fontSize: 14,
   },
   continueBtn: {
@@ -163,7 +157,6 @@ const styles = StyleSheet.create({
   },
   continueText: {
     ...typography.button,
-    color: '#07111f',
     fontSize: 14,
   },
 });

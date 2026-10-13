@@ -1,58 +1,74 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
-export type TabKey = 'Learn' | 'Trace' | 'RawLog';
+export type MainNavTab = 'Home' | 'Learn' | 'Progress' | 'Profile';
 
 interface BottomNavigationProps {
-  currentTab: TabKey;
-  onSelectTab: (tab: TabKey) => void;
-  pendingCount?: number;
+  currentTab: MainNavTab;
+  onSelectTab: (tab: MainNavTab) => void;
+  onOpenJudgeTools?: () => void;
 }
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   currentTab,
   onSelectTab,
-  pendingCount = 0,
+  onOpenJudgeTools,
 }) => {
   return (
     <View style={styles.container}>
       <Pressable
+        style={[styles.tab, currentTab === 'Home' && styles.activeTab]}
+        onPress={() => onSelectTab('Home')}
+        accessibilityRole="button"
+        accessibilityLabel="Home tab"
+      >
+        <Text style={styles.icon}>🏠</Text>
+        <Text style={[styles.label, currentTab === 'Home' && styles.activeLabel]}>Home</Text>
+      </Pressable>
+
+      <Pressable
         style={[styles.tab, currentTab === 'Learn' && styles.activeTab]}
         onPress={() => onSelectTab('Learn')}
         accessibilityRole="button"
-        accessibilityLabel="Learn Screen"
+        accessibilityLabel="Learn tab"
       >
         <Text style={styles.icon}>📖</Text>
         <Text style={[styles.label, currentTab === 'Learn' && styles.activeLabel]}>Learn</Text>
       </Pressable>
 
       <Pressable
-        style={[styles.tab, currentTab === 'Trace' && styles.activeTab]}
-        onPress={() => onSelectTab('Trace')}
+        style={[styles.tab, currentTab === 'Progress' && styles.activeTab]}
+        onPress={() => onSelectTab('Progress')}
         accessibilityRole="button"
-        accessibilityLabel="Trace Screen"
+        accessibilityLabel="Progress tab"
       >
-        <Text style={styles.icon}>🔍</Text>
-        <Text style={[styles.label, currentTab === 'Trace' && styles.activeLabel]}>Trace</Text>
+        <Text style={styles.icon}>📊</Text>
+        <Text style={[styles.label, currentTab === 'Progress' && styles.activeLabel]}>Progress</Text>
       </Pressable>
 
       <Pressable
-        style={[styles.tab, currentTab === 'RawLog' && styles.activeTab]}
-        onPress={() => onSelectTab('RawLog')}
+        style={[styles.tab, currentTab === 'Profile' && styles.activeTab]}
+        onPress={() => onSelectTab('Profile')}
         accessibilityRole="button"
-        accessibilityLabel="Raw Log Screen"
+        accessibilityLabel="Profile tab"
       >
-        <View style={styles.badgeWrapper}>
-          <Text style={styles.icon}>📋</Text>
-          {pendingCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{pendingCount}</Text>
-            </View>
-          )}
-        </View>
-        <Text style={[styles.label, currentTab === 'RawLog' && styles.activeLabel]}>Raw Log</Text>
+        <Text style={styles.icon}>👤</Text>
+        <Text style={[styles.label, currentTab === 'Profile' && styles.activeLabel]}>Profile</Text>
       </Pressable>
+
+      {/* Discrete judge / developer trigger */}
+      {onOpenJudgeTools && (
+        <Pressable
+          style={styles.judgeTab}
+          onPress={onOpenJudgeTools}
+          accessibilityRole="button"
+          accessibilityLabel="Judge tools"
+        >
+          <Text style={styles.judgeIcon}>⚙️</Text>
+          <Text style={styles.judgeLabel}>Demo</Text>
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -60,21 +76,23 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.sm,
     justifyContent: 'space-around',
+    alignItems: 'center',
+    ...shadows.card,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: spacing.xs,
-    borderRadius: radius.md,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
   },
   activeTab: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.primaryLight,
   },
   icon: {
     fontSize: 20,
@@ -82,31 +100,26 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.caption,
+    fontSize: 11,
     color: colors.textMuted,
     fontWeight: '600',
   },
   activeLabel: {
-    color: colors.primaryLight,
+    color: colors.primary,
     fontWeight: '800',
   },
-  badgeWrapper: {
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -10,
-    backgroundColor: colors.attention,
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+  judgeTab: {
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
+    opacity: 0.6,
   },
-  badgeText: {
-    color: '#07111f',
-    fontSize: 10,
-    fontWeight: '800',
+  judgeIcon: {
+    fontSize: 14,
+  },
+  judgeLabel: {
+    ...typography.caption,
+    fontSize: 9,
+    color: colors.textMuted,
+    fontWeight: '700',
   },
 });

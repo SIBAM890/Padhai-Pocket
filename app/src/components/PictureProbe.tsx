@@ -1,25 +1,27 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
-export interface PictureChoice {
+interface PictureChoice {
   id: string;
-  visualIcon?: string;
+  icon?: string;
   label?: string;
-  text?: string;
+  desc?: string;
 }
 
 interface PictureProbeProps {
+  title?: string;
+  titleOr?: string;
   prompt: string;
-  promptOr?: string;
   choices: PictureChoice[];
   selectedChoiceId?: string | null;
   onSelect: (choiceId: string) => void;
 }
 
 export const PictureProbe: React.FC<PictureProbeProps> = ({
+  title = 'Visual Exploration',
+  titleOr = 'ଚିତ୍ର ଦେଖି ବାଛନ୍ତୁ',
   prompt,
-  promptOr,
   choices,
   selectedChoiceId,
   onSelect,
@@ -27,13 +29,16 @@ export const PictureProbe: React.FC<PictureProbeProps> = ({
   return (
     <View style={styles.card}>
       <View style={styles.badge}>
-        <Text style={styles.badgeText}>PICTURE PROBE (ଚିତ୍ର ଯାଞ୍ଚ)</Text>
+        <Text style={styles.badgeText}>PICTURE ACTIVITY</Text>
       </View>
 
-      <Text style={styles.prompt}>{prompt}</Text>
-      {promptOr && <Text style={styles.promptOr}>{promptOr}</Text>}
+      <Text style={styles.title}>{title}</Text>
+      {titleOr && <Text style={styles.titleOr}>{titleOr}</Text>}
 
-      <View style={styles.choicesGrid}>
+      <Text style={styles.prompt}>{prompt}</Text>
+
+      {/* Balanced 3-column card row without giant empty vertical space */}
+      <View style={styles.choicesRow}>
         {choices.map((choice) => {
           const isSelected = selectedChoiceId === choice.id;
           return (
@@ -42,13 +47,11 @@ export const PictureProbe: React.FC<PictureProbeProps> = ({
               style={[styles.choiceCard, isSelected && styles.choiceCardSelected]}
               onPress={() => onSelect(choice.id)}
               accessibilityRole="button"
-              accessibilityLabel={`${choice.label ?? ''} ${choice.text ?? ''}`}
+              accessibilityLabel={`${choice.label ?? ''}: ${choice.desc ?? ''}`}
             >
-              {choice.visualIcon && (
-                <Text style={styles.visualIcon}>{choice.visualIcon}</Text>
-              )}
-              {choice.label && <Text style={styles.choiceLabel}>{choice.label}</Text>}
-              {choice.text && <Text style={styles.choiceText}>{choice.text}</Text>}
+              {choice.icon && <Text style={styles.icon}>{choice.icon}</Text>}
+              {choice.label && <Text style={styles.label}>{choice.label}</Text>}
+              {choice.desc && <Text style={styles.desc}>{choice.desc}</Text>}
             </Pressable>
           );
         })}
@@ -59,71 +62,77 @@ export const PictureProbe: React.FC<PictureProbeProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
+    ...shadows.card,
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#064e3b',
+    backgroundColor: colors.secondaryLight,
     paddingHorizontal: spacing.sm + 2,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-    marginBottom: spacing.sm,
+    borderRadius: radius.xs,
+    marginBottom: spacing.xs,
   },
   badgeText: {
     ...typography.caption,
-    color: colors.primaryLight,
+    color: colors.secondary,
     fontWeight: '800',
   },
-  prompt: {
-    ...typography.bodyLarge,
+  title: {
+    ...typography.h2,
     color: colors.textPrimary,
-    fontWeight: '700',
+    marginTop: 2,
   },
-  promptOr: {
+  titleOr: {
     ...typography.body,
-    color: colors.textMuted,
-    marginTop: 4,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  prompt: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
-  choicesGrid: {
+  choicesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm + 4,
-    marginTop: spacing.xs,
+    gap: spacing.sm,
   },
   choiceCard: {
     flex: 1,
-    minWidth: '45%',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    minHeight: 110,
+    minHeight: 120, // Balanced height
+    ...shadows.subtle,
   },
   choiceCardSelected: {
     borderColor: colors.primary,
-    backgroundColor: '#0a3325',
+    backgroundColor: '#F5F7FF',
   },
-  visualIcon: {
-    fontSize: 34,
+  icon: {
+    fontSize: 32,
     marginBottom: spacing.xs,
   },
-  choiceLabel: {
-    ...typography.body,
+  label: {
+    ...typography.bodySmall,
     fontWeight: '700',
     color: colors.textPrimary,
     textAlign: 'center',
   },
-  choiceText: {
+  desc: {
     ...typography.caption,
+    fontSize: 11,
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: 2,

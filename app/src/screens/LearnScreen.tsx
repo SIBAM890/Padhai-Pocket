@@ -9,9 +9,15 @@ import {
   Pressable,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 import { AppHeader } from '../components/AppHeader';
-import { LessonCard } from '../components/LessonCard';
+import { ContinueLearningCard } from '../components/ContinueLearningCard';
+import { StreakGrid } from '../components/StreakGrid';
+import { GoalCard } from '../components/GoalCard';
+import { SubjectCard } from '../components/SubjectCard';
+import { LessonBrowserCard } from '../components/LessonBrowserCard';
+import { LessonIntroCard } from '../components/LessonIntroCard';
+import { LessonContentCard } from '../components/LessonContentCard';
 import { MCQOption, type OptionState } from '../components/MCQOption';
 import { MicButton, type VoiceState } from '../components/MicButton';
 import { SoundCheck } from '../components/SoundCheck';
@@ -20,295 +26,481 @@ import { AudioProbe } from '../components/AudioProbe';
 import { TextProbe } from '../components/TextProbe';
 import { ConfirmationCard } from '../components/ConfirmationCard';
 import { RemediationCard } from '../components/RemediationCard';
-import { SuccessCard } from '../components/SuccessCard';
+import { CompletionCard } from '../components/CompletionCard';
+import { LearnerProfileCard } from '../components/LearnerProfileCard';
 import { FriendlyState } from '../components/FriendlyState';
-import { BottomNavigation } from '../components/BottomNavigation';
-import { OnboardingModal } from '../components/OnboardingModal';
+import { BottomNavigation, type MainNavTab } from '../components/BottomNavigation';
+import { StudentSetupModal } from '../components/StudentSetupModal';
 import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
-import { mockLesson, mockProbes } from '../mock/mockData';
+import {
+  mockProfile,
+  mockStreakGrid,
+  mockSubjects,
+  mockLessonsList,
+  mockLessonQuestion,
+  mockProbes,
+} from '../mock/mockData';
 import { useNetworkStatus } from '../network/network';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
-export type LearnStep =
+export type LessonFlowStep =
+  | 'DASHBOARD'
+  | 'LESSON_LIST'
+  | 'LESSON_INTRO'
   | 'SOUND_CHECK'
-  | 'LESSON_MCQ'
-  | 'PICTURE_PROBE'
-  | 'AUDIO_PROBE'
-  | 'TEXT_PROBE'
+  | 'QUESTION_INTERACTION'
+  | 'PROBE_PICTURE'
+  | 'PROBE_AUDIO'
+  | 'PROBE_TEXT'
   | 'CONFIRMATION'
   | 'REMEDIATION'
-  | 'SUCCESS'
-  | 'FRIENDLY_ERROR';
+  | 'COMPLETION';
 
 export default function LearnScreen({ navigation }: Props) {
   const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus();
 
-  // Screen workflow state (defaults to sound check then lesson MCQ)
-  const [currentStep, setCurrentStep] = useState<LearnStep>('LESSON_MCQ');
+  // Navigation tab state (Home, Learn, Progress, Profile)
+  const [currentTab, setCurrentTab] = useState<MainNavTab>('Home');
+
+  // Progressive student lesson flow
+  const [flowStep, setFlowStep] = useState<LessonFlowStep>('DASHBOARD');
+
+  // Interactive Question & Probe states
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [voiceState, setVoiceState] = useState<VoiceState>('IDLE');
+  const [voiceState, setVoiceState] = useState<VoiceState>('Ready');
   const [selectedProbeChoice, setSelectedProbeChoice] = useState<string | null>(null);
-  const [pendingSyncCount, setPendingSyncCount] = useState(1);
 
   // Modals (isolated from student navigation)
-  const [onboardingOpen, setOnboardingOpen] = useState(false);
-  const [teacherOpen, setTeacherOpen] = useState(false);
+  const [setupModalVisible, setSetupModalVisible] = useState(false);
+  const [teacherModalVisible, setTeacherModalVisible] = useState(false);
+  const [judgeToolsVisible, setJudgeToolsVisible] = useState(false);
 
-  // MCQ answer selection with gentle student feedback
-  const handleSelectOption = (optionId: string) => {
-    setSelectedOption(optionId);
-    if (optionId === mockLesson.correctOptionId) {
-      setTimeout(() => setCurrentStep('SUCCESS'), 800);
+  // Profile data in local state
+  const [profile, setProfile] = useState(mockProfile);
+
+  // Handlers
+  const handleSelectOption = (optId: string) => {
+    setSelectedOption(optId);
+    if (optId === mockLessonQuestion.correctOptionId) {
+      setTimeout(() => setFlowStep('COMPLETION'), 700);
     } else {
-      // Transition smoothly into supportive probe/remediation
-      setTimeout(() => setCurrentStep('REMEDIATION'), 800);
+      // Natural transition to probe exploration
+      setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
     }
   };
 
-  // Mock Voice interaction state transition
   const handleMicPress = () => {
-    if (voiceState === 'IDLE') {
-      setVoiceState('LISTENING');
+    if (voiceState === 'Ready') {
+      setVoiceState('Listening');
       setTimeout(() => {
-        setVoiceState('PROCESSING');
+        setVoiceState('Thinking');
         setTimeout(() => {
-          setVoiceState('IDLE');
-          handleSelectOption(mockLesson.correctOptionId);
+          setVoiceState('Ready');
+          handleSelectOption(mockLessonQuestion.correctOptionId);
         }, 1200);
       }, 1500);
-    } else if (voiceState === 'LISTENING') {
-      setVoiceState('PROCESSING');
-      setTimeout(() => setVoiceState('IDLE'), 1000);
+    } else if (voiceState === 'Listening') {
+      setVoiceState('Thinking');
+      setTimeout(() => setVoiceState('Ready'), 1000);
     }
   };
 
-  const getOptionState = (optionId: string): OptionState => {
-    if (!selectedOption) return 'DEFAULT';
-    if (optionId === selectedOption) {
-      return optionId === mockLesson.correctOptionId ? 'CORRECT' : 'SELECTED';
+  const getOptionState = (optId: string): OptionState => {
+    if (!selectedOption) return 'default';
+    if (optId === selectedOption) {
+      return optId === mockLessonQuestion.correctOptionId ? 'correct' : 'needs-review';
     }
-    return 'NEUTRAL';
+    return 'default';
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
+        {/* Header with greeting and status */}
         <AppHeader
+          greeting={`Good morning, ${profile.name}`}
+          subgreeting="Keep learning, one step at a time."
+          avatar={profile.avatar}
           networkMode={networkMode}
           forcedOffline={forcedOffline}
-          onHelpPress={() => setOnboardingOpen(true)}
+          onAvatarPress={() => setCurrentTab('Profile')}
         />
 
-        {/* Demo Mode / Judge Fast-Switch Banner */}
-        <View style={styles.demoBar}>
-          <View style={styles.demoBarLeft}>
-            <Text style={styles.demoTitle}>Airplane-mode demo</Text>
-            <Text style={styles.demoSubtitle}>Force offline mode for stage testing</Text>
-          </View>
-          <Switch
-            value={forcedOffline}
-            onValueChange={setForcedOffline}
-            trackColor={{ false: '#334155', true: colors.primary }}
-          />
-        </View>
-
-        {/* Dynamic Workflow View based on currentStep */}
-        {currentStep === 'SOUND_CHECK' && (
-          <SoundCheck
-            onHeard={() => setCurrentStep('LESSON_MCQ')}
-            onCannotHear={() => setCurrentStep('PICTURE_PROBE')}
-            onSkip={() => setCurrentStep('LESSON_MCQ')}
-          />
-        )}
-
-        {currentStep === 'LESSON_MCQ' && (
+        {/* ======================================================== */}
+        {/* TAB 1: HOME DASHBOARD                                    */}
+        {/* ======================================================== */}
+        {currentTab === 'Home' && flowStep === 'DASHBOARD' && (
           <View>
-            <LessonCard
-              chapter={mockLesson.chapter}
-              lessonIndex={mockLesson.lessonIndex}
-              totalLessons={mockLesson.totalLessons}
-              title={mockLesson.title}
-              prompt={mockLesson.prompt}
-              promptOr={mockLesson.promptOr}
+            <ContinueLearningCard
+              subject="Physics · Motion"
+              lessonNumber="Lesson 2"
+              lessonTitle="Displacement and Distance"
+              lessonTitleOr="ଦୂରତା ଏବଂ ବିସ୍ଥାପନ"
+              progressPercent={80}
+              onContinue={() => setFlowStep('LESSON_INTRO')}
             />
 
-            <View style={styles.optionsContainer}>
-              {mockLesson.options.map((opt) => (
-                <MCQOption
-                  key={opt.id}
-                  label={opt.label}
-                  text={opt.text}
-                  subtext={opt.subtext}
-                  state={getOptionState(opt.id)}
-                  onPress={() => handleSelectOption(opt.id)}
-                />
-              ))}
+            <StreakGrid
+              streakDays={profile.streakDays}
+              minutesThisWeek={profile.minutesThisWeek}
+              gridData={mockStreakGrid}
+            />
+
+            <GoalCard
+              goalTitle="Complete 1 lesson today"
+              activitiesDone={1}
+              totalActivities={3}
+              onPress={() => setFlowStep('LESSON_INTRO')}
+            />
+
+            {/* Subject Modules */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Your learning subjects</Text>
+              <Text style={styles.sectionSub}>BSE Odisha Class 9</Text>
             </View>
 
-            <MicButton
-              state={voiceState}
-              onPress={handleMicPress}
-              onFallbackPress={() => setVoiceState('TAP_FALLBACK')}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subjectsRow}>
+              {mockSubjects.map((sub) => (
+                <SubjectCard
+                  key={sub.id}
+                  module={sub}
+                  onPress={() => {
+                    setCurrentTab('Learn');
+                    setFlowStep('LESSON_LIST');
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-            {selectedOption && selectedOption !== mockLesson.correctOptionId && (
-              <View style={styles.supportNotice}>
-                <Text style={styles.supportText}>Not quite. Let's look at it together.</Text>
-                <Text style={styles.supportSub}>ପ୍ରଶ୍ନଟି ଆଉ ଥରେ ବୁଝିବା।</Text>
+        {/* ======================================================== */}
+        {/* TAB 2 / LESSON FLOW: BROWSER & LESSON EXPERIENCE        */}
+        {/* ======================================================== */}
+        {(currentTab === 'Learn' || flowStep !== 'DASHBOARD') && (
+          <View>
+            {flowStep === 'DASHBOARD' && (
+              <View>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Physics · Motion</Text>
+                  <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
+                </View>
+                {mockLessonsList.map((les) => (
+                  <LessonBrowserCard
+                    key={les.id}
+                    lesson={les}
+                    onPress={() => setFlowStep('LESSON_INTRO')}
+                  />
+                ))}
               </View>
+            )}
+
+            {flowStep === 'LESSON_LIST' && (
+              <View>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Physics · Motion</Text>
+                  <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
+                </View>
+                {mockLessonsList.map((les) => (
+                  <LessonBrowserCard
+                    key={les.id}
+                    lesson={les}
+                    onPress={() => setFlowStep('LESSON_INTRO')}
+                  />
+                ))}
+              </View>
+            )}
+
+            {flowStep === 'LESSON_INTRO' && (
+              <LessonIntroCard
+                title="Motion & Mechanics"
+                titleOr="ଦୂରତା ଏବଂ ବିସ୍ଥାପନ"
+                estimatedMinutes={5}
+                lessonNumber="Lesson 2 of 3"
+                onStart={() => setFlowStep('QUESTION_INTERACTION')}
+                onBack={() => setFlowStep('DASHBOARD')}
+              />
+            )}
+
+            {flowStep === 'SOUND_CHECK' && (
+              <SoundCheck
+                onHeard={() => setFlowStep('QUESTION_INTERACTION')}
+                onCannotHear={() => setFlowStep('PROBE_PICTURE')}
+              />
+            )}
+
+            {flowStep === 'QUESTION_INTERACTION' && (
+              <View>
+                <LessonContentCard
+                  conceptTitle={mockLessonQuestion.title}
+                  conceptTitleOr={mockLessonQuestion.titleOr}
+                  story={mockLessonQuestion.storyContext}
+                  storyOr={mockLessonQuestion.storyContextOr}
+                  prompt={mockLessonQuestion.prompt}
+                  promptOr={mockLessonQuestion.promptOr}
+                />
+
+                <View style={styles.optionsList}>
+                  {mockLessonQuestion.options.map((opt) => (
+                    <MCQOption
+                      key={opt.id}
+                      label={opt.label}
+                      text={opt.text}
+                      subtext={opt.subtext}
+                      state={getOptionState(opt.id)}
+                      onPress={() => handleSelectOption(opt.id)}
+                    />
+                  ))}
+                </View>
+
+                <MicButton
+                  state={voiceState}
+                  onPress={handleMicPress}
+                  onFallbackPress={() => setVoiceState('Tap instead')}
+                />
+
+                {selectedOption && selectedOption !== mockLessonQuestion.correctOptionId && (
+                  <View style={styles.supportNote}>
+                    <Text style={styles.supportNoteText}>
+                      Let's look at this together · ଚାଲନ୍ତୁ ଏହାକୁ ବୁଝିବା
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {flowStep === 'PROBE_PICTURE' && (
+              <PictureProbe
+                prompt={mockProbes.PICTURE.prompt}
+                titleOr={mockProbes.PICTURE.titleOr}
+                choices={mockProbes.PICTURE.choices}
+                selectedChoiceId={selectedProbeChoice}
+                onSelect={(id) => {
+                  setSelectedProbeChoice(id);
+                  setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+                }}
+              />
+            )}
+
+            {flowStep === 'PROBE_AUDIO' && (
+              <AudioProbe
+                prompt={mockProbes.AUDIO.prompt}
+                choices={mockProbes.AUDIO.choices}
+                selectedChoiceId={selectedProbeChoice}
+                onSelect={(id) => {
+                  setSelectedProbeChoice(id);
+                  setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+                }}
+              />
+            )}
+
+            {flowStep === 'PROBE_TEXT' && (
+              <TextProbe
+                prompt={mockProbes.TEXT.prompt}
+                promptOr={mockProbes.TEXT.promptOr}
+                choices={mockProbes.TEXT.choices}
+                selectedChoiceId={selectedProbeChoice}
+                onSelect={(id) => {
+                  setSelectedProbeChoice(id);
+                  setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+                }}
+              />
+            )}
+
+            {flowStep === 'CONFIRMATION' && (
+              <ConfirmationCard
+                question="If you start at point A, run 100 meters, and return to point A, what is your displacement?"
+                questionOr="ଯଦି ଆପଣ A ବିନ୍ଦୁରୁ ଦୌଡ଼ି ପୁଣି A କୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"
+                options={[
+                  { id: 'c1', label: 'A', text: '0 m (Zero displacement)' },
+                  { id: 'c2', label: 'B', text: '100 m' },
+                  { id: 'c3', label: 'C', text: '200 m' },
+                ]}
+                selectedOptionId={selectedProbeChoice}
+                onSelect={setSelectedProbeChoice}
+                onContinue={() => setFlowStep('COMPLETION')}
+              />
+            )}
+
+            {flowStep === 'REMEDIATION' && (
+              <RemediationCard
+                explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and west 3 meters, you are back at 0 meters!"
+                explanationOr="ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।"
+                onListen={() => {}}
+                onTryAgain={() => {
+                  setSelectedOption(null);
+                  setFlowStep('QUESTION_INTERACTION');
+                }}
+                onContinue={() => setFlowStep('COMPLETION')}
+              />
+            )}
+
+            {flowStep === 'COMPLETION' && (
+              <CompletionCard
+                lessonTitle="Displacement & Distance"
+                pointsEarned={10}
+                streakDays={profile.streakDays}
+                onContinue={() => {
+                  setSelectedOption(null);
+                  setSelectedProbeChoice(null);
+                  setFlowStep('DASHBOARD');
+                  setCurrentTab('Home');
+                }}
+                onBackToDashboard={() => {
+                  setSelectedOption(null);
+                  setSelectedProbeChoice(null);
+                  setFlowStep('DASHBOARD');
+                  setCurrentTab('Home');
+                }}
+              />
             )}
           </View>
         )}
 
-        {currentStep === 'PICTURE_PROBE' && (
-          <PictureProbe
-            prompt={mockProbes.PICTURE.prompt}
-            promptOr={mockProbes.PICTURE.promptOr}
-            choices={mockProbes.PICTURE.choices}
-            selectedChoiceId={selectedProbeChoice}
-            onSelect={(id) => {
-              setSelectedProbeChoice(id);
-              setTimeout(() => setCurrentStep('CONFIRMATION'), 800);
-            }}
-          />
+        {/* ======================================================== */}
+        {/* TAB 3: PROGRESS TAB                                      */}
+        {/* ======================================================== */}
+        {currentTab === 'Progress' && (
+          <View>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Your learning progress</Text>
+              <Text style={styles.sectionSub}>Consistent habits create big milestones</Text>
+            </View>
+
+            <StreakGrid
+              streakDays={profile.streakDays}
+              minutesThisWeek={profile.minutesThisWeek}
+              gridData={mockStreakGrid}
+            />
+
+            <View style={styles.progressCard}>
+              <Text style={styles.progressCardTitle}>Topics Explored</Text>
+
+              <View style={styles.topicRow}>
+                <View style={styles.topicMeta}>
+                  <Text style={styles.topicName}>Motion & Mechanics</Text>
+                  <Text style={styles.topicPercent}>80%</Text>
+                </View>
+                <View style={styles.topicTrack}>
+                  <View style={[styles.topicFill, { width: '80%', backgroundColor: colors.primary }]} />
+                </View>
+              </View>
+
+              <View style={styles.topicRow}>
+                <View style={styles.topicMeta}>
+                  <Text style={styles.topicName}>Laws of Motion</Text>
+                  <Text style={styles.topicPercent}>40%</Text>
+                </View>
+                <View style={styles.topicTrack}>
+                  <View style={[styles.topicFill, { width: '40%', backgroundColor: colors.secondary }]} />
+                </View>
+              </View>
+
+              <View style={styles.topicRow}>
+                <View style={styles.topicMeta}>
+                  <Text style={styles.topicName}>Gravitation</Text>
+                  <Text style={styles.topicPercent}>10%</Text>
+                </View>
+                <View style={styles.topicTrack}>
+                  <View style={[styles.topicFill, { width: '10%', backgroundColor: colors.accent }]} />
+                </View>
+              </View>
+            </View>
+          </View>
         )}
 
-        {currentStep === 'AUDIO_PROBE' && (
-          <AudioProbe
-            prompt={mockProbes.AUDIO.prompt}
-            promptOr={mockProbes.AUDIO.promptOr}
-            choices={mockProbes.AUDIO.choices}
-            selectedChoiceId={selectedProbeChoice}
-            onSelect={(id) => {
-              setSelectedProbeChoice(id);
-              setTimeout(() => setCurrentStep('CONFIRMATION'), 800);
-            }}
-          />
+        {/* ======================================================== */}
+        {/* TAB 4: PROFILE TAB                                       */}
+        {/* ======================================================== */}
+        {currentTab === 'Profile' && (
+          <View>
+            <LearnerProfileCard
+              profile={profile}
+              onEdit={() => setSetupModalVisible(true)}
+              onOpenTeacherPin={() => setTeacherModalVisible(true)}
+            />
+
+            {/* Offline learning confidence notice */}
+            <FriendlyState
+              type="OFFLINE_READY"
+              onAction={() => {
+                setCurrentTab('Learn');
+                setFlowStep('LESSON_LIST');
+              }}
+              actionText="Review Saved Lessons"
+            />
+          </View>
         )}
 
-        {currentStep === 'TEXT_PROBE' && (
-          <TextProbe
-            prompt={mockProbes.TEXT.prompt}
-            promptOr={mockProbes.TEXT.promptOr}
-            choices={mockProbes.TEXT.choices as any}
-            selectedChoiceId={selectedProbeChoice}
-            onSelect={(id) => {
-              setSelectedProbeChoice(id);
-              setTimeout(() => setCurrentStep('CONFIRMATION'), 800);
-            }}
-          />
-        )}
+        {/* ======================================================== */}
+        {/* JUDGE & DEMO CONTROLS (Discreet bottom section)          */}
+        {/* ======================================================== */}
+        {judgeToolsVisible && (
+          <View style={styles.judgeSection}>
+            <View style={styles.judgeTop}>
+              <Text style={styles.judgeTitle}>HACKATHON / JUDGE CONTROLS</Text>
+              <Pressable onPress={() => setJudgeToolsVisible(false)}>
+                <Text style={styles.judgeClose}>✕ Hide</Text>
+              </Pressable>
+            </View>
 
-        {currentStep === 'CONFIRMATION' && (
-          <ConfirmationCard
-            question="If a cyclist returns to the origin point after 10 km, what is displacement?"
-            questionOr="ଯଦି ସାଇକେଲ ଆରୋହୀ ୧୦ କିଲୋମିଟର ପରେ ପୁନର୍ବାର ଆରମ୍ଭ ବିନ୍ଦୁକୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"
-            options={[
-              { id: 'c1', label: 'A', text: '0 km (Zero displacement)' },
-              { id: 'c2', label: 'B', text: '10 km' },
-              { id: 'c3', label: 'C', text: '20 km' },
-            ]}
-            selectedOptionId={selectedProbeChoice}
-            onSelect={setSelectedProbeChoice}
-            onContinue={() => setCurrentStep('SUCCESS')}
-          />
-        )}
+            <View style={styles.demoToggleRow}>
+              <View>
+                <Text style={styles.demoToggleLabel}>Airplane-mode demo</Text>
+                <Text style={styles.demoToggleSub}>Simulate offline behavior on stage</Text>
+              </View>
+              <Switch value={forcedOffline} onValueChange={setForcedOffline} />
+            </View>
 
-        {currentStep === 'REMEDIATION' && (
-          <RemediationCard
-            conceptTitle="Understanding Displacement (ବିସ୍ଥାପନ)"
-            explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and walk west 3 meters, you end up right where you began: 0 meters!"
-            explanationOr="ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।"
-            onListen={() => {}}
-            onTryAgain={() => {
-              setSelectedOption(null);
-              setCurrentStep('PICTURE_PROBE');
-            }}
-            onContinue={() => setCurrentStep('SUCCESS')}
-          />
+            <View style={styles.judgeButtonsRow}>
+              <Pressable
+                style={styles.judgeBtn}
+                onPress={() => navigation.navigate('Trace')}
+              >
+                <Text style={styles.judgeBtnText}>🔍 Open Trace</Text>
+              </Pressable>
+              <Pressable
+                style={styles.judgeBtn}
+                onPress={() => navigation.navigate('RawLog')}
+              >
+                <Text style={styles.judgeBtnText}>📋 Open Raw Log</Text>
+              </Pressable>
+              <Pressable
+                style={styles.judgeBtn}
+                onPress={() => setTeacherModalVisible(true)}
+              >
+                <Text style={styles.judgeBtnText}>👩🏽‍🏫 Teacher Dashboard</Text>
+              </Pressable>
+            </View>
+          </View>
         )}
-
-        {currentStep === 'SUCCESS' && (
-          <SuccessCard
-            conceptMastery={0.76}
-            onContinue={() => {
-              setSelectedOption(null);
-              setSelectedProbeChoice(null);
-              setCurrentStep('LESSON_MCQ');
-            }}
-          />
-        )}
-
-        {currentStep === 'FRIENDLY_ERROR' && (
-          <FriendlyState
-            type="AUDIO_UNAVAILABLE"
-            onAction={() => setCurrentStep('PICTURE_PROBE')}
-          />
-        )}
-
-        {/* Flow Switcher for Judges / Review */}
-        <View style={styles.judgeBar}>
-          <Text style={styles.judgeLabel}>PROBE & STATE PREVIEW:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.judgePills}>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('SOUND_CHECK')}>
-              <Text style={styles.pillText}>Sound Check</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('LESSON_MCQ')}>
-              <Text style={styles.pillText}>Lesson MCQ</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('PICTURE_PROBE')}>
-              <Text style={styles.pillText}>Picture Probe</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('AUDIO_PROBE')}>
-              <Text style={styles.pillText}>Audio Probe</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('TEXT_PROBE')}>
-              <Text style={styles.pillText}>Text Probe</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('CONFIRMATION')}>
-              <Text style={styles.pillText}>Confirmation</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('REMEDIATION')}>
-              <Text style={styles.pillText}>Remediation</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('SUCCESS')}>
-              <Text style={styles.pillText}>Success</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setCurrentStep('FRIENDLY_ERROR')}>
-              <Text style={styles.pillText}>Friendly State</Text>
-            </Pressable>
-            <Pressable style={[styles.pill, styles.pillHighlight]} onPress={() => setTeacherOpen(true)}>
-              <Text style={styles.pillHighlightText}>Teacher Dashboard (PIN)</Text>
-            </Pressable>
-            <Pressable style={styles.pill} onPress={() => setOnboardingOpen(true)}>
-              <Text style={styles.pillText}>Onboarding</Text>
-            </Pressable>
-          </ScrollView>
-        </View>
       </ScrollView>
 
-      {/* Child Bottom Navigation: Exactly Learn, Trace, RawLog */}
+      {/* Main Student Navigation: Home, Learn, Progress, Profile */}
       <BottomNavigation
-        currentTab="Learn"
+        currentTab={currentTab}
         onSelectTab={(tab) => {
-          if (tab === 'Trace') navigation.navigate('Trace');
-          if (tab === 'RawLog') navigation.navigate('RawLog');
+          setCurrentTab(tab);
+          if (tab === 'Home') setFlowStep('DASHBOARD');
         }}
-        pendingCount={pendingSyncCount}
+        onOpenJudgeTools={() => setJudgeToolsVisible(!judgeToolsVisible)}
       />
 
-      {/* Isolated Modals */}
-      <OnboardingModal
-        visible={onboardingOpen}
-        onFinish={() => setOnboardingOpen(false)}
-        onClose={() => setOnboardingOpen(false)}
+      {/* Modals */}
+      <StudentSetupModal
+        visible={setupModalVisible}
+        onClose={() => setSetupModalVisible(false)}
+        onFinish={(name, language, subject) => {
+          setProfile((p) => ({ ...p, name, language, subject }));
+          setSetupModalVisible(false);
+        }}
       />
 
       <TeacherDashboardModal
-        visible={teacherOpen}
-        onClose={() => setTeacherOpen(false)}
+        visible={teacherModalVisible}
+        onClose={() => setTeacherModalVisible(false)}
       />
     </SafeAreaView>
   );
@@ -320,94 +512,144 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   container: {
-    padding: spacing.md + 2,
-    paddingBottom: spacing.xxl,
+    padding: spacing.md,
+    paddingBottom: spacing.xxl + 20,
   },
-  optionsContainer: {
-    marginBottom: spacing.xs,
+  sectionHeader: {
+    marginBottom: spacing.md,
   },
-  demoBar: {
+  sectionTitle: {
+    ...typography.h2,
+    color: colors.textPrimary,
+  },
+  sectionSub: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  subjectsRow: {
+    gap: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  optionsList: {
+    marginVertical: spacing.sm,
+  },
+  supportNote: {
+    backgroundColor: '#F5F7FF',
+    padding: spacing.md,
+    borderRadius: radius.card,
+    alignItems: 'center',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    marginTop: spacing.xs,
+  },
+  supportNoteText: {
+    ...typography.bodySmall,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.lg,
+    ...shadows.card,
+  },
+  progressCardTitle: {
+    ...typography.cardHeading,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  topicRow: {
+    marginBottom: spacing.md,
+  },
+  topicMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  topicName: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  topicPercent: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  topicTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F1F5F9',
+    overflow: 'hidden',
+  },
+  topicFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  judgeSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: spacing.xl,
+    ...shadows.subtle,
+  },
+  judgeTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  demoBarLeft: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  demoTitle: {
-    ...typography.body,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  demoSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  supportNotice: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    alignItems: 'center',
-    borderLeftWidth: 3,
-    borderLeftColor: colors.info,
-    marginTop: spacing.sm,
-  },
-  supportText: {
-    ...typography.body,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  supportSub: {
-    ...typography.caption,
-    color: colors.primaryLight,
-    marginTop: 2,
-  },
-  judgeBar: {
-    marginTop: spacing.xl,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  judgeLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '800',
-    letterSpacing: 1,
     marginBottom: spacing.sm,
   },
-  judgePills: {
-    flexDirection: 'row',
-    gap: spacing.xs + 2,
-    paddingBottom: spacing.sm,
-  },
-  pill: {
-    backgroundColor: colors.surfaceElevated,
-    paddingHorizontal: spacing.sm + 4,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pillText: {
+  judgeTitle: {
     ...typography.caption,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  pillHighlight: {
-    backgroundColor: '#1e3a8a',
-    borderColor: colors.borderHighlight,
-  },
-  pillHighlightText: {
-    ...typography.caption,
-    color: colors.info,
+    fontSize: 10,
     fontWeight: '800',
+    color: colors.textMuted,
+  },
+  judgeClose: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  demoToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    padding: spacing.sm + 4,
+    borderRadius: radius.sm,
+    marginBottom: spacing.sm,
+  },
+  demoToggleLabel: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  demoToggleSub: {
+    ...typography.caption,
+    fontSize: 10,
+    color: colors.textMuted,
+  },
+  judgeButtonsRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  judgeBtn: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+  },
+  judgeBtnText: {
+    ...typography.caption,
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
 });

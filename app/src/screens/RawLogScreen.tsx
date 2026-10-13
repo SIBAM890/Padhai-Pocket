@@ -70,13 +70,14 @@ export default function RawLogScreen({ navigation }: any) {
         </View>
       </ScrollView>
 
-      <BottomNavigation
-        currentTab="RawLog"
-        onSelectTab={(tab) => {
-          if (tab === 'Learn') navigation.navigate('Learn');
-          if (tab === 'Trace') navigation.navigate('Trace');
-        }}
-      />
+      <View style={styles.navBar}>
+        <Pressable
+          style={styles.navBtn}
+          onPress={() => navigation.navigate('Learn')}
+        >
+          <Text style={styles.navBtnText}>← Back to Learning Home</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -115,32 +116,48 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   toolBtn: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
+    borderRadius: radius.button,
     borderWidth: 1,
     borderColor: colors.border,
   },
   refreshBtn: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#F1F5F9',
   },
   toolBtnText: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   codeContainer: {
-    backgroundColor: '#030712',
-    borderRadius: radius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
   },
   code: {
     ...typography.mono,
-    color: '#38bdf8',
+    color: colors.primary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  navBar: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    padding: spacing.md,
+  },
+  navBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: radius.button,
+    alignItems: 'center',
+  },
+  navBtnText: {
+    ...typography.button,
+    fontSize: 14,
   },
 });

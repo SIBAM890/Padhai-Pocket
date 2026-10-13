@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
-export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'NEUTRAL';
+export type OptionState = 'default' | 'selected' | 'correct' | 'needs-review';
 
 interface MCQOptionProps {
   label: string; // 'A', 'B', 'C', 'D'
@@ -17,41 +17,56 @@ export const MCQOption: React.FC<MCQOptionProps> = ({
   label,
   text,
   subtext,
-  state = 'DEFAULT',
+  state = 'default',
   disabled = false,
   onPress,
 }) => {
-  const isSelected = state === 'SELECTED';
-  const isCorrect = state === 'CORRECT';
-  const isNeutral = state === 'NEUTRAL';
-
-  const containerStyle = [
-    styles.container,
-    isSelected && styles.selectedContainer,
-    isCorrect && styles.correctContainer,
-    isNeutral && styles.neutralContainer,
-    disabled && styles.disabledContainer,
-  ];
-
-  const badgeStyle = [
-    styles.labelBadge,
-    isSelected && styles.selectedBadge,
-    isCorrect && styles.correctBadge,
-  ];
+  const isSelected = state === 'selected';
+  const isCorrect = state === 'correct';
+  const isNeedsReview = state === 'needs-review';
 
   return (
     <Pressable
-      style={containerStyle}
+      style={[
+        styles.container,
+        isSelected && styles.selectedContainer,
+        isCorrect && styles.correctContainer,
+        isNeedsReview && styles.needsReviewContainer,
+        disabled && styles.disabledContainer,
+      ]}
       disabled={disabled}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Option ${label}: ${text}`}
     >
-      <View style={badgeStyle}>
-        <Text style={[styles.labelText, isCorrect && styles.correctText]}>{label}</Text>
+      <View
+        style={[
+          styles.badge,
+          isSelected && styles.selectedBadge,
+          isCorrect && styles.correctBadge,
+          isNeedsReview && styles.needsReviewBadge,
+        ]}
+      >
+        <Text
+          style={[
+            styles.badgeText,
+            (isSelected || isCorrect || isNeedsReview) && styles.badgeTextContrast,
+          ]}
+        >
+          {label}
+        </Text>
       </View>
-      <View style={styles.textWrapper}>
-        <Text style={[styles.text, isSelected && styles.selectedText]}>{text}</Text>
+
+      <View style={styles.textColumn}>
+        <Text
+          style={[
+            styles.text,
+            isSelected && styles.selectedText,
+            isCorrect && styles.correctText,
+          ]}
+        >
+          {text}
+        </Text>
         {subtext ? <Text style={styles.subtext}>{subtext}</Text> : null}
       </View>
     </Pressable>
@@ -60,64 +75,72 @@ export const MCQOption: React.FC<MCQOptionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md + 2,
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
     borderWidth: 1.5,
     borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: spacing.sm + 2,
-    minHeight: 64, // Large touch target for students
+    minHeight: 64, // Large touch targets for student comfort
+    ...shadows.subtle,
   },
   selectedContainer: {
-    borderColor: colors.borderHighlight,
-    backgroundColor: '#172e4c',
+    borderColor: colors.primary,
+    backgroundColor: '#F5F7FF',
   },
   correctContainer: {
-    borderColor: colors.borderSuccess,
-    backgroundColor: '#0a3325',
+    borderColor: colors.success,
+    backgroundColor: '#F0FDF4',
   },
-  neutralContainer: {
-    borderColor: colors.border,
-    opacity: 0.7,
+  needsReviewContainer: {
+    borderColor: colors.accent,
+    backgroundColor: '#FFF5F4',
   },
   disabledContainer: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
-  labelBadge: {
+  badge: {
     width: 38,
     height: 38,
     borderRadius: radius.sm,
-    backgroundColor: colors.surfaceSubtle,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
   selectedBadge: {
-    backgroundColor: colors.borderHighlight,
-  },
-  correctBadge: {
     backgroundColor: colors.primary,
   },
-  labelText: {
+  correctBadge: {
+    backgroundColor: colors.success,
+  },
+  needsReviewBadge: {
+    backgroundColor: colors.accent,
+  },
+  badgeText: {
     ...typography.h3,
-    color: colors.textSecondary,
     fontSize: 16,
+    color: colors.textPrimary,
   },
-  correctText: {
-    color: '#07111f',
+  badgeTextContrast: {
+    color: '#FFFFFF',
   },
-  textWrapper: {
+  textColumn: {
     flex: 1,
   },
   text: {
     ...typography.bodyLarge,
-    color: colors.textPrimary,
+    fontSize: 17,
     fontWeight: '600',
+    color: colors.textPrimary,
   },
   selectedText: {
-    color: '#ffffff',
+    color: colors.primary,
+  },
+  correctText: {
+    color: '#15803D',
   },
   subtext: {
     ...typography.caption,

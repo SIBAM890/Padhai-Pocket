@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 import { mockTeacherData } from '../mock/mockData';
 
 interface TeacherDashboardModalProps {
@@ -83,7 +83,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               {learner.confirmedGaps.length > 0 && (
                 <View style={styles.gapPill}>
                   <Text style={styles.gapText}>
-                    Gap: {learner.confirmedGaps.join(', ')}
+                    Flag: {learner.confirmedGaps.join(', ')}
                   </Text>
                 </View>
               )}
@@ -98,21 +98,22 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(7, 17, 31, 0.94)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.md,
     zIndex: 999,
   },
   modalCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.hero,
     width: '100%',
     maxWidth: 580,
     maxHeight: '85%',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
+    ...shadows.card,
   },
   topHeader: {
     flexDirection: 'row',
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
   },
   teacherBadge: {
     ...typography.caption,
-    color: colors.primaryLight,
+    color: colors.primary,
     fontWeight: '800',
   },
   title: {
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   closeBtn: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.background,
     paddingHorizontal: spacing.sm + 4,
     paddingVertical: spacing.xs + 2,
     borderRadius: radius.sm,
@@ -158,22 +159,23 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: colors.background,
+    borderRadius: radius.card,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
   },
   flaggedCard: {
-    borderColor: colors.attention,
+    borderColor: colors.accent,
+    backgroundColor: '#FFF5F4',
   },
   metricNumber: {
     ...typography.h2,
     color: colors.textPrimary,
   },
   flaggedNumber: {
-    color: colors.attentionLight,
+    color: colors.accent,
   },
   metricLabel: {
     ...typography.caption,
@@ -187,8 +189,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   learnerRow: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: colors.background,
+    borderRadius: radius.card,
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderWidth: 1,
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
   masteryVal: {
     ...typography.body,
     fontWeight: '800',
-    color: colors.primaryLight,
+    color: colors.primary,
   },
   masteryCaption: {
     ...typography.caption,
@@ -233,15 +235,15 @@ const styles = StyleSheet.create({
   },
   gapPill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#3b1c1c',
+    backgroundColor: '#FFF5F4',
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: radius.sm,
+    borderRadius: radius.xs,
     marginTop: spacing.xs,
   },
   gapText: {
     ...typography.caption,
-    color: '#fca5a5',
+    color: colors.accent,
     fontWeight: '600',
   },
 });

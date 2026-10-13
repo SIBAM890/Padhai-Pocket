@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
-import { MCQOption, type OptionState } from './MCQOption';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { MCQOption } from './MCQOption';
 
-export interface TextChoice {
+interface TextChoice {
   id: string;
   label: string;
   text: string;
 }
 
 interface TextProbeProps {
+  title?: string;
+  titleOr?: string;
   prompt: string;
   promptOr?: string;
   choices: TextChoice[];
@@ -18,6 +20,8 @@ interface TextProbeProps {
 }
 
 export const TextProbe: React.FC<TextProbeProps> = ({
+  title = 'Definition Concept Check',
+  titleOr = 'ସଂଜ୍ଞା ଯାଞ୍ଚ',
   prompt,
   promptOr,
   choices,
@@ -27,8 +31,11 @@ export const TextProbe: React.FC<TextProbeProps> = ({
   return (
     <View style={styles.card}>
       <View style={styles.badge}>
-        <Text style={styles.badgeText}>TEXT PROBE (ପାଠ ଯାଞ୍ଚ)</Text>
+        <Text style={styles.badgeText}>CONCEPT CHECK</Text>
       </View>
+
+      <Text style={styles.title}>{title}</Text>
+      {titleOr && <Text style={styles.titleOr}>{titleOr}</Text>}
 
       <Text style={styles.prompt}>{prompt}</Text>
       {promptOr && <Text style={styles.promptOr}>{promptOr}</Text>}
@@ -36,13 +43,12 @@ export const TextProbe: React.FC<TextProbeProps> = ({
       <View style={styles.choicesList}>
         {choices.map((choice) => {
           const isSelected = selectedChoiceId === choice.id;
-          const optionState: OptionState = isSelected ? 'SELECTED' : 'DEFAULT';
           return (
             <MCQOption
               key={choice.id}
               label={choice.label}
               text={choice.text}
-              state={optionState}
+              state={isSelected ? 'selected' : 'default'}
               onPress={() => onSelect(choice.id)}
             />
           );
@@ -54,35 +60,48 @@ export const TextProbe: React.FC<TextProbeProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
+    ...shadows.card,
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#312e81',
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm + 2,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-    marginBottom: spacing.sm,
+    borderRadius: radius.xs,
+    marginBottom: spacing.xs,
   },
   badgeText: {
     ...typography.caption,
-    color: '#a5b4fc',
+    color: colors.primary,
     fontWeight: '800',
+  },
+  title: {
+    ...typography.h2,
+    color: colors.textPrimary,
+    marginTop: 2,
+  },
+  titleOr: {
+    ...typography.body,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
   },
   prompt: {
     ...typography.bodyLarge,
-    color: colors.textPrimary,
     fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: spacing.sm,
   },
   promptOr: {
     ...typography.body,
-    color: colors.textMuted,
-    marginTop: 4,
+    color: colors.textSecondary,
+    marginTop: 2,
     marginBottom: spacing.md,
   },
   choicesList: {

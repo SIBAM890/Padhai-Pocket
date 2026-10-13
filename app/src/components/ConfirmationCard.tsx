@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/theme';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 
 interface ConfirmationCardProps {
   question: string;
@@ -21,13 +21,12 @@ export const ConfirmationCard: React.FC<ConfirmationCardProps> = ({
 }) => {
   return (
     <View style={styles.card}>
-      <View style={styles.headerRow}>
-        <Text style={styles.kicker}>ONE QUICK CHECK</Text>
-        <Text style={styles.icon}>🎯</Text>
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>LET'S CHECK ONE MORE THING</Text>
       </View>
 
-      <Text style={styles.heading}>Let's check one more thing together</Text>
-      <Text style={styles.subheading}>ଆଉ ଗୋଟିଏ ପ୍ରଶ୍ନ ଦେଖିବା</Text>
+      <Text style={styles.title}>A quick follow-up to solidify your concept</Text>
+      <Text style={styles.titleOr}>ଆଉ ଗୋଟିଏ ପ୍ରଶ୍ନ ଦେଖିବା</Text>
 
       <View style={styles.questionBox}>
         <Text style={styles.questionText}>{question}</Text>
@@ -44,22 +43,26 @@ export const ConfirmationCard: React.FC<ConfirmationCardProps> = ({
               onPress={() => onSelect(opt.id)}
               accessibilityRole="button"
             >
-              <View style={[styles.badge, isSelected && styles.badgeSelected]}>
-                <Text style={styles.badgeText}>{opt.label}</Text>
+              <View style={[styles.badgeCircle, isSelected && styles.badgeCircleSelected]}>
+                <Text style={[styles.badgeLabel, isSelected && styles.badgeLabelSelected]}>
+                  {opt.label}
+                </Text>
               </View>
-              <Text style={styles.optText}>{opt.text}</Text>
+              <Text style={[styles.optText, isSelected && styles.optTextSelected]}>
+                {opt.text}
+              </Text>
             </Pressable>
           );
         })}
       </View>
 
       <Pressable
-        style={[styles.continueButton, !selectedOptionId && styles.buttonDisabled]}
+        style={[styles.continueBtn, !selectedOptionId && styles.btnDisabled]}
         disabled={!selectedOptionId}
         onPress={onContinue}
         accessibilityRole="button"
       >
-        <Text style={styles.buttonText}>Check My Understanding</Text>
+        <Text style={styles.btnText}>Check Understanding ➔</Text>
       </Pressable>
     </View>
   );
@@ -67,40 +70,42 @@ export const ConfirmationCard: React.FC<ConfirmationCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,
+    ...shadows.card,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.xs,
+    marginBottom: spacing.xs,
   },
-  kicker: {
-    color: colors.primaryLight,
+  badgeText: {
+    ...typography.caption,
+    color: colors.primary,
     fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 1.5,
   },
-  icon: {
-    fontSize: 20,
-  },
-  heading: {
+  title: {
     ...typography.h3,
     color: colors.textPrimary,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
-  subheading: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
+  titleOr: {
+    ...typography.body,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
     marginBottom: spacing.md,
   },
   questionBox: {
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.md,
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
     padding: spacing.md,
     marginBottom: spacing.md,
     borderLeftWidth: 3,
@@ -123,49 +128,56 @@ const styles = StyleSheet.create({
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#FFFFFF',
     padding: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.card,
     borderWidth: 1.5,
     borderColor: colors.border,
+    ...shadows.subtle,
   },
   optionItemSelected: {
     borderColor: colors.primary,
-    backgroundColor: '#0a3325',
+    backgroundColor: '#F5F7FF',
   },
-  badge: {
+  badgeCircle: {
     width: 32,
     height: 32,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceSubtle,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  badgeSelected: {
+  badgeCircleSelected: {
     backgroundColor: colors.primary,
   },
-  badgeText: {
-    color: colors.textPrimary,
+  badgeLabel: {
     fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  badgeLabelSelected: {
+    color: '#FFFFFF',
   },
   optText: {
     ...typography.body,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
+    fontWeight: '500',
     flex: 1,
   },
-  continueButton: {
+  optTextSelected: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  continueBtn: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.button,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  buttonDisabled: {
+  btnDisabled: {
     opacity: 0.5,
   },
-  buttonText: {
+  btnText: {
     ...typography.button,
-    color: '#07111f',
   },
 });

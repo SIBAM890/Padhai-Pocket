@@ -6,36 +6,36 @@ import type { TraceEventMock } from '../mock/mockData';
 interface TraceTimelineProps {
   episodeId?: string;
   summaryTitle?: string;
-  events: TraceEventMock[];
+  events: any[];
 }
 
 export const TraceTimeline: React.FC<TraceTimelineProps> = ({
-  episodeId = 'Episode #001 (Deterministic Seed: 1806635391)',
-  summaryTitle = 'Diagnostic State Machine Sequence',
+  episodeId = 'Episode #001 · BSE9-PHYS-MOTION-S02',
+  summaryTitle = 'Diagnostic State Machine: OBSERVE ➔ MASTERY ➔ PROBE ➔ REFLECT ➔ ACT',
   events,
 }) => {
   const getNodeColor = (node: string) => {
     switch (node) {
       case 'OBSERVE':
-        return '#38bdf8';
+        return '#0284C7';
       case 'MASTERY':
-        return '#34d399';
+        return '#059669';
       case 'PROBE':
-        return '#fbbf24';
+        return '#D97706';
       case 'REFLECT':
-        return '#a78bfa';
+        return '#7C3AED';
       case 'ACT':
-        return '#f43f5e';
+        return '#E11D48';
       default:
-        return '#94a3b8';
+        return '#64748B';
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.episodeHeader}>
+      <View style={styles.header}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>DEMO / JUDGE VIEW</Text>
+          <Text style={styles.badgeText}>JUDGE / DEMO ARCHITECTURE</Text>
         </View>
         <Text style={styles.episodeId}>{episodeId}</Text>
         <Text style={styles.summaryTitle}>{summaryTitle}</Text>
@@ -47,51 +47,33 @@ export const TraceTimeline: React.FC<TraceTimelineProps> = ({
           const nodeColor = getNodeColor(ev.node);
 
           return (
-            <View key={ev.id} style={styles.eventRow}>
-              {/* Left timeline line & indicator */}
-              <View style={styles.markerColumn}>
+            <View key={ev.id ?? index} style={styles.row}>
+              <View style={styles.markerCol}>
                 <View style={[styles.dot, { backgroundColor: nodeColor }]} />
-                {!isLast && <View style={styles.verticalLine} />}
+                {!isLast && <View style={styles.line} />}
               </View>
 
-              {/* Event card */}
-              <View style={styles.cardContent}>
+              <View style={styles.card}>
                 <View style={styles.cardTop}>
-                  <View style={[styles.nodePill, { backgroundColor: `${nodeColor}22` }]}>
+                  <View style={[styles.nodeTag, { backgroundColor: `${nodeColor}15` }]}>
                     <Text style={[styles.nodeText, { color: nodeColor }]}>{ev.node}</Text>
                   </View>
-                  <Text style={styles.timestamp}>{ev.timestamp}</Text>
-                  <View
-                    style={[
-                      styles.statusPill,
-                      ev.status === 'ACKED'
-                        ? styles.statusAcked
-                        : ev.status === 'ERROR'
-                        ? styles.statusError
-                        : styles.statusPending,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        ev.status === 'ACKED'
-                          ? styles.statusTextAcked
-                          : ev.status === 'ERROR'
-                          ? styles.statusTextError
-                          : styles.statusTextPending,
-                      ]}
-                    >
+                  <Text style={styles.time}>{ev.timestamp}</Text>
+                  <View style={[styles.statusTag, ev.status === 'ACKED' ? styles.statusAcked : styles.statusPending]}>
+                    <Text style={[styles.statusText, ev.status === 'ACKED' ? styles.statusTextAcked : styles.statusTextPending]}>
                       {ev.status}
                     </Text>
                   </View>
                 </View>
 
-                <Text style={styles.actionTitle}>{ev.action}</Text>
-                <Text style={styles.description}>{ev.description}</Text>
+                <Text style={styles.action}>{ev.action}</Text>
+                <Text style={styles.desc}>{ev.description}</Text>
 
-                <View style={styles.payloadBox}>
-                  <Text style={styles.payloadText}>{JSON.stringify(ev.payload, null, 2)}</Text>
-                </View>
+                {ev.payload && (
+                  <View style={styles.payloadBox}>
+                    <Text style={styles.payloadText}>{JSON.stringify(ev.payload, null, 2)}</Text>
+                  </View>
+                )}
               </View>
             </View>
           );
@@ -105,9 +87,9 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: spacing.md,
   },
-  episodeHeader: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
+  header: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -115,15 +97,15 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#172554',
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: radius.sm,
+    borderRadius: radius.xs,
     marginBottom: 4,
   },
   badgeText: {
     ...typography.caption,
-    color: '#60a5fa',
+    color: colors.primary,
     fontWeight: '800',
   },
   episodeId: {
@@ -138,11 +120,11 @@ const styles = StyleSheet.create({
   timeline: {
     paddingLeft: spacing.xs,
   },
-  eventRow: {
+  row: {
     flexDirection: 'row',
     marginBottom: spacing.md,
   },
-  markerColumn: {
+  markerCol: {
     alignItems: 'center',
     width: 24,
     marginRight: spacing.sm,
@@ -153,16 +135,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 6,
   },
-  verticalLine: {
+  line: {
     flex: 1,
     width: 2,
     backgroundColor: colors.border,
     marginTop: 4,
   },
-  cardContent: {
+  card: {
     flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -173,66 +155,60 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.xs,
   },
-  nodePill: {
+  nodeTag: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
-    borderRadius: radius.sm,
+    borderRadius: radius.xs,
   },
   nodeText: {
     fontWeight: '800',
     fontSize: 11,
   },
-  timestamp: {
+  time: {
     ...typography.caption,
     color: colors.textMuted,
     fontSize: 11,
   },
-  statusPill: {
+  statusTag: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: radius.sm,
+    borderRadius: radius.xs,
   },
   statusAcked: {
-    backgroundColor: '#064e3b',
+    backgroundColor: colors.successLight,
   },
   statusPending: {
-    backgroundColor: '#78350f',
-  },
-  statusError: {
-    backgroundColor: '#7f1d1d',
+    backgroundColor: colors.warningLight,
   },
   statusText: {
     fontSize: 10,
     fontWeight: '800',
   },
   statusTextAcked: {
-    color: colors.primaryLight,
+    color: colors.success,
   },
   statusTextPending: {
-    color: colors.attentionLight,
+    color: colors.warning,
   },
-  statusTextError: {
-    color: '#f87171',
-  },
-  actionTitle: {
+  action: {
     ...typography.body,
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  description: {
+  desc: {
     ...typography.bodySmall,
     color: colors.textSecondary,
     marginTop: 2,
   },
   payloadBox: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.background,
     borderRadius: radius.sm,
     padding: spacing.sm,
     marginTop: spacing.sm,
   },
   payloadText: {
     ...typography.mono,
-    color: '#93c5fd',
+    color: '#0284C7',
     fontSize: 11,
   },
 });
