@@ -5,10 +5,12 @@
 
 export interface LearnerProfile {
   name: string;
-  avatar: string;
-  language: string;
+  gender: 'male' | 'female';
+  language: 'odia' | 'english';
+  subject: 'physics' | 'mathematics' | 'science';
+  onboardingComplete: boolean;
+  avatar?: string;
   standard: string;
-  subject: string;
   streakDays: number;
   minutesThisWeek: number;
   completedLessons: number;
@@ -17,10 +19,12 @@ export interface LearnerProfile {
 
 export const mockProfile: LearnerProfile = {
   name: 'Sunita',
-  avatar: '👧🏽',
-  language: 'ଓଡ଼ିଆ (Odia)',
+  gender: 'female',
+  language: 'odia',
+  subject: 'physics',
+  onboardingComplete: false,
+  avatar: 'female',
   standard: 'Class 9 (BSE Odisha)',
-  subject: 'Physical Science (ଭୌତିକ ବିଜ୍ଞାନ)',
   streakDays: 7,
   minutesThisWeek: 42,
   completedLessons: 12,

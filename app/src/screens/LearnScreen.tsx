@@ -124,6 +124,7 @@ export default function LearnScreen({ navigation }: Props) {
           greeting={`Good morning, ${profile.name}`}
           subgreeting="Keep learning, one step at a time."
           avatar={profile.avatar}
+          gender={profile.gender}
           networkMode={networkMode}
           forcedOffline={forcedOffline}
           onAvatarPress={() => setCurrentTab('Profile')}
@@ -460,19 +461,19 @@ export default function LearnScreen({ navigation }: Props) {
                 style={styles.judgeBtn}
                 onPress={() => navigation.navigate('Trace')}
               >
-                <Text style={styles.judgeBtnText}>🔍 Open Trace</Text>
+                <Text style={styles.judgeBtnText}>Open Trace</Text>
               </Pressable>
               <Pressable
                 style={styles.judgeBtn}
                 onPress={() => navigation.navigate('RawLog')}
               >
-                <Text style={styles.judgeBtnText}>📋 Open Raw Log</Text>
+                <Text style={styles.judgeBtnText}>Open Raw Log</Text>
               </Pressable>
               <Pressable
                 style={styles.judgeBtn}
                 onPress={() => setTeacherModalVisible(true)}
               >
-                <Text style={styles.judgeBtnText}>👩🏽‍🏫 Teacher Dashboard</Text>
+                <Text style={styles.judgeBtnText}>Teacher Overview</Text>
               </Pressable>
             </View>
           </View>
@@ -493,8 +494,16 @@ export default function LearnScreen({ navigation }: Props) {
       <StudentSetupModal
         visible={setupModalVisible}
         onClose={() => setSetupModalVisible(false)}
-        onFinish={(name, language, subject) => {
-          setProfile((p) => ({ ...p, name, language, subject }));
+        onFinish={(data) => {
+          setProfile((p) => ({
+            ...p,
+            name: data.name,
+            gender: data.gender,
+            language: data.language,
+            subject: data.subject,
+            avatar: data.gender,
+            onboardingComplete: true,
+          }));
           setSetupModalVisible(false);
         }}
       />

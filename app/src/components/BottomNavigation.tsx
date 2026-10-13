@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { HomeIcon, BookIcon, ChartIcon, UserIcon, SettingsIcon } from './AppIcons';
 
 export type MainNavTab = 'Home' | 'Learn' | 'Progress' | 'Profile';
 
@@ -23,7 +24,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         accessibilityRole="button"
         accessibilityLabel="Home tab"
       >
-        <Text style={styles.icon}>🏠</Text>
+        <HomeIcon
+          size={22}
+          color={currentTab === 'Home' ? colors.primary : colors.textMuted}
+        />
         <Text style={[styles.label, currentTab === 'Home' && styles.activeLabel]}>Home</Text>
       </Pressable>
 
@@ -33,7 +37,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         accessibilityRole="button"
         accessibilityLabel="Learn tab"
       >
-        <Text style={styles.icon}>📖</Text>
+        <BookIcon
+          size={22}
+          color={currentTab === 'Learn' ? colors.primary : colors.textMuted}
+        />
         <Text style={[styles.label, currentTab === 'Learn' && styles.activeLabel]}>Learn</Text>
       </Pressable>
 
@@ -43,7 +50,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         accessibilityRole="button"
         accessibilityLabel="Progress tab"
       >
-        <Text style={styles.icon}>📊</Text>
+        <ChartIcon
+          size={22}
+          color={currentTab === 'Progress' ? colors.primary : colors.textMuted}
+        />
         <Text style={[styles.label, currentTab === 'Progress' && styles.activeLabel]}>Progress</Text>
       </Pressable>
 
@@ -53,7 +63,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         accessibilityRole="button"
         accessibilityLabel="Profile tab"
       >
-        <Text style={styles.icon}>👤</Text>
+        <UserIcon
+          size={22}
+          color={currentTab === 'Profile' ? colors.primary : colors.textMuted}
+        />
         <Text style={[styles.label, currentTab === 'Profile' && styles.activeLabel]}>Profile</Text>
       </Pressable>
 
@@ -63,9 +76,9 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           style={styles.judgeTab}
           onPress={onOpenJudgeTools}
           accessibilityRole="button"
-          accessibilityLabel="Judge tools"
+          accessibilityLabel="Judge demo tools"
         >
-          <Text style={styles.judgeIcon}>⚙️</Text>
+          <SettingsIcon size={18} color={colors.textMuted} />
           <Text style={styles.judgeLabel}>Demo</Text>
         </Pressable>
       )}
@@ -83,43 +96,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     justifyContent: 'space-around',
     alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     ...shadows.card,
   },
   tab: {
-    flex: 1,
     alignItems: 'center',
-    paddingVertical: 4,
-    borderRadius: radius.sm,
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.card,
+    minWidth: 58,
+    minHeight: 44,
   },
   activeTab: {
     backgroundColor: colors.primaryLight,
   },
-  icon: {
-    fontSize: 20,
-    marginBottom: 2,
-  },
   label: {
     ...typography.caption,
     fontSize: 11,
+    fontWeight: '700',
     color: colors.textMuted,
-    fontWeight: '600',
+    marginTop: 2,
   },
   activeLabel: {
     color: colors.primary,
-    fontWeight: '800',
   },
   judgeTab: {
-    paddingHorizontal: spacing.sm,
     alignItems: 'center',
-    opacity: 0.6,
-  },
-  judgeIcon: {
-    fontSize: 14,
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: spacing.xs,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+    minWidth: 44,
+    minHeight: 44,
   },
   judgeLabel: {
     ...typography.caption,
-    fontSize: 9,
+    fontSize: 10,
     color: colors.textMuted,
-    fontWeight: '700',
+    fontWeight: '600',
+    marginTop: 2,
   },
 });

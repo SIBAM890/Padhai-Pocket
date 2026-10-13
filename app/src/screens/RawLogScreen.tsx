@@ -49,7 +49,7 @@ export default function RawLogScreen({ navigation }: any) {
         <View style={styles.toolbar}>
           <Pressable style={styles.toolBtn} onPress={handleCopy} accessibilityRole="button">
             <Text style={styles.toolBtnText}>
-              {copiedNotice ? '✓ Copied to Clipboard' : '📋 Copy JSON'}
+              {copiedNotice ? '✓ Copied to Clipboard' : 'Copy JSON'}
             </Text>
           </Pressable>
 

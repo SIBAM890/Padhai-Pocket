@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { BookIcon, AudioWaveIcon } from './AppIcons';
 
 interface LessonIntroCardProps {
   title: string;
@@ -40,18 +41,17 @@ export const LessonIntroCard: React.FC<LessonIntroCardProps> = ({
       {/* Meta indicators */}
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
-          <Text style={styles.metaIcon}>⏱️</Text>
           <Text style={styles.metaText}>{estimatedMinutes} minutes</Text>
         </View>
         <View style={styles.metaDivider} />
         <View style={styles.metaItem}>
-          <Text style={styles.metaIcon}>📖</Text>
+          <BookIcon size={14} color={colors.textSecondary} />
           <Text style={styles.metaText}>{lessonNumber}</Text>
         </View>
         <View style={styles.metaDivider} />
         <View style={styles.metaItem}>
-          <Text style={styles.metaIcon}>🗣️</Text>
-          <Text style={styles.metaText}>Odia Voice Ready</Text>
+          <AudioWaveIcon size={14} color={colors.secondary} />
+          <Text style={styles.metaText}>Voice Audio Ready</Text>
         </View>
       </View>
 

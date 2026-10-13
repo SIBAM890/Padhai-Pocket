@@ -1,12 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import {
+  MaleHumanIcon,
+  FemaleHumanIcon,
+  BackpackIcon,
+  BookIcon,
+  AudioWaveIcon,
+  TrophyIcon,
+  CheckIcon,
+} from './AppIcons';
 
-export type SetupStep = 'WELCOME' | 'NAME' | 'LANGUAGE' | 'SUBJECT' | 'ALL_SET';
+export type SetupStep = 'WELCOME' | 'NAME_GENDER' | 'LANGUAGE' | 'SUBJECT' | 'ALL_SET';
+
+export interface SetupFinishData {
+  name: string;
+  gender: 'male' | 'female';
+  language: 'odia' | 'english';
+  subject: 'physics' | 'mathematics' | 'science';
+}
 
 interface StudentSetupModalProps {
   visible: boolean;
-  onFinish: (name: string, language: string, subject: string) => void;
+  onFinish: (data: SetupFinishData) => void;
   onClose?: () => void;
 }
 
@@ -16,11 +32,14 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
   onClose,
 }) => {
   const [step, setStep] = useState<SetupStep>('WELCOME');
-  const [name, setName] = useState('Sunita');
-  const [selectedLanguage, setSelectedLanguage] = useState('ଓଡ଼ିଆ');
-  const [selectedSubject, setSelectedSubject] = useState('Physical Science');
+  const [name, setName] = useState('');
+  const [gender, setGender] = useState<'male' | 'female'>('female');
+  const [selectedLanguage, setSelectedLanguage] = useState<'odia' | 'english'>('odia');
+  const [selectedSubject, setSelectedSubject] = useState<'physics' | 'mathematics' | 'science'>('physics');
 
   if (!visible) return null;
+
+  const displayName = name.trim() || (gender === 'male' ? 'Student' : 'Learner');
 
   const renderContent = () => {
     switch (step) {
@@ -28,42 +47,139 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
         return (
           <View style={styles.stepContent}>
             <View style={styles.iconCircle}>
-              <Text style={styles.icon}>🎒</Text>
+              <BackpackIcon size={32} color={colors.primary} />
             </View>
             <Text style={styles.title}>Welcome to PadhAI Pocket</Text>
-            <Text style={styles.tagline}>Your learning journey, your way.</Text>
+            <Text style={styles.tagline}>Your offline learning companion.</Text>
             <Text style={styles.description}>
               Practice Class 9 science offline, listen in your mother tongue, and build your daily learning habit.
             </Text>
 
-            <Pressable style={styles.primaryBtn} onPress={() => setStep('NAME')}>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() => setStep('NAME_GENDER')}
+              accessibilityRole="button"
+              accessibilityLabel="Get started"
+            >
               <Text style={styles.primaryBtnText}>Get Started ➔</Text>
             </Pressable>
 
-            <Pressable style={styles.secondaryBtn} onPress={() => setStep('ALL_SET')}>
+            <Pressable
+              style={styles.secondaryBtn}
+              onPress={() => setStep('ALL_SET')}
+              accessibilityRole="button"
+              accessibilityLabel="I already have a profile"
+            >
               <Text style={styles.secondaryBtnText}>I already have a profile</Text>
             </Pressable>
           </View>
         );
 
-      case 'NAME':
+      case 'NAME_GENDER':
         return (
           <View style={styles.stepContent}>
-            <View style={styles.iconCircle}>
-              <Text style={styles.icon}>👧🏽</Text>
+            <Text style={styles.title}>Let's get to know you</Text>
+            <Text style={styles.tagline}>ଆପଣଙ୍କ ବିଷୟରେ ଜଣାନ୍ତୁ</Text>
+
+            {/* Name Input Section */}
+            <View style={styles.fieldSection}>
+              <Text style={styles.fieldLabel}>What's your name?</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter your name"
+                placeholderTextColor={colors.textDisabled}
+                autoCapitalize="words"
+              />
             </View>
-            <Text style={styles.title}>Enter your name</Text>
-            <Text style={styles.tagline}>ଆପଣଙ୍କ ନାମ କ’ଣ?</Text>
 
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g. Sunita"
-              placeholderTextColor={colors.textDisabled}
-            />
+            {/* Gender Selection Section */}
+            <View style={styles.fieldSection}>
+              <Text style={styles.fieldLabel}>Gender</Text>
+              <View style={styles.genderRow}>
+                {/* Male Card */}
+                <Pressable
+                  style={[
+                    styles.genderCard,
+                    gender === 'male' && styles.genderCardSelected,
+                  ]}
+                  onPress={() => setGender('male')}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: gender === 'male' }}
+                  accessibilityLabel="Male"
+                >
+                  <View
+                    style={[
+                      styles.genderIconContainer,
+                      gender === 'male' && styles.genderIconContainerSelected,
+                    ]}
+                  >
+                    <MaleHumanIcon
+                      size={28}
+                      color={gender === 'male' ? colors.primary : colors.textSecondary}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.genderText,
+                      gender === 'male' && styles.genderTextSelected,
+                    ]}
+                  >
+                    Male
+                  </Text>
+                  {gender === 'male' && (
+                    <View style={styles.checkBadge}>
+                      <CheckIcon size={14} color="#FFFFFF" />
+                    </View>
+                  )}
+                </Pressable>
 
-            <Pressable style={styles.primaryBtn} onPress={() => setStep('LANGUAGE')}>
+                {/* Female Card */}
+                <Pressable
+                  style={[
+                    styles.genderCard,
+                    gender === 'female' && styles.genderCardSelected,
+                  ]}
+                  onPress={() => setGender('female')}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: gender === 'female' }}
+                  accessibilityLabel="Female"
+                >
+                  <View
+                    style={[
+                      styles.genderIconContainer,
+                      gender === 'female' && styles.genderIconContainerSelected,
+                    ]}
+                  >
+                    <FemaleHumanIcon
+                      size={28}
+                      color={gender === 'female' ? colors.primary : colors.textSecondary}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.genderText,
+                      gender === 'female' && styles.genderTextSelected,
+                    ]}
+                  >
+                    Female
+                  </Text>
+                  {gender === 'female' && (
+                    <View style={styles.checkBadge}>
+                      <CheckIcon size={14} color="#FFFFFF" />
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() => setStep('LANGUAGE')}
+              accessibilityRole="button"
+              accessibilityLabel="Continue to language selection"
+            >
               <Text style={styles.primaryBtnText}>Continue ➔</Text>
             </Pressable>
           </View>
@@ -73,29 +189,45 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
         return (
           <View style={styles.stepContent}>
             <View style={styles.iconCircle}>
-              <Text style={styles.icon}>🗣️</Text>
+              <AudioWaveIcon size={28} color={colors.secondary} />
             </View>
-            <Text style={styles.title}>Choose language</Text>
+            <Text style={styles.title}>How would you like to learn?</Text>
             <Text style={styles.tagline}>ପଢ଼ିବା ଭାଷା ବାଛନ୍ତୁ</Text>
 
-            <View style={styles.optionsRow}>
-              {['ଓଡ଼ିଆ', 'English', 'କୂଇଁ (Kui)'].map((lang) => {
-                const isSelected = selectedLanguage === lang;
+            <View style={styles.optionsColumn}>
+              {[
+                { id: 'odia' as const, label: 'ଓଡ଼ିଆ (Odia)', desc: 'Mother-tongue explanation and Odia audio guidance' },
+                { id: 'english' as const, label: 'English', desc: 'Standard BSE Odisha English medium curriculum' },
+              ].map((lang) => {
+                const isSelected = selectedLanguage === lang.id;
                 return (
                   <Pressable
-                    key={lang}
-                    style={[styles.choicePill, isSelected && styles.choicePillSelected]}
-                    onPress={() => setSelectedLanguage(lang)}
+                    key={lang.id}
+                    style={[styles.subjectOption, isSelected && styles.subjectOptionSelected]}
+                    onPress={() => setSelectedLanguage(lang.id)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
                   >
-                    <Text style={[styles.choiceText, isSelected && styles.choiceTextSelected]}>
-                      {lang}
-                    </Text>
+                    <View style={styles.optionContentRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.subjTitle, isSelected && styles.subjTitleSelected]}>
+                          {lang.label}
+                        </Text>
+                        <Text style={styles.subjDesc}>{lang.desc}</Text>
+                      </View>
+                      {isSelected && <CheckIcon size={18} color={colors.primary} />}
+                    </View>
                   </Pressable>
                 );
               })}
             </View>
 
-            <Pressable style={styles.primaryBtn} onPress={() => setStep('SUBJECT')}>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() => setStep('SUBJECT')}
+              accessibilityRole="button"
+              accessibilityLabel="Continue to subject selection"
+            >
               <Text style={styles.primaryBtnText}>Continue ➔</Text>
             </Pressable>
           </View>
@@ -105,34 +237,46 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
         return (
           <View style={styles.stepContent}>
             <View style={styles.iconCircle}>
-              <Text style={styles.icon}>📚</Text>
+              <BookIcon size={28} color={colors.primary} />
             </View>
-            <Text style={styles.title}>Choose learning preference</Text>
+            <Text style={styles.title}>What would you like to learn?</Text>
             <Text style={styles.tagline}>କେଉଁ ବିଷୟରୁ ଆରମ୍ଭ କରିବେ?</Text>
 
             <View style={styles.optionsColumn}>
               {[
-                { title: 'Physical Science (ଭୌତିକ ବିଜ୍ଞାନ)', desc: 'Motion, Forces, Gravitation' },
-                { title: 'Life Science (ଜୀବ ବିଜ୍ଞାନ)', desc: 'Cells, Plant Tissues' },
-                { title: 'Mathematics (ଗଣିତ)', desc: 'Number Systems, Geometry' },
+                { id: 'physics' as const, title: 'Physics (ଭୌତିକ ବିଜ୍ଞାନ)', desc: 'Motion, Forces, Gravitation' },
+                { id: 'mathematics' as const, title: 'Mathematics (ଗଣିତ)', desc: 'Number Systems, Geometry, Algebra' },
+                { id: 'science' as const, title: 'Science (ଜୀବ ବିଜ୍ଞାନ)', desc: 'Cells, Plant Tissues, Living World' },
               ].map((subj) => {
-                const isSelected = selectedSubject === subj.title;
+                const isSelected = selectedSubject === subj.id;
                 return (
                   <Pressable
-                    key={subj.title}
+                    key={subj.id}
                     style={[styles.subjectOption, isSelected && styles.subjectOptionSelected]}
-                    onPress={() => setSelectedSubject(subj.title)}
+                    onPress={() => setSelectedSubject(subj.id)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
                   >
-                    <Text style={[styles.subjTitle, isSelected && styles.subjTitleSelected]}>
-                      {subj.title}
-                    </Text>
-                    <Text style={styles.subjDesc}>{subj.desc}</Text>
+                    <View style={styles.optionContentRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.subjTitle, isSelected && styles.subjTitleSelected]}>
+                          {subj.title}
+                        </Text>
+                        <Text style={styles.subjDesc}>{subj.desc}</Text>
+                      </View>
+                      {isSelected && <CheckIcon size={18} color={colors.primary} />}
+                    </View>
                   </Pressable>
                 );
               })}
             </View>
 
-            <Pressable style={styles.primaryBtn} onPress={() => setStep('ALL_SET')}>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() => setStep('ALL_SET')}
+              accessibilityRole="button"
+              accessibilityLabel="Continue to confirmation"
+            >
               <Text style={styles.primaryBtnText}>Continue ➔</Text>
             </Pressable>
           </View>
@@ -142,17 +286,26 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
         return (
           <View style={styles.stepContent}>
             <View style={[styles.iconCircle, styles.allSetCircle]}>
-              <Text style={styles.icon}>🎉</Text>
+              <TrophyIcon size={32} color={colors.secondary} />
             </View>
-            <Text style={styles.title}>You're all set, {name}!</Text>
+            <Text style={styles.title}>You're all set, {displayName}!</Text>
             <Text style={styles.tagline}>ଆପଣଙ୍କ ଶିକ୍ଷଣ ଯାତ୍ରା ପ୍ରସ୍ତୁତ।</Text>
             <Text style={styles.description}>
-              We've prepared your Class 9 Physical Science study room with offline saving and voice help.
+              We've configured your Class 9 study space for offline practice with voice assistance.
             </Text>
 
             <Pressable
               style={styles.primaryBtn}
-              onPress={() => onFinish(name, selectedLanguage, selectedSubject)}
+              onPress={() =>
+                onFinish({
+                  name: displayName,
+                  gender,
+                  language: selectedLanguage,
+                  subject: selectedSubject,
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Go to Home Dashboard"
             >
               <Text style={styles.primaryBtnText}>Go to Home Dashboard ➔</Text>
             </Pressable>
@@ -170,7 +323,12 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
         <View style={styles.topBar}>
           <Text style={styles.headerTitle}>PadhAI Pocket · Student Setup</Text>
           {onClose && (
-            <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
               <Text style={styles.closeText}>✕</Text>
             </Pressable>
           )}
@@ -214,6 +372,10 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     padding: spacing.xs,
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeText: {
     fontSize: 16,
@@ -222,6 +384,7 @@ const styles = StyleSheet.create({
   },
   stepContent: {
     alignItems: 'center',
+    width: '100%',
   },
   iconCircle: {
     width: 64,
@@ -234,9 +397,6 @@ const styles = StyleSheet.create({
   },
   allSetCircle: {
     backgroundColor: colors.secondaryLight,
-  },
-  icon: {
-    fontSize: 32,
   },
   title: {
     ...typography.h2,
@@ -258,43 +418,82 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: spacing.xl,
   },
+  fieldSection: {
+    width: '100%',
+    marginBottom: spacing.md,
+  },
+  fieldLabel: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   input: {
     width: '100%',
     backgroundColor: colors.background,
     borderRadius: radius.card,
-    padding: spacing.md,
-    fontSize: 18,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    minHeight: 48,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.textPrimary,
     borderWidth: 1.5,
     borderColor: colors.border,
-    textAlign: 'center',
-    marginVertical: spacing.lg,
   },
-  optionsRow: {
+  genderRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginVertical: spacing.lg,
+    gap: spacing.md,
+    width: '100%',
   },
-  choicePill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
+  genderCard: {
+    flex: 1,
+    minHeight: 88,
     backgroundColor: colors.background,
+    borderRadius: radius.card,
+    padding: spacing.md,
     borderWidth: 1.5,
     borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  choicePillSelected: {
-    backgroundColor: colors.primaryLight,
+  genderCardSelected: {
     borderColor: colors.primary,
+    backgroundColor: '#F5F7FF',
   },
-  choiceText: {
+  genderIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  genderIconContainerSelected: {
+    backgroundColor: colors.primaryLight,
+  },
+  genderText: {
     ...typography.bodySmall,
     fontWeight: '700',
-    color: colors.textSecondary,
+    color: colors.textPrimary,
   },
-  choiceTextSelected: {
+  genderTextSelected: {
     color: colors.primary,
+  },
+  checkBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionsColumn: {
     width: '100%',
@@ -305,12 +504,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: radius.card,
     padding: spacing.md,
+    minHeight: 48,
     borderWidth: 1.5,
     borderColor: colors.border,
   },
   subjectOptionSelected: {
     borderColor: colors.primary,
     backgroundColor: '#F5F7FF',
+  },
+  optionContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   subjTitle: {
     ...typography.body,
@@ -330,7 +535,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: radius.button,
     width: '100%',
+    minHeight: 48,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: spacing.md,
     ...shadows.subtle,
   },
@@ -339,6 +546,9 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     paddingVertical: spacing.md,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: spacing.xs,
   },
   secondaryBtnText: {

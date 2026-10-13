@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { TrophyIcon, FlameIcon, BookIcon } from './AppIcons';
 
 interface CompletionCardProps {
+  studentName?: string;
   lessonTitle?: string;
   pointsEarned?: number;
   streakDays?: number;
@@ -11,6 +13,7 @@ interface CompletionCardProps {
 }
 
 export const CompletionCard: React.FC<CompletionCardProps> = ({
+  studentName = 'Learner',
   lessonTitle = 'Motion & Displacement',
   pointsEarned = 10,
   streakDays = 7,
@@ -20,26 +23,26 @@ export const CompletionCard: React.FC<CompletionCardProps> = ({
   return (
     <View style={styles.card}>
       <View style={styles.badgeCircle}>
-        <Text style={styles.trophyIcon}>🎉</Text>
+        <TrophyIcon size={38} color={colors.secondary} />
       </View>
 
-      <Text style={styles.title}>Great work, Sunita!</Text>
+      <Text style={styles.title}>Great work, {studentName}!</Text>
       <Text style={styles.subtitle}>You completed {lessonTitle}</Text>
 
       {/* Rewards Pill Row */}
       <View style={styles.rewardsRow}>
         <View style={styles.rewardItem}>
-          <Text style={styles.rewardIcon}>🌟</Text>
+          <Text style={styles.starText}>★</Text>
           <Text style={styles.rewardValue}>+{pointsEarned} Points</Text>
         </View>
 
         <View style={styles.rewardItem}>
-          <Text style={styles.rewardIcon}>🔥</Text>
+          <FlameIcon size={16} color={colors.accent} />
           <Text style={styles.rewardValue}>{streakDays} Day Streak</Text>
         </View>
 
         <View style={styles.rewardItem}>
-          <Text style={styles.rewardIcon}>📚</Text>
+          <BookIcon size={16} color={colors.primary} />
           <Text style={styles.rewardValue}>+1 Lesson</Text>
         </View>
       </View>
@@ -64,23 +67,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
     ...shadows.card,
   },
   badgeCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: colors.secondaryLight,
+    borderWidth: 1.5,
+    borderColor: colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  trophyIcon: {
-    fontSize: 34,
-  },
   title: {
-    ...typography.h1,
+    ...typography.h2,
     color: colors.textPrimary,
     textAlign: 'center',
   },
@@ -95,21 +97,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     marginBottom: spacing.xl,
-    width: '100%',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   rewardItem: {
-    flex: 1,
-    backgroundColor: colors.background,
-    borderRadius: radius.card,
-    padding: spacing.sm + 2,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.border,
+    gap: 6,
   },
-  rewardIcon: {
-    fontSize: 20,
-    marginBottom: 2,
+  starText: {
+    fontSize: 16,
+    color: '#EAB308',
+    fontWeight: '800',
   },
   rewardValue: {
     ...typography.caption,
@@ -123,6 +128,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginBottom: spacing.sm,
+    minHeight: 48,
+    justifyContent: 'center',
     ...shadows.subtle,
   },
   primaryBtnText: {
@@ -130,10 +137,14 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     paddingVertical: spacing.sm,
+    width: '100%',
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   secondaryBtnText: {
     ...typography.bodySmall,
-    color: colors.primary,
+    color: colors.textSecondary,
     fontWeight: '700',
   },
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 import { mockTeacherData } from '../mock/mockData';
+import { MaleHumanIcon, FemaleHumanIcon } from './AppIcons';
 
 interface TeacherDashboardModalProps {
   visible: boolean;
@@ -58,7 +59,13 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           {learners.map((learner) => (
             <View key={learner.id} style={styles.learnerRow}>
               <View style={styles.learnerInfo}>
-                <Text style={styles.avatar}>{learner.avatar}</Text>
+                <View style={styles.avatarContainer}>
+                  {learner.avatar === '👦🏽' || learner.name.includes('Rohan') ? (
+                    <MaleHumanIcon size={20} color={colors.primary} />
+                  ) : (
+                    <FemaleHumanIcon size={20} color={colors.primary} />
+                  )}
+                </View>
                 <View>
                   <Text style={styles.learnerName}>{learner.name}</Text>
                   <Text style={styles.lastActive}>Active {learner.lastActive}</Text>
@@ -202,8 +209,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },
-  avatar: {
-    fontSize: 28,
+  avatarContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   learnerName: {
     ...typography.body,
