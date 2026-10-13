@@ -26,7 +26,8 @@ export function computeSeed(
 ): number {
   const key = `${profileId}|${conceptId}|${setId}`;
   const hash = crypto.createHash('sha256').update(key, 'utf8').digest();
-  return hash.readUInt32BE(0);
+  // Portable byte arithmetic (replaces Node-only hash.readUInt32BE(0))
+  return ((hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]) >>> 0;
 }
 
 /**
