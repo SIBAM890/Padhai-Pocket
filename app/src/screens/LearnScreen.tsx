@@ -30,15 +30,26 @@ import type { NetworkMode } from '../types/events';
 import type { RootStackParamList } from '../../App';
 import {
   type EngineState,
+  type EngineInput,
   createInitialState,
   nextAction,
 } from '../engine';
-import { computeSeed } from '../engine/seed';
-import { getHeroChunk, getHeroItem, getPackHash } from '../content/loader';
+import { computeSeed, probeOrder } from '../engine/seed';
+import { getHeroChunk, getHeroItem, getPackHash, getProbeItems, getConfirmItem, getKuiGlossary } from '../content/loader';
 import { getDeviceId } from '../utils/device';
 import * as SecureStore from 'expo-secure-store';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
+
+export type Step =
+  | 'sound_check'
+  | 'mcq'
+  | 'probe_p'
+  | 'probe_a'
+  | 'probe_t'
+  | 'confirm'
+  | 'remediation'
+  | 'done';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
 const HEALTH_URL = `${API_URL}/healthz`;
@@ -60,6 +71,7 @@ export default function LearnScreen({ navigation }: Props) {
   } = useNetworkStatus(HEALTH_URL);
 
   const [pending, setPending] = useState(0);
+  const [step, setStep] = useState<Step>('sound_check');
   const [answered, setAnswered] = useState(false);
   const [seq, setSeq] = useState(1);
   const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
@@ -69,6 +81,93 @@ export default function LearnScreen({ navigation }: Props) {
   useEffect(() => {
     getDeviceId().then((id) => setDeviceId(id));
   }, []);
+
+  // Pre-compute seeded probe order for Set A (PRD §4.9)
+  const [probeOrderSeq, setProbeOrderSeq] = useState<Array<'P' | 'A' | 'T'>>([]);
+  const [probeIndex, setProbeIndex] = useState(0);
+
+  useEffect(() => {
+    computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID).then((seed: number) => {
+      setProbeOrderSeq(probeOrder(seed));
+    });
+  }, []);
+
+  // Advance step based on last emitted event's node
+  const advanceStep = (result: { events: any[]; state: EngineState }) => {
+    const lastEvent = result.events[result.events.length - 1];
+    if (!lastEvent) return;
+
+    const node = lastEvent.node;
+    const action = lastEvent.action;
+
+    // OFFLINE branch: engine returns EPISODE_DONE after OFFLINE_REMEDIATION
+    if (result.state.step === 'EPISODE_DONE' && node === 'ACT' && action === 'OFFLINE_REMEDIATION') {
+      setStep('done');
+      return;
+    }
+
+    // PROBE node → advance to next probe in seeded order
+    if (node === 'PROBE') {
+      if (probeIndex < probeOrderSeq.length) {
+        const nextModality = probeOrderSeq[probeIndex];
+        setProbeIndex(probeIndex + 1);
+        setStep(`probe_${nextModality.toLowerCase()}` as Step);
+      }
+      return;
+    }
+
+    // CONFIRM node → go to confirm step
+    if (node === 'CONFIRM') {
+      setStep('confirm');
+      return;
+    }
+
+    // REFLECT node with TERM_GAP label → remediation
+    if (node === 'REFLECT' && result.state.current_set_label === 'TERM_GAP') {
+      setStep('remediation');
+      return;
+    }
+
+    // ACT node with REMEDIATION → remediation
+    if (node === 'ACT' && action.startsWith('REMEDIATION_')) {
+      setStep('remediation');
+      return;
+    }
+
+    // MASTERY or ACT after remediation → done
+    if (node === 'MASTERY' || (node === 'ACT' && action.includes('REMEDIATION'))) {
+      setStep('done');
+      return;
+    }
+
+    // RESOLVED → done (no remediation needed)
+    if (result.state.current_set_label === 'RESOLVED' && result.state.step === 'EPISODE_DONE') {
+      setStep('done');
+      return;
+    }
+
+    // INCONSISTENT with threshold=1 (demo) → done
+    // INCONSISTENT with threshold=2 and all 3 sets exhausted → done
+    if (result.state.current_set_label === 'INCONSISTENT' && result.state.step === 'EPISODE_DONE') {
+      setStep('done');
+      return;
+    }
+
+    // Default: if episode done, go to done
+    if (result.state.step === 'EPISODE_DONE') {
+      setStep('done');
+    }
+  };
+
+  // Reset for next MCQ round
+  const resetForNextRound = () => {
+    setAnswered(false);
+    setLastCorrect(null);
+    setSetAborted(false);
+    skipCountRef.current = 0;
+    setProbeIndex(0);
+    setStep('mcq');
+  };
 
   // FR-23: sound check state. null = not yet checked, true = OK, false = failed.
   const [soundOk, setSoundOk] = useState<boolean | null>(null);
@@ -107,6 +206,9 @@ export default function LearnScreen({ navigation }: Props) {
   const heroChunk = getHeroChunk();
   const heroItem = getHeroItem();
   const packHash = getPackHash();
+  const probeItems = getProbeItems();
+  const confirmItem = getConfirmItem();
+  const kuiGlossary = getKuiGlossary();
 
   const question = useMemo(() => {
     if (heroChunk && heroItem) {
@@ -137,6 +239,8 @@ export default function LearnScreen({ navigation }: Props) {
     setSoundOk(heard);
     if (!heard) {
       setAudioUnavailable(true);
+    } else {
+      setStep('mcq');
     }
   };
 
@@ -158,14 +262,14 @@ export default function LearnScreen({ navigation }: Props) {
     // ctx.now: wall-clock time supplied by the UI caller (PRD §4.9 allows callers to inject Date.now()).
     // ctx.seed: PRD §4.9 deterministic — SHA-256(profile|concept|set)[0..3] big-endian uint32.
     const now = Date.now();
-    const seed = computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
+    const seed = await computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
     const ctx = { now, seed, device_id: deviceId };
 
     // Sync current network mode and concept into engine state before calling.
     engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
 
     // Call the real pure engine — nextAction updates mastery, computes input_hash, emits events.
-    const engineResult = nextAction(
+    const engineResult = await nextAction(
       engineStateRef.current,
       {
         type: 'OBSERVE_MCQ',
@@ -185,6 +289,273 @@ export default function LearnScreen({ navigation }: Props) {
     setSeq(engineResult.state.seq);
     setAnswered(true);
     await refreshPending();
+
+    // Advance UI step based on engine events
+    advanceStep(engineResult);
+  };
+
+  // Handle probe item response (P/A/T)
+  const handleProbeResponse = async (modality: 'P' | 'A' | 'T', isCorrect: boolean) => {
+    const now = Date.now();
+    const seed = await computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
+    const ctx = { now, seed, device_id: deviceId };
+
+    engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
+
+    const engineResult = await nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_PROBE_ITEM',
+        modality,
+        correct: isCorrect,
+        audio_available: modality !== 'A' || !audioUnavailable,
+      } as any,
+      ctx
+    );
+
+    engineStateRef.current = engineResult.state;
+
+    for (const event of engineResult.events) {
+      await insertEvent(event as any);
+    }
+    setSeq(engineResult.state.seq);
+    await refreshPending();
+    advanceStep(engineResult);
+  };
+
+  // Render probe item screen
+  const renderProbe = (modality: 'P' | 'A' | 'T') => {
+    const item = probeItems?.[modality];
+    if (!item) return null;
+
+    const modalityLabels = { P: 'चित्र (Picture)', A: 'ऑडियो (Audio)', T: 'पाठ (Text)' };
+
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.top}>
+            <Text style={styles.brand}>PadhAI Pocket</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.kicker}>PROBE · {modalityLabels[modality]}</Text>
+            <Text style={styles.title}>Question {modality}</Text>
+            <Text style={styles.prompt}>{item.stem}</Text>
+
+            {/* Placeholder for media (images/audio) */}
+            <View style={styles.mediaPlaceholder}>
+              <Text style={styles.placeholderText}>
+                {modality === 'P' ? '📷 Picture options (4 images)' :
+                 modality === 'A' ? '🔊 Audio playing... (4 audio options)' :
+                 '📝 Text options (4 text choices)'}
+              </Text>
+            </View>
+
+            <View style={styles.probeButtons}>
+              <Pressable
+                testID={`probe-${modality.toLowerCase()}-correct`}
+                style={[styles.option, styles.correctBtn]}
+                onPress={() => handleProbeResponse(modality, true)}
+              >
+                <Text style={styles.optionText}>✓ Correct</Text>
+              </Pressable>
+              <Pressable
+                testID={`probe-${modality.toLowerCase()}-wrong`}
+                style={[styles.option, styles.wrongBtn]}
+                onPress={() => handleProbeResponse(modality, false)}
+              >
+                <Text style={styles.optionText}>✗ Wrong</Text>
+              </Pressable>
+            </View>
+
+            {/* FR-24: Skip button */}
+            <Pressable
+              testID={`skip-button-${modality.toLowerCase()}`}
+              style={styles.skipButton}
+              onPress={handleSkip}
+            >
+              <Text style={styles.skipText}>
+                Skip ({MAX_SKIPS_PER_SET - skipCountRef.current} remaining before set aborts)
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  };
+
+  // Handle confirm item response (W1 - word meaning check)
+  const handleConfirmResponse = async (isCorrect: boolean) => {
+    const now = Date.now();
+    const seed = await computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
+    const ctx = { now, seed, device_id: deviceId };
+
+    engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
+
+    const engineResult = await nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_CONFIRM_ITEM',
+        correct: isCorrect,
+        term_id: confirmItem?.termId ?? 'T_DISP',
+      } as any,
+      ctx
+    );
+
+    engineStateRef.current = engineResult.state;
+
+    for (const event of engineResult.events) {
+      await insertEvent(event as any);
+    }
+    setSeq(engineResult.state.seq);
+    await refreshPending();
+    advanceStep(engineResult);
+  };
+
+  // Render confirm item screen (W1 - word meaning check)
+  const renderConfirm = () => {
+    if (!confirmItem) return null;
+
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.top}>
+            <Text style={styles.brand}>PadhAI Pocket</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.kicker}>CONFIRM · शब्द अर्थ (Word Meaning)</Text>
+            <Text style={styles.title}>Confirm Check</Text>
+            <Text style={styles.prompt}>{confirmItem.stem}</Text>
+
+            {/* Placeholder for media (images) */}
+            <View style={styles.mediaPlaceholder}>
+              <Text style={styles.placeholderText}>
+                📷 Word meaning check (4 image options)
+              </Text>
+            </View>
+
+            <View style={styles.probeButtons}>
+              <Pressable
+                testID="confirm-correct"
+                style={[styles.option, styles.correctBtn]}
+                onPress={() => handleConfirmResponse(true)}
+              >
+                <Text style={styles.optionText}>✓ Correct</Text>
+              </Pressable>
+              <Pressable
+                testID="confirm-wrong"
+                style={[styles.option, styles.wrongBtn]}
+                onPress={() => handleConfirmResponse(false)}
+              >
+                <Text style={styles.optionText}>✗ Wrong</Text>
+              </Pressable>
+            </View>
+
+            {/* FR-24: Skip button */}
+            <Pressable
+              testID="skip-button-confirm"
+              style={styles.skipButton}
+              onPress={handleSkip}
+            >
+              <Text style={styles.skipText}>
+                Skip ({MAX_SKIPS_PER_SET - skipCountRef.current} remaining before set aborts)
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  };
+  
+  // Render remediation screen (TERM_GAP → Kui term + Odia term + visual)
+  const renderRemediation = () => {
+    // Find Kui glossary for T_DISP (displacement)
+    const kuiTerm = kuiGlossary.find((t: any) => t.term_id === 'T_DISP');
+    const odiaTerm = kuiTerm?.odia_from_textbook ?? 'ବିସ୍ଥାପନ';
+
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.top}>
+            <Text style={styles.brand}>PadhAI Pocket</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.kicker}>REMEDIATION · TERM_GAP</Text>
+            <Text style={styles.title}>शब्द सेतु (Word Bridge)</Text>
+
+            {/* Kui everyday description (text-only fallback) */}
+            <View style={styles.remediationSection}>
+              <Text style={styles.remediationLabel}>कुइ (Kui) — ସହଜ ବ୍ୟାଖ୍ୟା</Text>
+              <Text style={styles.remediationText}>
+                {kuiTerm?.kui?.description || 'ବସ୍ତୁ କେଉଁଠାରୁ ଆରମ୍ଭ କରି ଯେଉଁଠାରେ ପହଞ୍ଚେ, ସେହି ଦୁର୍ବଳ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।'}
+              </Text>
+            </View>
+
+            {/* Odia term from textbook */}
+            <View style={styles.remediationSection}>
+              <Text style={styles.remediationLabel}>ଓଡ଼ିଆ (Odia) — ପାଠ୍ୟ ପଦ</Text>
+              <Text style={styles.remediationTerm}>{odiaTerm}</Text>
+            </View>
+
+            {/* Visual placeholder */}
+            <View style={styles.mediaPlaceholder}>
+              <Text style={styles.placeholderText}>
+                🖼️ Visual: displacement arrow from start → end
+              </Text>
+            </View>
+
+            <Pressable
+              testID="remediation-understood"
+              style={[styles.option, styles.correctBtn]}
+              onPress={() => setStep('done')}
+            >
+              <Text style={styles.optionText}>सम्झिली (Understood) →</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  };
+
+  // Render done screen (mastery summary + next button)
+  const renderDone = () => {
+    const conceptMastery = Math.round(engineStateRef.current.concept_mastery * 100);
+    const termMastery = Math.round((engineStateRef.current.term_masteries['T_DISP'] ?? 0.4) * 100);
+
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.top}>
+            <Text style={styles.brand}>PadhAI Pocket</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.kicker}>DONE · Episode Complete</Text>
+            <Text style={styles.title}>ଅଭ୍ୟାସ ସମାପ୍ତ</Text>
+
+            <View style={styles.masteryCard}>
+              <Text style={styles.masteryLabel}>Concept Mastery (Distance vs Displacement)</Text>
+              <Text style={styles.masteryValue}>{conceptMastery}%</Text>
+            </View>
+
+            <View style={styles.masteryCard}>
+              <Text style={styles.masteryLabel}>Term Mastery (Displacement / ବିସ୍ଥାପନ)</Text>
+              <Text style={styles.masteryValue}>{termMastery}%</Text>
+            </View>
+
+            <Text style={styles.doneNote}>
+              Events saved locally. Tap Sync when online to send to teacher.
+            </Text>
+
+            <Pressable
+              testID="done-next"
+              style={[styles.option, styles.correctBtn]}
+              onPress={resetForNextRound}
+            >
+              <Text style={styles.optionText}>Next Question →</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
   };
 
   const sync = async () => {
@@ -195,7 +566,37 @@ export default function LearnScreen({ navigation }: Props) {
   };
 
   // ── FR-23: Sound check gate ─────────────────────────────────────────────────
-  if (soundOk === null) {
+  if (step === 'sound_check') {
+    if (audioUnavailable) {
+      return (
+        <SafeAreaView style={styles.safe}>
+          <ScrollView contentContainerStyle={styles.container}>
+            <View style={styles.top}>
+              <Text style={styles.brand}>PadhAI Pocket</Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.kicker}>AUDIO UNAVAILABLE</Text>
+              <Text style={styles.title}>Let{"'"}s look at pictures first</Text>
+              <Text style={styles.prompt}>
+                Audio items will be skipped this session.{'\n'}
+                We{"'"}ll use pictures and text instead.
+              </Text>
+              <Pressable
+                testID="audio-unavailable-proceed"
+                style={[styles.option, styles.soundYes]}
+                onPress={() => {
+                  setAudioUnavailable(false);
+                  setStep('mcq');
+                }}
+              >
+                <Text style={styles.optionText}>Proceed →</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
+
     return (
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.container}>
@@ -231,32 +632,25 @@ export default function LearnScreen({ navigation }: Props) {
     );
   }
 
-  // ── FR-23: Audio unavailable notice (shown before first A-item) ─────────────
-  if (audioUnavailable) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>AUDIO UNAVAILABLE</Text>
-            <Text style={styles.title}>Let{"'"}s look at pictures first</Text>
-            <Text style={styles.prompt}>
-              Audio items will be skipped this session.{'\n'}
-              We{"'"}ll use pictures and text instead.
-            </Text>
-            <Pressable
-              testID="audio-unavailable-proceed"
-              style={[styles.option, styles.soundYes]}
-              onPress={() => setAudioUnavailable(false)}
-            >
-              <Text style={styles.optionText}>Proceed →</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
+  // ── Probe screens (P/A/T) ───────────────────────────────────────────────────
+  if (step === 'probe_p' || step === 'probe_a' || step === 'probe_t') {
+    const modality = step.split('_')[1] as 'P' | 'A' | 'T';
+    return renderProbe(modality);
+  }
+
+  // ── Confirm screen (W1 - word meaning check) ────────────────────────────────
+  if (step === 'confirm') {
+    return renderConfirm();
+  }
+
+  // ── Remediation screen (TERM_GAP) ───────────────────────────────────────────
+  if (step === 'remediation') {
+    return renderRemediation();
+  }
+
+  // ── Done screen (episode complete) ──────────────────────────────────────────
+  if (step === 'done') {
+    return renderDone();
   }
 
   // ── Main MCQ screen ─────────────────────────────────────────────────────────
@@ -462,6 +856,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navText: { color: '#fff', fontWeight: '800' },
+  // Probe screen styles
+  mediaPlaceholder: {
+    height: 120,
+    backgroundColor: '#1a2a44',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 16,
+    borderWidth: 1,
+    borderColor: '#3d4f65',
+    borderStyle: 'dashed',
+  },
+  placeholderText: { color: '#8a9bb8', fontSize: 14, textAlign: 'center', paddingHorizontal: 16 },
+  probeButtons: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  correctBtn: { flex: 1, borderColor: '#22c55e', backgroundColor: '#14532d' },
+  wrongBtn: { flex: 1, borderColor: '#ef4444', backgroundColor: '#7f1d1d' },
+  // Remediation & Done styles
+  remediationSection: { marginVertical: 12, padding: 14, backgroundColor: '#1a2a44', borderRadius: 12 },
+  remediationLabel: { color: '#6ee7b7', fontWeight: '700', fontSize: 12, marginBottom: 6 },
+  remediationText: { color: '#d9e2ef', fontSize: 15, lineHeight: 24 },
+  remediationTerm: { color: '#fff', fontSize: 22, fontWeight: '800', textAlign: 'center', marginTop: 4 },
+  masteryCard: { marginVertical: 12, padding: 16, backgroundColor: '#14532d', borderRadius: 12 },
+  masteryLabel: { color: '#bbf7d0', fontSize: 13, marginBottom: 4 },
+  masteryValue: { color: '#fff', fontSize: 32, fontWeight: '800' },
+  doneNote: { color: '#91a0b5', fontSize: 13, marginTop: 12, textAlign: 'center', lineHeight: 20 },
   // Content integration styles
   chunkBadge: {
     flexDirection: 'row',
