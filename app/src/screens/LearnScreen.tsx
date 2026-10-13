@@ -1,416 +1,413 @@
-/**
- * LearnScreen — PRD v4.0
- *
- * FR-23: Sound check once per session. If failed → A-items skipped, engine abstains
- *        with reason=AUDIO_UNAVAILABLE.
- * FR-24: Skip button on each MCQ option row. A skip produces no event and no mastery
- *        change. Two skips in one set abort the set as INCONSISTENT (reason=SKIPPED).
- *
- * Engine wiring:
- *  - nextAction() called with PRD §4.9 deterministic seed.
- *  - concept_mastery comes from BKT inside nextAction (no hardcoding).
- *  - input_hash computed by buildEvent inside nextAction (no placeholder).
- */
-
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
-  Text,
   View,
+  Text,
+  Switch,
+  Pressable,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { insertEvent, listEvents } from '../db/database';
+import { colors, typography, spacing, radius } from '../theme/theme';
+import { AppHeader } from '../components/AppHeader';
+import { LessonCard } from '../components/LessonCard';
+import { MCQOption, type OptionState } from '../components/MCQOption';
+import { MicButton, type VoiceState } from '../components/MicButton';
+import { SoundCheck } from '../components/SoundCheck';
+import { PictureProbe } from '../components/PictureProbe';
+import { AudioProbe } from '../components/AudioProbe';
+import { TextProbe } from '../components/TextProbe';
+import { ConfirmationCard } from '../components/ConfirmationCard';
+import { RemediationCard } from '../components/RemediationCard';
+import { SuccessCard } from '../components/SuccessCard';
+import { FriendlyState } from '../components/FriendlyState';
+import { BottomNavigation } from '../components/BottomNavigation';
+import { OnboardingModal } from '../components/OnboardingModal';
+import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
+import { mockLesson, mockProbes } from '../mock/mockData';
 import { useNetworkStatus } from '../network/network';
-import { syncPending } from '../sync/syncClient';
-import type { NetworkMode } from '../types/events';
 import type { RootStackParamList } from '../../App';
-import {
-  type EngineState,
-  createInitialState,
-  nextAction,
-} from '../engine';
-import { computeSeed } from '../engine/seed';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
-const HEALTH_URL = `${API_URL}/healthz`;
-const DEVICE_ID = 'demo-device-01';
-const PROFILE_ID = 'demo-profile-01';
-const SESSION_ID = '11111111-2222-4333-8444-555555555555';
-
-// PRD §4.9: seed is stable per (learner, concept, set).
-const CONCEPT_ID = 'distance_vs_displacement';
-const SET_ID = 'A';
-
-// FR-24: max skips before set is aborted as INCONSISTENT.
-const MAX_SKIPS_PER_SET = 2;
+export type LearnStep =
+  | 'SOUND_CHECK'
+  | 'LESSON_MCQ'
+  | 'PICTURE_PROBE'
+  | 'AUDIO_PROBE'
+  | 'TEXT_PROBE'
+  | 'CONFIRMATION'
+  | 'REMEDIATION'
+  | 'SUCCESS'
+  | 'FRIENDLY_ERROR';
 
 export default function LearnScreen({ navigation }: Props) {
-  const {
-    networkMode: mode,
-    forcedOffline,
-    setForcedOffline,
-  } = useNetworkStatus(HEALTH_URL);
+  const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus();
 
-  const [pending, setPending] = useState(0);
-  const [answered, setAnswered] = useState(false);
-  const [seq, setSeq] = useState(1);
-  const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
+  // Screen workflow state (defaults to sound check then lesson MCQ)
+  const [currentStep, setCurrentStep] = useState<LearnStep>('LESSON_MCQ');
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [voiceState, setVoiceState] = useState<VoiceState>('IDLE');
+  const [selectedProbeChoice, setSelectedProbeChoice] = useState<string | null>(null);
+  const [pendingSyncCount, setPendingSyncCount] = useState(1);
 
-  // FR-23: sound check state. null = not yet checked, true = OK, false = failed.
-  const [soundOk, setSoundOk] = useState<boolean | null>(null);
-  const [audioUnavailable, setAudioUnavailable] = useState(false);
+  // Modals (isolated from student navigation)
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [teacherOpen, setTeacherOpen] = useState(false);
 
-  // FR-24: skip tracking.
-  const skipCountRef = useRef(0);
-  const [setAborted, setSetAborted] = useState(false);
-
-  // Engine state persisted across renders — initialised once per session.
-  const engineStateRef = useRef<EngineState>(
-    createInitialState(
-      PROFILE_ID,
-      SESSION_ID,
-      CONCEPT_ID,
-      0.42, // initial concept mastery
-      1,    // threshold = 1 (demo mode, PRD §4.5)
-      'OFFLINE'
-    )
-  );
-
-  const refreshPending = async () => {
-    const rows = await listEvents(200);
-    setPending(rows.filter((r) => r.sync_status !== 'ACKED').length);
-    if (rows.length > 0) {
-      const maxSeq = Math.max(...rows.map((r) => r.seq));
-      setSeq(maxSeq + 1);
+  // MCQ answer selection with gentle student feedback
+  const handleSelectOption = (optionId: string) => {
+    setSelectedOption(optionId);
+    if (optionId === mockLesson.correctOptionId) {
+      setTimeout(() => setCurrentStep('SUCCESS'), 800);
+    } else {
+      // Transition smoothly into supportive probe/remediation
+      setTimeout(() => setCurrentStep('REMEDIATION'), 800);
     }
   };
 
-  useEffect(() => {
-    refreshPending();
-  }, []);
-
-  const question = useMemo(
-    () => ({
-      title: 'Motion',
-      prompt: 'A student walks 3 m east and then 3 m west. What is the displacement?',
-      options: ['0 m', '3 m', '6 m', '9 m'],
-      answerIndex: 0,
-    }),
-    []
-  );
-
-  // FR-23: handle sound check result.
-  const handleSoundCheck = (heard: boolean) => {
-    setSoundOk(heard);
-    if (!heard) {
-      setAudioUnavailable(true);
+  // Mock Voice interaction state transition
+  const handleMicPress = () => {
+    if (voiceState === 'IDLE') {
+      setVoiceState('LISTENING');
+      setTimeout(() => {
+        setVoiceState('PROCESSING');
+        setTimeout(() => {
+          setVoiceState('IDLE');
+          handleSelectOption(mockLesson.correctOptionId);
+        }, 1200);
+      }, 1500);
+    } else if (voiceState === 'LISTENING') {
+      setVoiceState('PROCESSING');
+      setTimeout(() => setVoiceState('IDLE'), 1000);
     }
   };
 
-  // FR-24: handle skip.
-  const handleSkip = () => {
-    skipCountRef.current += 1;
-    if (skipCountRef.current >= MAX_SKIPS_PER_SET) {
-      // Two skips → abort set as INCONSISTENT (no event written, no mastery change).
-      setSetAborted(true);
-      setAnswered(true);
+  const getOptionState = (optionId: string): OptionState => {
+    if (!selectedOption) return 'DEFAULT';
+    if (optionId === selectedOption) {
+      return optionId === mockLesson.correctOptionId ? 'CORRECT' : 'SELECTED';
     }
-    // Single skip: no event, no mastery change. Item simply dismissed.
+    return 'NEUTRAL';
   };
 
-  const record = async (selectedIndex: number) => {
-    const isCorrect = selectedIndex === question.answerIndex;
-    setLastCorrect(isCorrect);
-
-    // ctx.now: wall-clock time supplied by the UI caller (PRD §4.9 allows callers to inject Date.now()).
-    // ctx.seed: PRD §4.9 deterministic — SHA-256(profile|concept|set)[0..3] big-endian uint32.
-    const now = Date.now();
-    const seed = computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
-    const ctx = { now, seed };
-
-    // Sync current network mode and concept into engine state before calling.
-    engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
-
-    // Call the real pure engine — nextAction updates mastery, computes input_hash, emits events.
-    const engineResult = nextAction(
-      engineStateRef.current,
-      {
-        type: 'OBSERVE_MCQ',
-        correct: isCorrect,
-        misconception_tag: isCorrect ? null : 'path_equals_displacement',
-      } as any,
-      ctx
-    );
-
-    // Advance engine state for next interaction.
-    engineStateRef.current = engineResult.state;
-
-    // Persist first emitted event (OBSERVE) to local SQLite.
-    if (engineResult.events.length > 0) {
-      await insertEvent(engineResult.events[0] as any);
-    }
-    setSeq(engineResult.state.seq);
-    setAnswered(true);
-    await refreshPending();
-  };
-
-  const sync = async () => {
-    await syncPending({ baseUrl: API_URL, deviceId: DEVICE_ID });
-    await refreshPending();
-  };
-
-  // ── FR-23: Sound check gate ─────────────────────────────────────────────────
-  if (soundOk === null) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>FR-23 · SOUND CHECK</Text>
-            <Text style={styles.title}>Can you hear us?</Text>
-            <Text style={styles.prompt}>
-              🔔 A chime should be playing now.{'\n'}
-              Tell us what you hear so we can set up your lesson correctly.
-            </Text>
-            <Pressable
-              testID="sound-check-heard"
-              style={[styles.option, styles.soundYes]}
-              onPress={() => handleSoundCheck(true)}
-            >
-              <Text style={styles.optionIndex}>✓</Text>
-              <Text style={styles.optionText}>I heard it</Text>
-            </Pressable>
-            <Pressable
-              testID="sound-check-not-heard"
-              style={[styles.option, styles.soundNo]}
-              onPress={() => handleSoundCheck(false)}
-            >
-              <Text style={styles.optionIndex}>✗</Text>
-              <Text style={styles.optionText}>I didn{"'"}t hear it</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // ── FR-23: Audio unavailable notice (shown before first A-item) ─────────────
-  if (audioUnavailable) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>AUDIO UNAVAILABLE</Text>
-            <Text style={styles.title}>Let{"'"}s look at pictures first</Text>
-            <Text style={styles.prompt}>
-              Audio items will be skipped this session.{'\n'}
-              We{"'"}ll use pictures and text instead.
-            </Text>
-            <Pressable
-              testID="audio-unavailable-proceed"
-              style={[styles.option, styles.soundYes]}
-              onPress={() => setAudioUnavailable(false)}
-            >
-              <Text style={styles.optionText}>Proceed →</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // ── Main MCQ screen ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.top}>
+        <AppHeader
+          networkMode={networkMode}
+          forcedOffline={forcedOffline}
+          onHelpPress={() => setOnboardingOpen(true)}
+        />
+
+        {/* Demo Mode / Judge Fast-Switch Banner */}
+        <View style={styles.demoBar}>
+          <View style={styles.demoBarLeft}>
+            <Text style={styles.demoTitle}>Airplane-mode demo</Text>
+            <Text style={styles.demoSubtitle}>Force offline mode for stage testing</Text>
+          </View>
+          <Switch
+            value={forcedOffline}
+            onValueChange={setForcedOffline}
+            trackColor={{ false: '#334155', true: colors.primary }}
+          />
+        </View>
+
+        {/* Dynamic Workflow View based on currentStep */}
+        {currentStep === 'SOUND_CHECK' && (
+          <SoundCheck
+            onHeard={() => setCurrentStep('LESSON_MCQ')}
+            onCannotHear={() => setCurrentStep('PICTURE_PROBE')}
+            onSkip={() => setCurrentStep('LESSON_MCQ')}
+          />
+        )}
+
+        {currentStep === 'LESSON_MCQ' && (
           <View>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-            <Text style={styles.subtitle}>Offline learning session</Text>
+            <LessonCard
+              chapter={mockLesson.chapter}
+              lessonIndex={mockLesson.lessonIndex}
+              totalLessons={mockLesson.totalLessons}
+              title={mockLesson.title}
+              prompt={mockLesson.prompt}
+              promptOr={mockLesson.promptOr}
+            />
+
+            <View style={styles.optionsContainer}>
+              {mockLesson.options.map((opt) => (
+                <MCQOption
+                  key={opt.id}
+                  label={opt.label}
+                  text={opt.text}
+                  subtext={opt.subtext}
+                  state={getOptionState(opt.id)}
+                  onPress={() => handleSelectOption(opt.id)}
+                />
+              ))}
+            </View>
+
+            <MicButton
+              state={voiceState}
+              onPress={handleMicPress}
+              onFallbackPress={() => setVoiceState('TAP_FALLBACK')}
+            />
+
+            {selectedOption && selectedOption !== mockLesson.correctOptionId && (
+              <View style={styles.supportNotice}>
+                <Text style={styles.supportText}>Not quite. Let's look at it together.</Text>
+                <Text style={styles.supportSub}>ପ୍ରଶ୍ନଟି ଆଉ ଥରେ ବୁଝିବା।</Text>
+              </View>
+            )}
           </View>
-          <View
-            style={[
-              styles.badge,
-              mode === 'ONLINE' ? styles.online : styles.offline,
+        )}
+
+        {currentStep === 'PICTURE_PROBE' && (
+          <PictureProbe
+            prompt={mockProbes.PICTURE.prompt}
+            promptOr={mockProbes.PICTURE.promptOr}
+            choices={mockProbes.PICTURE.choices}
+            selectedChoiceId={selectedProbeChoice}
+            onSelect={(id) => {
+              setSelectedProbeChoice(id);
+              setTimeout(() => setCurrentStep('CONFIRMATION'), 800);
+            }}
+          />
+        )}
+
+        {currentStep === 'AUDIO_PROBE' && (
+          <AudioProbe
+            prompt={mockProbes.AUDIO.prompt}
+            promptOr={mockProbes.AUDIO.promptOr}
+            choices={mockProbes.AUDIO.choices}
+            selectedChoiceId={selectedProbeChoice}
+            onSelect={(id) => {
+              setSelectedProbeChoice(id);
+              setTimeout(() => setCurrentStep('CONFIRMATION'), 800);
+            }}
+          />
+        )}
+
+        {currentStep === 'TEXT_PROBE' && (
+          <TextProbe
+            prompt={mockProbes.TEXT.prompt}
+            promptOr={mockProbes.TEXT.promptOr}
+            choices={mockProbes.TEXT.choices as any}
+            selectedChoiceId={selectedProbeChoice}
+            onSelect={(id) => {
+              setSelectedProbeChoice(id);
+              setTimeout(() => setCurrentStep('CONFIRMATION'), 800);
+            }}
+          />
+        )}
+
+        {currentStep === 'CONFIRMATION' && (
+          <ConfirmationCard
+            question="If a cyclist returns to the origin point after 10 km, what is displacement?"
+            questionOr="ଯଦି ସାଇକେଲ ଆରୋହୀ ୧୦ କିଲୋମିଟର ପରେ ପୁନର୍ବାର ଆରମ୍ଭ ବିନ୍ଦୁକୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"
+            options={[
+              { id: 'c1', label: 'A', text: '0 km (Zero displacement)' },
+              { id: 'c2', label: 'B', text: '10 km' },
+              { id: 'c3', label: 'C', text: '20 km' },
             ]}
-          >
-            <Text style={styles.badgeText}>{mode}</Text>
-          </View>
-        </View>
+            selectedOptionId={selectedProbeChoice}
+            onSelect={setSelectedProbeChoice}
+            onContinue={() => setCurrentStep('SUCCESS')}
+          />
+        )}
 
-        <View style={styles.card}>
-          <Text style={styles.kicker}>LEARN</Text>
-          <Text style={styles.title}>{question.title}</Text>
-          <Text style={styles.prompt}>{question.prompt}</Text>
+        {currentStep === 'REMEDIATION' && (
+          <RemediationCard
+            conceptTitle="Understanding Displacement (ବିସ୍ଥାପନ)"
+            explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and walk west 3 meters, you end up right where you began: 0 meters!"
+            explanationOr="ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।"
+            onListen={() => {}}
+            onTryAgain={() => {
+              setSelectedOption(null);
+              setCurrentStep('PICTURE_PROBE');
+            }}
+            onContinue={() => setCurrentStep('SUCCESS')}
+          />
+        )}
 
-          {question.options.map((option, index) => (
-            <Pressable
-              key={option}
-              testID={`option-${index}`}
-              disabled={answered}
-              onPress={() => record(index)}
-              style={[
-                styles.option,
-                answered && index === question.answerIndex && styles.correct,
-              ]}
-            >
-              <Text style={styles.optionIndex}>{String.fromCharCode(65 + index)}</Text>
-              <Text style={styles.optionText}>{option}</Text>
+        {currentStep === 'SUCCESS' && (
+          <SuccessCard
+            conceptMastery={0.76}
+            onContinue={() => {
+              setSelectedOption(null);
+              setSelectedProbeChoice(null);
+              setCurrentStep('LESSON_MCQ');
+            }}
+          />
+        )}
+
+        {currentStep === 'FRIENDLY_ERROR' && (
+          <FriendlyState
+            type="AUDIO_UNAVAILABLE"
+            onAction={() => setCurrentStep('PICTURE_PROBE')}
+          />
+        )}
+
+        {/* Flow Switcher for Judges / Review */}
+        <View style={styles.judgeBar}>
+          <Text style={styles.judgeLabel}>PROBE & STATE PREVIEW:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.judgePills}>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('SOUND_CHECK')}>
+              <Text style={styles.pillText}>Sound Check</Text>
             </Pressable>
-          ))}
-
-          {/* FR-24: Skip button */}
-          {!answered && (
-            <Pressable
-              testID="skip-button"
-              style={styles.skipButton}
-              onPress={handleSkip}
-            >
-              <Text style={styles.skipText}>
-                Skip ({MAX_SKIPS_PER_SET - skipCountRef.current} remaining before set aborts)
-              </Text>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('LESSON_MCQ')}>
+              <Text style={styles.pillText}>Lesson MCQ</Text>
             </Pressable>
-          )}
-
-          {answered && (
-            <View style={styles.feedback}>
-              {setAborted ? (
-                <>
-                  <Text style={styles.feedbackText}>Set aborted — INCONSISTENT (reason: SKIPPED)</Text>
-                  <Text style={styles.feedbackSub}>
-                    Two skips in one set. No mastery change recorded.
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.feedbackText}>
-                    {lastCorrect
-                      ? 'Very good! You got it right.'
-                      : "Let's look at it together."}
-                  </Text>
-                  <Text style={styles.feedbackSub}>
-                    Your event is saved locally before any sync is attempted.
-                  </Text>
-                </>
-              )}
-            </View>
-          )}
-        </View>
-
-        <View style={styles.controlCard}>
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.controlTitle}>Airplane-mode demo</Text>
-              <Text style={styles.controlSub}>Force the app into OFFLINE mode</Text>
-            </View>
-            <Switch value={forcedOffline} onValueChange={setForcedOffline} />
-          </View>
-          <View style={styles.syncRow}>
-            <Text style={styles.pending}>PENDING {pending}</Text>
-            <Pressable style={styles.syncButton} onPress={sync}>
-              <Text style={styles.syncText}>Sync</Text>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('PICTURE_PROBE')}>
+              <Text style={styles.pillText}>Picture Probe</Text>
             </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.navRow}>
-          <Pressable
-            style={styles.navButton}
-            onPress={() => navigation.navigate('Trace')}
-          >
-            <Text style={styles.navText}>Trace</Text>
-          </Pressable>
-          <Pressable
-            style={styles.navButton}
-            onPress={() => navigation.navigate('RawLog')}
-          >
-            <Text style={styles.navText}>Raw Log</Text>
-          </Pressable>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('AUDIO_PROBE')}>
+              <Text style={styles.pillText}>Audio Probe</Text>
+            </Pressable>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('TEXT_PROBE')}>
+              <Text style={styles.pillText}>Text Probe</Text>
+            </Pressable>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('CONFIRMATION')}>
+              <Text style={styles.pillText}>Confirmation</Text>
+            </Pressable>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('REMEDIATION')}>
+              <Text style={styles.pillText}>Remediation</Text>
+            </Pressable>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('SUCCESS')}>
+              <Text style={styles.pillText}>Success</Text>
+            </Pressable>
+            <Pressable style={styles.pill} onPress={() => setCurrentStep('FRIENDLY_ERROR')}>
+              <Text style={styles.pillText}>Friendly State</Text>
+            </Pressable>
+            <Pressable style={[styles.pill, styles.pillHighlight]} onPress={() => setTeacherOpen(true)}>
+              <Text style={styles.pillHighlightText}>Teacher Dashboard (PIN)</Text>
+            </Pressable>
+            <Pressable style={styles.pill} onPress={() => setOnboardingOpen(true)}>
+              <Text style={styles.pillText}>Onboarding</Text>
+            </Pressable>
+          </ScrollView>
         </View>
       </ScrollView>
+
+      {/* Child Bottom Navigation: Exactly Learn, Trace, RawLog */}
+      <BottomNavigation
+        currentTab="Learn"
+        onSelectTab={(tab) => {
+          if (tab === 'Trace') navigation.navigate('Trace');
+          if (tab === 'RawLog') navigation.navigate('RawLog');
+        }}
+        pendingCount={pendingSyncCount}
+      />
+
+      {/* Isolated Modals */}
+      <OnboardingModal
+        visible={onboardingOpen}
+        onFinish={() => setOnboardingOpen(false)}
+        onClose={() => setOnboardingOpen(false)}
+      />
+
+      <TeacherDashboardModal
+        visible={teacherOpen}
+        onClose={() => setTeacherOpen(false)}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#07111f' },
-  container: { padding: 20, gap: 16 },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  brand: { fontSize: 26, fontWeight: '800', color: '#fff' },
-  subtitle: { color: '#91a0b5', marginTop: 4 },
-  badge: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 99 },
-  online: { backgroundColor: '#14532d' },
-  offline: { backgroundColor: '#7f1d1d' },
-  badgeText: { color: '#fff', fontWeight: '800', fontSize: 11 },
-  card: { backgroundColor: '#0e1b2d', borderRadius: 20, padding: 20 },
-  kicker: { color: '#6ee7b7', fontWeight: '800', fontSize: 12, letterSpacing: 1.5 },
-  title: { color: '#fff', fontSize: 30, fontWeight: '800', marginTop: 8 },
-  prompt: { color: '#d9e2ef', fontSize: 18, lineHeight: 27, marginVertical: 18 },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#24364f',
-    borderRadius: 14,
-    marginTop: 10,
-  },
-  soundYes: { borderColor: '#22c55e' },
-  soundNo: { borderColor: '#ef4444' },
-  correct: { borderColor: '#22c55e' },
-  optionIndex: { color: '#91a0b5', fontWeight: '800' },
-  optionText: { color: '#fff', fontSize: 16 },
-  // FR-24 skip button
-  skipButton: {
-    marginTop: 14,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3d4f65',
-    borderStyle: 'dashed',
-    alignItems: 'center',
-  },
-  skipText: { color: '#91a0b5', fontSize: 13 },
-  feedback: { marginTop: 16, padding: 14, backgroundColor: '#15243a', borderRadius: 14 },
-  feedbackText: { color: '#fff', fontWeight: '700' },
-  feedbackSub: { color: '#91a0b5', marginTop: 5, lineHeight: 19 },
-  controlCard: { backgroundColor: '#0e1b2d', borderRadius: 18, padding: 16 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  controlTitle: { color: '#fff', fontWeight: '700' },
-  controlSub: { color: '#91a0b5', marginTop: 4 },
-  syncRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 18,
-  },
-  pending: { color: '#fbbf24', fontWeight: '800' },
-  syncButton: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-  },
-  syncText: { color: '#07111f', fontWeight: '800' },
-  navRow: { flexDirection: 'row', gap: 12 },
-  navButton: {
+  safe: {
     flex: 1,
-    padding: 15,
-    borderRadius: 14,
-    backgroundColor: '#16253b',
-    alignItems: 'center',
+    backgroundColor: colors.background,
   },
-  navText: { color: '#fff', fontWeight: '800' },
+  container: {
+    padding: spacing.md + 2,
+    paddingBottom: spacing.xxl,
+  },
+  optionsContainer: {
+    marginBottom: spacing.xs,
+  },
+  demoBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  demoBarLeft: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  demoTitle: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  demoSubtitle: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  supportNotice: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.info,
+    marginTop: spacing.sm,
+  },
+  supportText: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  supportSub: {
+    ...typography.caption,
+    color: colors.primaryLight,
+    marginTop: 2,
+  },
+  judgeBar: {
+    marginTop: spacing.xl,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  judgeLabel: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+  },
+  judgePills: {
+    flexDirection: 'row',
+    gap: spacing.xs + 2,
+    paddingBottom: spacing.sm,
+  },
+  pill: {
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pillText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  pillHighlight: {
+    backgroundColor: '#1e3a8a',
+    borderColor: colors.borderHighlight,
+  },
+  pillHighlightText: {
+    ...typography.caption,
+    color: colors.info,
+    fontWeight: '800',
+  },
 });

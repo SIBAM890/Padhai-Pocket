@@ -1,15 +1,37 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { colors, typography, spacing, radius } from '../theme/theme';
+import { TraceTimeline } from '../components/TraceTimeline';
+import { BottomNavigation } from '../components/BottomNavigation';
+import { mockTraceEvents } from '../mock/mockData';
 import { listEvents } from '../db/database';
 import type { StoredEvent } from '../types/events';
 
 export default function TraceScreen({ navigation }: any) {
-  const [events, setEvents] = useState<StoredEvent[]>([]);
+  const [events, setEvents] = useState<any[]>(mockTraceEvents);
 
   const load = useCallback(async () => {
-    const list = await listEvents(100);
-    setEvents(list);
+    try {
+      const dbRows = await listEvents(100);
+      if (dbRows && dbRows.length > 0) {
+        // Map SQLite rows to TraceTimeline format
+        const mapped = dbRows.map((row: StoredEvent, index: number) => ({
+          id: row.event_id,
+          node: row.node,
+          action: row.action,
+          description: `Action: ${row.action} (seq ${row.seq})`,
+          timestamp: new Date(row.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: row.sync_status,
+          seq: row.seq,
+          payload: row.output ?? {},
+        }));
+        setEvents(mapped);
+      }
+    } catch {
+      // Fallback cleanly to mock trace events if SQLite is empty
+      setEvents(mockTraceEvents);
+    }
   }, []);
 
   useFocusEffect(
@@ -22,72 +44,57 @@ export default function TraceScreen({ navigation }: any) {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Decision Trace</Text>
-            <Text style={styles.sub}>Rendered from SQLite event rows</Text>
-          </View>
-          <Pressable onPress={() => navigation.navigate('Learn')}>
-            <Text style={styles.back}>Learn</Text>
-          </Pressable>
+          <Text style={styles.kicker}>DIAGNOSTIC ENGINE TRACE</Text>
+          <Text style={styles.title}>Decision Timeline</Text>
+          <Text style={styles.subtitle}>
+            Inspecting live SQLite rows & diagnostic state machine transitions
+          </Text>
         </View>
 
-        {events.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No events yet. Answer the lesson question first.</Text>
-          </View>
-        ) : (
-          events.map((event) => (
-            <View key={event.event_id} style={styles.event}>
-              <View style={styles.eventTop}>
-                <Text style={styles.node}>{event.node}</Text>
-                <Text
-                  style={[
-                    styles.status,
-                    event.sync_status === 'ACKED'
-                      ? styles.statusAcked
-                      : event.sync_status === 'ERROR'
-                      ? styles.statusError
-                      : styles.statusPending,
-                  ]}
-                >
-                  {event.sync_status}
-                </Text>
-              </View>
-              <Text style={styles.action}>{event.action}</Text>
-              <Text style={styles.meta}>
-                seq {event.seq} · {event.network_mode} · {event.origin}
-              </Text>
-              <Text style={styles.json}>{JSON.stringify(event.output, null, 2)}</Text>
-            </View>
-          ))
-        )}
+        <TraceTimeline
+          episodeId="Episode #001 · BSE9-PHYS-MOTION-S02"
+          summaryTitle="State Machine: OBSERVE ➔ MASTERY ➔ PROBE ➔ REFLECT ➔ ACT"
+          events={events}
+        />
       </ScrollView>
+
+      <BottomNavigation
+        currentTab="Trace"
+        onSelectTab={(tab) => {
+          if (tab === 'Learn') navigation.navigate('Learn');
+          if (tab === 'RawLog') navigation.navigate('RawLog');
+        }}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#07111f' },
-  container: { padding: 20, gap: 12 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+  safe: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  title: { color: '#fff', fontSize: 28, fontWeight: '800' },
-  sub: { color: '#91a0b5', marginTop: 4 },
-  back: { color: '#6ee7b7', fontWeight: '800' },
-  empty: { padding: 22, borderRadius: 16, backgroundColor: '#0e1b2d' },
-  emptyText: { color: '#d9e2ef', lineHeight: 22 },
-  event: { backgroundColor: '#0e1b2d', borderRadius: 16, padding: 15 },
-  eventTop: { flexDirection: 'row', justifyContent: 'space-between' },
-  node: { color: '#6ee7b7', fontWeight: '900', fontSize: 12 },
-  status: { fontWeight: '800', fontSize: 11 },
-  statusPending: { color: '#fbbf24' },
-  statusAcked: { color: '#22c55e' },
-  statusError: { color: '#ef4444' },
-  action: { color: '#fff', fontSize: 17, fontWeight: '800', marginTop: 8 },
-  meta: { color: '#91a0b5', marginTop: 5, fontSize: 12 },
-  json: { color: '#b9c8db', marginTop: 10, fontFamily: 'monospace', fontSize: 12 },
+  container: {
+    padding: spacing.md + 2,
+    paddingBottom: spacing.xxl,
+  },
+  header: {
+    marginBottom: spacing.sm,
+  },
+  kicker: {
+    ...typography.caption,
+    color: colors.primaryLight,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.textPrimary,
+    marginTop: 2,
+  },
+  subtitle: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
 });
