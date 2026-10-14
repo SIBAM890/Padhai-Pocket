@@ -5,11 +5,12 @@
 
 export const colors = {
   // Primary Backgrounds
-  background: '#F8F9FA',         // Light-first canvas
-  surface: '#FFFFFF',            // Crisp card surfaces
-  surfaceSubtle: '#F1F5F9',      // Input fields, table rows, tag backgrounds
+  background: '#FDF6E3',         // Warm cream canvas
+  surface: '#FFFFFF',            // Crisp card surfaces (keep white)
+  surfaceAlt: '#F5EBD0',         // Nested panels, subtle sections
+  surfaceSubtle: '#F5EBD0',      // Input fields, table rows, tag backgrounds
   surfaceBorder: '#E2E8F0',      // Soft clean dividers
-  surfaceElevated: '#F8FAFC',    // Subtle elevation surface
+  surfaceElevated: '#FFFFFF',    // Elevated white cards
   
   // Brand Palettes
   primary: '#304FFE',            // Deep Blue / Soft Indigo (Refined & Modern)
