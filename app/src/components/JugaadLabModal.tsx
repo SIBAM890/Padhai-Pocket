@@ -6,8 +6,11 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  Dimensions,
 } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, Path } from 'react-native-svg';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 import {
   JUGAAD_EXPERIMENTS,
   ExperimentId,
@@ -144,6 +147,7 @@ export function JugaadLabModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
+        <Pressable style={styles.backdropTouch} onPress={onClose} accessibilityLabel="Close backdrop" />
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.headerRow}>
@@ -157,7 +161,11 @@ export function JugaadLabModal({
             </Pressable>
           </View>
 
-          <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={true}
+          >
             {/* Experiment Picker Pills */}
             <View style={styles.tabsRow}>
               {JUGAAD_EXPERIMENTS.map((exp) => {
@@ -496,8 +504,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.hero,
     width: '100%',
     maxWidth: 620,
+    height: Math.min(760, Math.max(500, SCREEN_HEIGHT * 0.88)),
     maxHeight: '92%',
     padding: spacing.md,
+    flexDirection: 'column',
     ...shadows.card,
   },
   headerRow: {
@@ -529,8 +539,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textMuted,
   },
+  backdropTouch: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   scrollArea: {
     flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: spacing.xxl,
   },
   tabsRow: {
     flexDirection: 'row',
