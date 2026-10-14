@@ -6,8 +6,9 @@ import TraceScreen from './src/screens/TraceScreen';
 import RawLogScreen from './src/screens/RawLogScreen';
 import ProgressScreen from './src/screens/ProgressScreen';
 import TeacherViewScreen from './src/screens/TeacherViewScreen';
+import SubjectPickerScreen from './src/screens/SubjectPickerScreen';
 import { SplashScreen } from './src/components/SplashScreen';
-import { GlobalErrorBoundary } from './src/components/GlobalErrorBoundary';
+import { GlobalErrorBoundary } from './src/errorBoundary/GlobalErrorBoundary';
 import { initDatabase } from './src/db/database';
 import { FINALE_ROUTES } from './src/navigation/FinaleRoutes';
 
@@ -15,7 +16,8 @@ import { StatusBar } from 'react-native';
 import { colors } from './src/theme/theme';
 
 export type RootStackParamList = {
-  Learn: { profileId?: string; subject?: string; chunkId?: string } | undefined;
+  SubjectPicker: undefined;
+  Learn: { profileId?: string; subject?: string; chunkId?: string; subjectId?: string; topicId?: string } | undefined;
   Trace: undefined;
   RawLog: undefined;
   Progress: { profileId: string };
@@ -66,6 +68,7 @@ export default function App() {
       >
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Learn" component={LearnScreen} />
+          <Stack.Screen name="SubjectPicker" component={SubjectPickerScreen} />
           <Stack.Screen name="Trace" component={TraceScreen} />
           <Stack.Screen name="RawLog" component={RawLogScreen} />
           <Stack.Screen name="Progress" component={ProgressScreen} />

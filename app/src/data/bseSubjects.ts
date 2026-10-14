@@ -126,6 +126,26 @@ export function computeTopicStatus(
     };
   }
 
+  if (subjectId === 'chemistry' && (topicId === 'substitution_reaction' || topicId === 'covalent_bonding')) {
+    const isApproved =
+      chemistryPack?.status === 'demo_approved' || chemistryPack != null;
+    return {
+      status: isApproved ? 'Preview' : 'Structure ready',
+      statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+      ready: isApproved,
+    };
+  }
+
+  if (subjectId === 'biology' && (topicId === 'cell_structure' || topicId === 'cell_unit_of_life')) {
+    const isApproved =
+      biologyPack?.status === 'demo_approved' || biologyPack != null;
+    return {
+      status: isApproved ? 'Preview' : 'Structure ready',
+      statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+      ready: isApproved,
+    };
+  }
+
   // Fallback for pending curriculum packs
   return {
     status: 'Pack pending',
@@ -210,11 +230,30 @@ export const BSE_SUBJECTS: BseSubject[] = [
     titleOr: 'ରସାୟନ ବିଜ୍ଞାନ',
     icon: '🧪',
     accentColor: '#0F9D8A',
-    status: 'Structure ready',
-    statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-    totalTopics: 3,
-    readyTopics: 0,
+    status: chemistryPack ? 'Preview' : 'Structure ready',
+    statusOr: chemistryPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+    totalTopics: 4,
+    readyTopics: chemistryPack ? 1 : 0,
     chapters: [
+      {
+        id: 'carbon_compounds',
+        chapterNumber: 4,
+        title: 'Carbon and its Compounds',
+        titleOr: 'ଚତୁର୍ଥ ଅଧ୍ୟାୟ: କାର୍ବନ ଏବଂ ଏହାର ଯୌଗିକ',
+        topics: [
+          {
+            id: 'substitution_reaction',
+            title: 'Substitution Reaction & Covalent Bond',
+            titleOr: 'ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା',
+            status: chemistryPack ? 'Preview' : 'Structure ready',
+            statusOr: chemistryPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+            ready: Boolean(chemistryPack),
+            estimatedMins: 5,
+            chunkId: 'BSE9-CHEM-CARBON-S04',
+            conceptId: 'substitution_reaction',
+          },
+        ],
+      },
       {
         id: 'matter_surroundings',
         chapterNumber: 2,
@@ -266,10 +305,10 @@ export const BSE_SUBJECTS: BseSubject[] = [
     titleOr: 'ଜୀବ ବିଜ୍ଞାନ',
     icon: '🌱',
     accentColor: '#22C55E',
-    status: 'Structure ready',
-    statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+    status: biologyPack ? 'Preview' : 'Structure ready',
+    statusOr: biologyPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
     totalTopics: 3,
-    readyTopics: 0,
+    readyTopics: biologyPack ? 1 : 0,
     chapters: [
       {
         id: 'cell_unit_of_life',
@@ -281,10 +320,12 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'cell_structure',
             title: 'Cell Structure and Organelles',
             titleOr: 'କୋଷ ଗଠନ',
-            status: 'Pack pending',
-            statusOr: 'ପ୍ୟାକ୍ ଅପେକ୍ଷାରେ ଅଛି',
-            ready: false,
+            status: biologyPack ? 'Preview' : 'Structure ready',
+            statusOr: biologyPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+            ready: Boolean(biologyPack),
             estimatedMins: 5,
+            chunkId: 'BSE9-BIO-CELL-S01',
+            conceptId: 'cell_structure',
           },
           {
             id: 'cell_division',

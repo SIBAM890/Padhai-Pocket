@@ -42,9 +42,11 @@ export default function SubjectPickerScreen({ navigation, onSelectTopic }: Props
       onSelectTopic(topic, subject);
     } else if (navigation) {
       navigation.navigate('Learn', {
+        profileId: 'prof_demo_01',
+        subject: subject.id,
+        chunkId: topic.chunkId ?? 'motion_01',
         subjectId: subject.id,
         topicId: topic.id,
-        chunkId: topic.chunkId,
       });
     }
   };

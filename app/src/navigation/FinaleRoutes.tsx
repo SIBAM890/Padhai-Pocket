@@ -32,7 +32,7 @@ export type FinaleRouteName = (typeof FINALE_ROUTES)[keyof typeof FINALE_ROUTES]
 
 export type FinaleStackParamList = {
   SubjectPicker: undefined;
-  Learn: { profileId?: string; subject?: string; chunkId?: string } | undefined;
+  Learn: { profileId?: string; subject?: string; chunkId?: string; subjectId?: string; topicId?: string } | undefined;
   Progress: { profileId?: string } | undefined;
   TeacherView: { profileId?: string } | undefined;
   ProfilePicker: undefined;
@@ -74,7 +74,7 @@ export function SubjectPickerScreen({ navigation }: StubScreenProps) {
           </Text>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => navigation.navigate('Learn')}
+            onPress={() => navigation.navigate('Learn', { profileId: 'prof_demo_01', subject: 'physics', chunkId: 'motion_01' })}
             activeOpacity={0.85}
           >
             <Text style={styles.primaryButtonText}>ଶିକ୍ଷଣ ଆରମ୍ଭ କରନ୍ତୁ • Start Learning</Text>
