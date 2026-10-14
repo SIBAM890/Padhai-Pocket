@@ -65,7 +65,10 @@ async def test_healthz():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.get("/healthz")
         assert res.status_code == 200
-        assert res.json() == {"ok": True}
+        data = res.json()
+        assert data["ok"] is True
+        assert "storage" in data
+        assert "supabase_connected" in data
 
 
 @pytest.mark.anyio
@@ -256,7 +259,7 @@ async def test_s7_failure_mode_ignored_in_prod():
         res = await client.get("/healthz", headers={"X-Failure-Mode": "500"})
         # Must be 200 because header is ignored in prod
         assert res.status_code == 200
-        assert res.json() == {"ok": True}
+        assert res.json()["ok"] is True
 
 
 @pytest.mark.anyio
