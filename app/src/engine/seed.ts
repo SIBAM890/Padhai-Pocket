@@ -10,11 +10,13 @@
  *            swap(a[i], a[j])
  */
 
+import { sha256Bytes } from './sha256';
+
 /**
  * PRD §4.9: compute deterministic probe seed.
  * seed = uint32 (big-endian first 4 bytes) of SHA-256("<profileId>|<conceptId>|<setId>").
  * Same learner, same concept, same set → same probe order every session.
- * Uses Web Crypto API (available in React Native / Expo / browsers).
+ * Uses Web Crypto when available, with pure-JS SHA-256 fallback for Hermes / JSC / offline.
  *
  * Reference test: computeSeed('prof_demo_01','distance_vs_displacement','A') === 1806635391
  */
@@ -24,30 +26,26 @@ export async function computeSeed(
   setId: string
 ): Promise<number> {
   const key = `${profileId}|${conceptId}|${setId}`;
-  try {
-    if (typeof crypto !== 'undefined' && crypto?.subtle?.digest) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(key);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+
+  let hash: Uint8Array;
+
+  // Prefer Web Crypto on Web / Node (fast, native)
+  if (typeof crypto !== 'undefined' && crypto?.subtle?.digest) {
+    try {
       const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hash = new Uint8Array(hashBuffer);
-      // big-endian uint32 from first 4 bytes
-      return ((hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]) >>> 0;
+      hash = new Uint8Array(hashBuffer);
+    } catch {
+      hash = sha256Bytes(data); // pure-JS fallback
     }
-  } catch (err) {
-    console.warn('crypto.subtle unavailable or failed in current context, using fallback seed:', err);
+  } else {
+    // Native Hermes/JSC: pure-JS SHA-256 (byte-identical to Web Crypto)
+    hash = sha256Bytes(data);
   }
 
-  // Guaranteed fallback for golden demo (prof_demo_01, distance_vs_displacement, A)
-  if (key === 'prof_demo_01|distance_vs_displacement|A') {
-    return 1806635391;
-  }
-
-  // Deterministic 32-bit FNV-1a hash fallback for non-secure LAN HTTP / test mocks
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < key.length; i++) {
-    h = Math.imul(h ^ key.charCodeAt(i), 16777619) >>> 0;
-  }
-  return h;
+  // big-endian uint32 from first 4 bytes
+  return ((hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]) >>> 0;
 }
 
 /**
