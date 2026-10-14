@@ -1,5 +1,8 @@
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
-import { CrashRecoveredState } from '../errorStates/crash_recovered';
+import {
+  ERROR_STATE_COMPONENTS,
+  type ErrorStateType,
+} from '../errorStates';
 import { insertEvent } from '../db/database';
 import type { PadhaiEvent } from '../types/events';
 
@@ -9,16 +12,26 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  errorType: ErrorStateType | null;
+}
+
+export function pickErrorState(
+  type: string | null,
+  hasError: boolean
+): ErrorStateType {
+  if (!hasError) return 'crash_recovered';
+  if (type && type in ERROR_STATE_COMPONENTS) return type as ErrorStateType;
+  return 'crash_recovered';
 }
 
 export class GlobalErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, errorType: null };
   }
 
   static getDerivedStateFromError(): State {
-    return { hasError: true };
+    return { hasError: true, errorType: 'crash_recovered' };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -49,13 +62,15 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   }
 
   handleReset = () => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, errorType: null });
   };
 
   render() {
     if (this.state.hasError) {
+      const activeType = pickErrorState(this.state.errorType, this.state.hasError);
+      const Comp = ERROR_STATE_COMPONENTS[activeType] || ERROR_STATE_COMPONENTS.crash_recovered;
       return (
-        <CrashRecoveredState
+        <Comp
           onAction={this.handleReset}
           actionText="ପାଠ ଜାରି ରଖନ୍ତୁ · Continue Learning"
         />
@@ -67,3 +82,4 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 }
 
 export default GlobalErrorBoundary;
+

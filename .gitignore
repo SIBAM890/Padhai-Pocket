@@ -55,3 +55,12 @@ skills-lock.json
 Thumbs.db
 .idea/
 .vscode/
+
+# Local SQLite databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Scratch scripts
+eval/scratch/

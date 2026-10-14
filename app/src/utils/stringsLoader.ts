@@ -1,70 +1,32 @@
-/**
- * Odia Child-Safe Strings Loader for Padhai Pocket.
- * Provides offline-first localization dictionary loading and string retrieval.
- * Conforms to PRD §3.6 and FR-16 (Zero network, affirmative copy).
+﻿/**
+ * stringsLoader ΓÇö loads Odia UI strings from the bundled JSON.
+ * Silent fallback to empty object on any error.
  */
+import stringsOr from '../../../content/strings.or.json';
 
-export type StringKey = string;
+let cache: Record<string, string> | null = null;
 
-let cachedOdiaStrings: Record<StringKey, string> | null = null;
-
-/**
- * Loads the child-safe Odia localization dictionary.
- * Searches bundled content/strings/strings.or.json or content/strings.or.json.
- * Silent fallback to empty object on error. Zero network calls.
- */
-export async function loadStrings(
-  locale: 'or' | 'en' = 'or'
-): Promise<Record<StringKey, string>> {
+export function getStrings(): Record<string, string> {
+  if (cache) return cache;
   try {
-    if (locale !== 'or') {
-      // English or alternate locales return empty dictionary (UI falls back to default labels)
-      return {};
+    const raw = (stringsOr as unknown) as Record<string, unknown>;
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (typeof v === 'string') out[k] = v;
     }
-
-    if (cachedOdiaStrings) {
-      return cachedOdiaStrings;
-    }
-
-    let loaded: Record<StringKey, string> = {};
-
-    try {
-      // Primary location: content/strings.or.json
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      loaded = require('../../../content/strings.or.json');
-    } catch {
-      try {
-        // Fallback nested location: content/strings/strings.or.json
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        loaded = require('../../../content/strings/strings.or.json');
-      } catch {
-        loaded = {};
-      }
-    }
-
-    cachedOdiaStrings = loaded && typeof loaded === 'object' ? loaded : {};
-    return cachedOdiaStrings;
+    cache = out;
+    return cache;
   } catch {
-    // Silent fallback on any error
     return {};
   }
 }
 
-/**
- * Translates a key using the provided strings map.
- * Returns the mapped string if present and non-empty, otherwise returns the fallback string.
- */
-export function t(
-  strings: Record<StringKey, string>,
-  key: StringKey,
-  fallback: string
-): string {
-  if (!strings || typeof strings !== 'object') {
+export function t(key: string, fallback: string): string {
+  try {
+    const s = getStrings();
+    const v = s[key];
+    return typeof v === 'string' && v.length > 0 ? v : fallback;
+  } catch {
     return fallback;
   }
-  const value = strings[key];
-  if (typeof value === 'string' && value.trim().length > 0) {
-    return value;
-  }
-  return fallback;
 }
