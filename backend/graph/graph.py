@@ -17,11 +17,18 @@ Requirements:
 
 import json
 from typing import Dict, Any, List, Optional
-from prompts import (
-    PINNED_MODEL_ID,
-    PLAN_PROMPT_HASH,
-    build_plan_input,
-)
+try:
+    from graph.prompts import (
+        PINNED_MODEL_ID,
+        PLAN_PROMPT_HASH,
+        build_plan_input,
+    )
+except ImportError:
+    from prompts import (
+        PINNED_MODEL_ID,
+        PLAN_PROMPT_HASH,
+        build_plan_input,
+    )
 
 # Known approved chunk IDs in the motion pack (BSE9-PHYS-MOTION-S02, etc.)
 APPROVED_CHUNKS = {
@@ -258,4 +265,35 @@ def run_pipeline(
             ref_res["event"],
             act_res["event"],
         ],
+    }
+
+
+def run_agent_workflow(
+    plan_input: Dict[str, Any],
+    is_online: bool = True,
+    mock_llm_plan: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Exposes LangGraph / agent planning pipeline for /v1/agent/plan endpoint.
+    """
+    if mock_llm_plan is None:
+        concept = plan_input.get("candidate_concept_ids", ["distance_vs_displacement"])[0] if plan_input.get("candidate_concept_ids") else "distance_vs_displacement"
+        tier = 1 if plan_input.get("mastery_bucket") in ("low", "struggling", "<0.50") else 2
+        mock_llm_plan = json.dumps({
+            "concept_id": concept,
+            "tier": tier,
+            "reason": f"Targeted remediation for concept {concept} at tier {tier}",
+        })
+
+    pipeline = run_pipeline(plan_input, is_online=is_online, mock_llm_plan=mock_llm_plan)
+    plan = pipeline["plan_result"]["plan"]
+    planner_mode = pipeline["plan_result"]["planner_mode"]
+
+    return {
+        "concept_id": plan["concept_id"],
+        "tier": plan["tier"],
+        "reason": plan["reason"],
+        "planner": planner_mode,
+        "events": pipeline["events"],
+        "act_action": pipeline["act_result"]["action"],
     }
