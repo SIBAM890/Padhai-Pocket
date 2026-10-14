@@ -12,6 +12,8 @@ import os
 import json
 import hashlib
 import secrets
+import subprocess
+import tempfile
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -184,6 +186,110 @@ async def get_profile_events(profile_id: str):
     """
     events = await storage_dual.read_events_for_profile(profile_id)
     return {"events": events}
+
+
+TTS_CACHE_DIR = Path(__file__).resolve().parent / "cache" / "tts"
+TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+CORE_ODIA_PHRASES = {
+    "motion": "ସୁନୀତା ଘରୁ ବିଦ୍ୟାଳୟକୁ ଯାଉଛନ୍ତି। ଦୂରତା ହେଉଛି ବକ୍ର ପଥର ମୋଟ ଦୈର୍ଘ୍ୟ, ଏବଂ ବିସ୍ଥାପନ ହେଉଛି ସିଧା ସଳଖ ଦୂରତା।",
+    "sound_check": "ନମସ୍କାର! ପଢାଇ ପକେଟ୍ କୁ ସ୍ୱାଗତ। ତୁମେ ଏହି ଶବ୍ଦଟି ସ୍ପଷ୍ଟ ଭାବରେ ଶୁଣିପାରୁଛ କି?",
+    "probe_audio": "ଧ୍ୟାନ ଦେଇ ଶୁଣନ୍ତୁ: ଏକ ବସ୍ତୁ ଓ ବିନ୍ଦୁରୁ ବାହାରି ଏ କୁ ଯାଇ ପୁଣି ବି କୁ ଫେରିଲେ, ତାର ବିସ୍ଥାପନର ପରିମାଣ କେତେ?",
+    "gravitation": "ପୃଥିବୀ ପୃଷ୍ଠରେ ବସ୍ତୁର ଓଜନ ୯୮ ନିଉଟନ୍ ହେଲେ, ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଏହା ଏକ ଷଷ୍ଠାଂଶ ଅର୍ଥାତ୍ ୧୬.୩ ନିଉଟନ୍ ହୋଇଥାଏ, ମାତ୍ର ବସ୍ତୁତ୍ୱ ସର୍ବଦା ୧୦ କିଲୋଗ୍ରାମ ରହେ।",
+    "remediation": "ବସ୍ତୁ କେଉଁଠାରୁ ଆରମ୍ଭ କରି ଯେଉଁଠାରେ ପହଞ୍ଚେ, ସେହି ସର୍ବନିମ୍ନ ସରଳରୈଖିକ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।",
+    "chemistry": "ସୂର୍ଯ୍ୟାଲୋକ ଉପସ୍ଥିତିରେ ମିଥେନ୍ ସହ କ୍ଲୋରିନ୍ ପ୍ରତିକ୍ରିୟା ଘଟି ହାଇଡ୍ରୋଜେନ୍ ପରମାଣୁ ବିସ୍ଥାପିତ ହୁଏ।",
+    "biology": "ମାଇଟୋକଣ୍ଡ୍ରିଆ ହେଉଛି କୋଷର ଶକ୍ତି କେନ୍ଦ୍ର, ଯାହା ଏଟିପି ଆକାରରେ ଶକ୍ତି ଉତ୍ପାଦନ କରେ।",
+    "maths": "ପରିମେୟ ସଂଖ୍ୟା ଏବଂ ଅପରିମେୟ ସଂଖ୍ୟା ଉଭୟ ବାସ୍ତବ ସଂଖ୍ୟା ରେଖାରେ ବିନ୍ଦୁ ଦର୍ଶାନ୍ତି।",
+}
+
+
+@app.get("/v1/tts")
+@app.head("/v1/tts")
+@app.post("/v1/tts")
+async def get_tts(request: Request, text: Optional[str] = None, key: Optional[str] = None):
+    """
+    Pure Odia dialect text-to-speech endpoint.
+    Uses espeak-ng Odia phoneme synthesizer ('-v or') and ffmpeg MP3 transcoding.
+    Cached on disk for sub-millisecond responses on repeat calls.
+    """
+    if not text and not key:
+        if request.method == "POST":
+            try:
+                body = await request.json()
+                text = body.get("text", "")
+                key = body.get("key", "")
+            except Exception:
+                text = ""
+                key = ""
+        else:
+            text = request.query_params.get("text", "")
+            key = request.query_params.get("key", "")
+
+    if key and key in CORE_ODIA_PHRASES:
+        text = CORE_ODIA_PHRASES[key]
+
+    clean_text = (text or "").strip()
+    if not clean_text:
+        raise HTTPException(status_code=400, detail="Missing text or key parameter")
+
+    clean_text = clean_text[:600]
+    cache_key = hashlib.md5(clean_text.encode("utf-8")).hexdigest()
+    cached_file = TTS_CACHE_DIR / f"{cache_key}.mp3"
+
+    if cached_file.exists():
+        return Response(
+            content=cached_file.read_bytes(),
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "X-TTS-Cached": "true",
+            },
+        )
+
+    wav_p = None
+    mp3_p = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_f, \
+             tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as mp3_f:
+            wav_p = wav_f.name
+            mp3_p = mp3_f.name
+
+        subprocess.run(
+            ["espeak-ng", "-v", "or", "-s", "125", "-p", "50", "-g", "6", clean_text, "-w", wav_p],
+            check=True,
+            timeout=8,
+        )
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", wav_p, "-b:a", "64k", "-f", "mp3", mp3_p],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+            timeout=8,
+        )
+
+        audio_bytes = Path(mp3_p).read_bytes()
+        cached_file.write_bytes(audio_bytes)
+
+        return Response(
+            content=audio_bytes,
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "X-TTS-Cached": "false",
+            },
+        )
+    except Exception as e:
+        print(f"TTS synthesis error: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS synthesis error: {str(e)}")
+    finally:
+        for p in [wav_p, mp3_p]:
+            if p and os.path.exists(p):
+                try:
+                    os.remove(p)
+                except Exception:
+                    pass
+
 
 
 @app.post("/v1/agent/plan")

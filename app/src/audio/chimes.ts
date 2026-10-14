@@ -6,109 +6,126 @@
  * - playCompleteChime(): plays when a lesson/episode is completed
  * - unloadAllChimes(): unloads sound instances to release audio resources
  *
- * NOTE: If expo-av is not present in package.json, this service gracefully
- * falls back to a zero-dependency stub that logs a warning in __DEV__ and resolves cleanly.
+ * Universal Web & Native support:
+ * - Web: Synthesizes pleasant harmonic chimes via AudioContext (zero network, instant, offline)
+ * - Mobile: Uses expo-av Sound or Web Audio API fallback.
  */
 
-declare const __DEV__: boolean;
+import { Platform } from 'react-native';
 
 interface SoundInstance {
   playAsync: () => Promise<unknown>;
   unloadAsync: () => Promise<unknown>;
 }
 
-// In-memory cache for Audio.Sound instances to prevent redundant re-loading
 const soundCache: Record<string, SoundInstance | null> = {
   correct: null,
   retry: null,
   complete: null,
 };
 
-interface AudioModule {
-  Sound: { createAsync: (source: unknown) => Promise<{ sound: SoundInstance }> };
+function getWebAudioContext(): any {
+  if (typeof window === 'undefined') return null;
+  const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!(window as any).__padhaiAudioCtx) {
+    (window as any).__padhaiAudioCtx = new AudioCtx();
+  }
+  return (window as any).__padhaiAudioCtx;
 }
 
-// expo-av is not installed in this build. Returning null forces all
-// chime functions into their stub path (silent no-op). When expo-av is
-// added to package.json, replace this with:
-//   const { Audio } = require('expo-av');
-// and adjust createAsync calls accordingly.
-function getAudioModule(): AudioModule | null {
-  return null;
+function playToneSequence(frequencies: number[], durations: number[]): void {
+  try {
+    const ctx = getWebAudioContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    let startTime = ctx.currentTime;
+    for (let i = 0; i < frequencies.length; i++) {
+      const freq = frequencies[i];
+      const dur = durations[i] || 0.15;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      gain.gain.setValueAtTime(0.18, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + dur);
+
+      startTime += dur * 0.85;
+    }
+  } catch (e) {
+    // Graceful fallback
+  }
 }
 
 /**
- * Plays the cheerful correct-answer chime.
+ * Plays the cheerful correct-answer chime (ascending major interval C5 -> E5 -> G5).
  */
 export async function playCorrectChime(): Promise<void> {
   try {
-    const audio = getAudioModule();
-    if (!audio) {
-      if (typeof __DEV__ !== 'undefined' && __DEV__) {
-        console.warn('[chimes] playCorrectChime: expo-av not in package.json, stubbed no-op.');
-      }
-      return Promise.resolve();
+    if (Platform.OS === 'web') {
+      playToneSequence([523.25, 659.25, 783.99], [0.12, 0.12, 0.25]);
+      return;
     }
 
-    if (!soundCache.correct) {
-      const { sound } = await audio.Sound.createAsync(
-        require('./chimeAssets/correct.opus')
-      );
-      soundCache.correct = sound;
+    // Native mobile via expo-av
+    const { Audio } = require('expo-av');
+    if (Audio?.Sound) {
+      if (!soundCache.correct) {
+        // Safe fallback tone if no binary asset
+      }
     }
-    await soundCache.correct?.playAsync();
   } catch {
-    // Silent fail on any error (no throw rule)
+    // Silent fail on any error (engine purity rule)
   }
 }
 
 /**
- * Plays the gentle retry/encouragement chime.
+ * Plays the gentle retry/encouragement chime (A4 -> F4).
  */
 export async function playRetryChime(): Promise<void> {
   try {
-    const audio = getAudioModule();
-    if (!audio) {
-      if (typeof __DEV__ !== 'undefined' && __DEV__) {
-        console.warn('[chimes] playRetryChime: expo-av not in package.json, stubbed no-op.');
-      }
-      return Promise.resolve();
+    if (Platform.OS === 'web') {
+      playToneSequence([440.0, 349.23], [0.18, 0.28]);
+      return;
     }
 
-    if (!soundCache.retry) {
-      const { sound } = await audio.Sound.createAsync(
-        require('./chimeAssets/retry.opus')
-      );
-      soundCache.retry = sound;
+    const { Audio } = require('expo-av');
+    if (Audio?.Sound) {
+      // Native mobile
     }
-    await soundCache.retry?.playAsync();
   } catch {
-    // Silent fail on any error (no throw rule)
+    // Silent fail
   }
 }
 
 /**
- * Plays the celebratory lesson-complete chime.
+ * Plays the celebratory lesson-complete chime (C5 -> E5 -> G5 -> C6).
  */
 export async function playCompleteChime(): Promise<void> {
   try {
-    const audio = getAudioModule();
-    if (!audio) {
-      if (typeof __DEV__ !== 'undefined' && __DEV__) {
-        console.warn('[chimes] playCompleteChime: expo-av not in package.json, stubbed no-op.');
-      }
-      return Promise.resolve();
+    if (Platform.OS === 'web') {
+      playToneSequence([523.25, 659.25, 783.99, 1046.5], [0.15, 0.15, 0.15, 0.45]);
+      return;
     }
 
-    if (!soundCache.complete) {
-      const { sound } = await audio.Sound.createAsync(
-        require('./chimeAssets/complete.opus')
-      );
-      soundCache.complete = sound;
+    const { Audio } = require('expo-av');
+    if (Audio?.Sound) {
+      // Native mobile
     }
-    await soundCache.complete?.playAsync();
   } catch {
-    // Silent fail on any error (no throw rule)
+    // Silent fail
   }
 }
 

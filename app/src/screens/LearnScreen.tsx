@@ -68,6 +68,8 @@ import {
   getKuiGlossary,
   getPackHash,
 } from '../content/loader';
+import { playOdiaVoice, stopOdiaAudio } from '../audio/odiaAudio';
+import { playCorrectChime, playRetryChime, playCompleteChime } from '../audio/chimes';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
@@ -563,8 +565,13 @@ export default function LearnScreen({ navigation, route }: Props) {
       loadStreakAndStats();
 
       if (isCorrect) {
-        setTimeout(() => setFlowStep('COMPLETION'), 700);
+        playCorrectChime();
+        setTimeout(() => {
+          playCompleteChime();
+          setFlowStep('COMPLETION');
+        }, 700);
       } else {
+        playRetryChime();
         setProbeIndex(0);
         const firstMod = probeSequence[0] || 'T';
         if (firstMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
@@ -1011,6 +1018,12 @@ export default function LearnScreen({ navigation, route }: Props) {
                 choices={audioProbe.choices}
                 selectedChoiceId={selectedProbeChoice}
                 onSelect={handleSelectAudioProbe}
+                onPlayAudio={() =>
+                  playOdiaVoice({
+                    key: 'probe_audio',
+                    text: audioProbe.prompt,
+                  })
+                }
               />
             )}
 
@@ -1048,6 +1061,9 @@ export default function LearnScreen({ navigation, route }: Props) {
 
             {flowStep === 'REMEDIATION' && (() => {
               const matched = engineStateRef.current?.last_resource_match?.selected;
+              const spokenRemediation = matched?.title_or
+                ? `${matched.title_or}। ${remediationKuiText || ''}`
+                : `ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`;
               return (
                 <RemediationCard
                   conceptTitle={matched?.title_en ? `${matched.title_en}` : `${questionTitle} (${activeSubjectTitleOr})`}
@@ -1057,13 +1073,22 @@ export default function LearnScreen({ navigation, route }: Props) {
                   resourceModality={matched?.modality}
                   resourceReasons={matched?.reasons}
                   matchScore={matched?.score}
-                  onListen={() => {}}
+                  onListen={() => {
+                    playOdiaVoice({
+                      key: 'remediation',
+                      text: spokenRemediation,
+                    });
+                  }}
                   onTryAgain={() => {
+                    stopOdiaAudio();
                     setSelectedOption(null);
                     setSelectedProbeChoice(null);
                     setFlowStep('QUESTION_INTERACTION');
                   }}
-                  onContinue={handleCompleteRemediation}
+                  onContinue={() => {
+                    stopOdiaAudio();
+                    handleCompleteRemediation();
+                  }}
                 />
               );
             })()}

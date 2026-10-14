@@ -17,6 +17,7 @@ import Svg, {
 } from 'react-native-svg';
 import { colors } from '../theme/theme';
 import { styles } from './MotionSimulation.styles';
+import { playOdiaVoice, stopOdiaAudio } from '../audio/odiaAudio';
 
 export interface MotionSimulationProps {
   mode?: 'interactive' | 'probe' | 'compact';
@@ -120,33 +121,15 @@ export default function MotionSimulation({
     }
   }, []);
 
-  // Audio / Narration hook when Play is tapped
+  // Audio / Narration hook when Play is tapped (Pure Odia Dialect)
   const triggerNarration = () => {
     try {
-      if (
-        Platform.OS === 'web' &&
-        typeof window !== 'undefined' &&
-        'speechSynthesis' in window &&
-        typeof (window as any).SpeechSynthesisUtterance === 'function'
-      ) {
-        window.speechSynthesis.cancel();
-        const text =
-          'ସୁନୀତା ଘରୁ ବିଦ୍ୟାଳୟକୁ ଯାଉଛନ୍ତି। ଦୂରତା ହେଉଛି ବକ୍ର ପଥର ମୋଟ ଦୈର୍ଘ୍ୟ, ଏବଂ ବିସ୍ଥାପନ ହେଉଛି ସିଧା ସଳଖ ଦୂରତା।';
-        const utterance = new (window as any).SpeechSynthesisUtterance(text);
-        const voice = pickBestVoice();
-        if (voice) {
-          utterance.voice = voice;
-          utterance.lang = voice.lang;
-        } else {
-          utterance.lang = 'hi-IN'; // safe fallback if no voices enumerated yet
-        }
-        utterance.rate = 0.85; // slower for young learners
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        window.speechSynthesis.speak(utterance);
-      }
+      playOdiaVoice({
+        key: 'motion',
+        text: 'ସୁନୀତା ଘରୁ ବିଦ୍ୟାଳୟକୁ ଯାଉଛନ୍ତି। ଦୂରତା ହେଉଛି ବକ୍ର ପଥର ମୋଟ ଦୈର୍ଘ୍ୟ, ଏବଂ ବିସ୍ଥାପନ ହେଉଛି ସିଧା ସଳଖ ଦୂରତା।',
+      });
     } catch {
-      // Graceful fallback if TTS unavailable
+      // Graceful fallback if audio unavailable
     }
   };
 
@@ -171,8 +154,12 @@ export default function MotionSimulation({
       }, 30);
 
       animRef.current = interval;
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        stopOdiaAudio();
+      };
     } else {
+      stopOdiaAudio();
       if (animRef.current) clearInterval(animRef.current);
     }
   }, [isPlaying]);
@@ -182,10 +169,14 @@ export default function MotionSimulation({
       setProgress(0);
       onProgressChange?.(0);
     }
+    if (isPlaying) {
+      stopOdiaAudio();
+    }
     setIsPlaying(!isPlaying);
   };
 
   const handleReset = () => {
+    stopOdiaAudio();
     setIsPlaying(false);
     setProgress(0);
     onProgressChange?.(0);
