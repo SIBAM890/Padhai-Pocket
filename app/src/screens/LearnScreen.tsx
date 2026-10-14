@@ -171,6 +171,30 @@ export default function LearnScreen({ navigation }: Props) {
     return unsub;
   }, [triggerTelemetryUpdate]);
 
+  // Request pedagogical plan from backend LangGraph agent workflow when online
+  useEffect(() => {
+    if (forcedOffline || networkMode !== 'ONLINE') return;
+    const callAgent = async () => {
+      try {
+        const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+        const resp = await fetch(`${baseUrl}/v1/agent/plan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            candidate_concept_ids: ['distance_vs_displacement'],
+            mastery_bucket: 'low',
+            tier_history: [],
+          }),
+        });
+        const plan = await resp.json();
+        console.log('[AGENT PLAN]', plan);
+      } catch (e) {
+        console.warn('[AGENT PLAN FAILED]', e);
+      }
+    };
+    callAgent();
+  }, [forcedOffline, networkMode]);
+
   // When airplane mode is toggled OFF or network becomes ONLINE, attempt to sync pending events
   useEffect(() => {
     if (!forcedOffline && networkMode === 'ONLINE') {

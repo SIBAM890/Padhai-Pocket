@@ -133,6 +133,9 @@ def verify_device_token(authorization: Optional[str]) -> str:
 # ==============================================================================
 
 
+from graph.graph import run_agent_workflow
+
+
 @app.options("/healthz")
 @app.get("/healthz")
 async def healthz():
@@ -140,6 +143,20 @@ async def healthz():
     Network-mode probe; returns {ok: true} only. Fast, no auth, no DB hit.
     """
     return {"ok": True}
+
+
+@app.post("/v1/agent/plan")
+async def agent_plan(request: Request):
+    """
+    Exposes LangGraph planning pipeline to frontend / diagnostic agent.
+    """
+    body = await request.json()
+    result = run_agent_workflow({
+        "candidate_concept_ids": body.get("candidate_concept_ids", []),
+        "mastery_bucket": body.get("mastery_bucket", "mid"),
+        "tier_history": body.get("tier_history", []),
+    })
+    return result
 
 
 @app.post("/v1/devices/register")
