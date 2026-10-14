@@ -5,6 +5,7 @@ import LearnScreen from './src/screens/LearnScreen';
 import TraceScreen from './src/screens/TraceScreen';
 import RawLogScreen from './src/screens/RawLogScreen';
 import ProgressScreen from './src/screens/ProgressScreen';
+import TeacherViewScreen from './src/screens/TeacherViewScreen';
 import { SplashScreen } from './src/components/SplashScreen';
 import { GlobalErrorBoundary } from './src/components/GlobalErrorBoundary';
 import { initDatabase } from './src/db/database';
@@ -14,10 +15,11 @@ import { StatusBar } from 'react-native';
 import { colors } from './src/theme/theme';
 
 export type RootStackParamList = {
-  Learn: undefined;
+  Learn: { profileId?: string; subject?: string; chunkId?: string } | undefined;
   Trace: undefined;
   RawLog: undefined;
   Progress: { profileId: string };
+  TeacherView: { profileId: string };
 };
 
 export { FINALE_ROUTES };
@@ -67,6 +69,7 @@ export default function App() {
           <Stack.Screen name="Trace" component={TraceScreen} />
           <Stack.Screen name="RawLog" component={RawLogScreen} />
           <Stack.Screen name="Progress" component={ProgressScreen} />
+          <Stack.Screen name="TeacherView" component={TeacherViewScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </GlobalErrorBoundary>

@@ -32,9 +32,9 @@ export type FinaleRouteName = (typeof FINALE_ROUTES)[keyof typeof FINALE_ROUTES]
 
 export type FinaleStackParamList = {
   SubjectPicker: undefined;
-  Learn: undefined;
-  Progress: undefined;
-  TeacherView: undefined;
+  Learn: { profileId?: string; subject?: string; chunkId?: string } | undefined;
+  Progress: { profileId?: string } | undefined;
+  TeacherView: { profileId?: string } | undefined;
   ProfilePicker: undefined;
   Trace: undefined;
   RawLog: undefined;

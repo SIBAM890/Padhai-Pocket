@@ -20,6 +20,7 @@ import {
 } from '../sync/syncClient';
 import type { StoredEvent } from '../types/events';
 import type { EngineState, EngineContext } from '../engine';
+import { ReplayVerifyButton } from './ReplayVerifyButton';
 
 interface JudgeTelemetryPanelProps {
   engineState: EngineState;
@@ -28,6 +29,9 @@ interface JudgeTelemetryPanelProps {
   forcedOffline: boolean;
   onToggleForcedOffline: (val: boolean) => void;
   onRefreshParent?: () => void;
+  profileId?: string;
+  currentEpisodeId?: string;
+  episodeId?: string;
 }
 
 export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
@@ -37,6 +41,9 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   forcedOffline,
   onToggleForcedOffline,
   onRefreshParent,
+  profileId: propProfileId,
+  currentEpisodeId: propCurrentEpisodeId,
+  episodeId: propEpisodeId,
 }) => {
   const [events, setEvents] = useState<StoredEvent[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -122,6 +129,20 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   // Pattern formatting
   const pat = engineState.current_probe_pattern || [null, null, null];
   const formatBit = (b: number | null) => (b === 1 ? '✓ (1)' : b === 0 ? '✗ (0)' : '—');
+
+  // Derive profileId & currentEpisodeId safely for deterministic episode replay
+  const profileId =
+    propProfileId ??
+    engineState?.profile_id ??
+    events[0]?.profile_id ??
+    'prof_demo_01';
+
+  const currentEpisodeId =
+    propCurrentEpisodeId ??
+    propEpisodeId ??
+    engineState?.episode_id ??
+    [...events].reverse().find((e) => Boolean(e.episode_id))?.episode_id ??
+    null;
 
   return (
     <View style={styles.container}>
@@ -428,6 +449,16 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
                     </View>
                   </View>
                 ))
+              )}
+
+              {currentEpisodeId && (
+                <View style={{ marginTop: spacing.md }}>
+                  <ReplayVerifyButton
+                    episodeId={currentEpisodeId}
+                    events={events}
+                    profileId={profileId}
+                  />
+                </View>
               )}
             </View>
           )}
