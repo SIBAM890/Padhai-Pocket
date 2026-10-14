@@ -46,6 +46,8 @@ integration_result.json
 .agents/
 skills-lock.json
 
-# OS files
+# OS & IDE files
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
