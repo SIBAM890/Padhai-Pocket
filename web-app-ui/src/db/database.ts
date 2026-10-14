@@ -71,40 +71,46 @@ export async function insertEvent(
 }
 
 export async function listEvents(limit = 200): Promise<StoredEvent[]> {
-  const db = await getDatabase();
-  const rows = await db.getAllAsync<{
-    event_id: string;
-    profile_id: string;
-    seq: number;
-    ts: string;
-    origin: string;
-    node: string;
-    action: string;
-    payload_json: string;
-    sync_status: SyncStatus;
-    retry_count: number;
-    next_retry_at: number;
-  }>(`SELECT * FROM events ORDER BY seq DESC, ts DESC LIMIT ?`, limit);
+  try {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<{
+      event_id: string;
+      profile_id: string;
+      seq: number;
+      ts: string;
+      origin: string;
+      node: string;
+      action: string;
+      payload_json: string;
+      sync_status: SyncStatus;
+      retry_count: number;
+      next_retry_at: number;
+    }>(`SELECT * FROM events ORDER BY seq DESC, ts DESC LIMIT ?`, limit);
 
-  return rows.map((row: {
-    event_id: string;
-    profile_id: string;
-    seq: number;
-    ts: string;
-    origin: string;
-    node: string;
-    action: string;
-    payload_json: string;
-    sync_status: SyncStatus;
-    retry_count: number;
-    next_retry_at: number;
-  }) => ({
-    ...(JSON.parse(row.payload_json) as PadhaiEvent),
-    sync_status: row.sync_status,
-    retry_count: row.retry_count,
-    next_retry_at: row.next_retry_at,
-  }));
+    return rows.map((row: {
+      event_id: string;
+      profile_id: string;
+      seq: number;
+      ts: string;
+      origin: string;
+      node: string;
+      action: string;
+      payload_json: string;
+      sync_status: SyncStatus;
+      retry_count: number;
+      next_retry_at: number;
+    }) => ({
+      ...(JSON.parse(row.payload_json) as PadhaiEvent),
+      sync_status: row.sync_status,
+      retry_count: row.retry_count,
+      next_retry_at: row.next_retry_at,
+    }));
+  } catch (err) {
+    console.warn('listEvents fallback to empty array', err);
+    return [];
+  }
 }
+
 
 export async function pendingEvents(limit = 200): Promise<PadhaiEvent[]> {
   const db = await getDatabase();
