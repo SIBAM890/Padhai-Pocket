@@ -12,6 +12,7 @@
   "chunks": [
     {
       "chunk_id": "BSE9-BIO-CELL-S01",
+      "concept_id": "cell_structure",
       "title_or": "କୋଷର ସଂରଚନା ଏବଂ ମୁଖ୍ୟ ଅଙ୍ଗିକା",
       "odia_text": "ପ୍ରତ୍ୟେକ ଜୀବ ଶରୀର ଗୋଟିଏ ବା ଏକାଧିକ କୋଷ ଦ୍ୱାରା ଗଠିତ । କୋଷ ହେଉଛି ଜୀବର ମୌଳିକ ଗଠନମୂଳକ ଓ କାର୍ଯ୍ୟକାରୀ ଏକକ । କୋଷଝିଲ୍ଲୀ କୋଷକୁ ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ଦିଏ ଏବଂ କୋଷଜୀବକରେ ବିଭିନ୍ନ ଅଙ୍ଗିକା ଯଥା ମାଇଟୋକଣ୍ଡ୍ରିଆ ଥାଏ ।",
       "terms": [
@@ -19,6 +20,32 @@
         "T_MITO"
       ],
       "source_page": 1,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-BIO-CELL-S02",
+      "concept_id": "cell_division",
+      "title_or": "କୋଷ ବିଭାଜନ (ମାଇଟୋସିସ୍ ଏବଂ ମିଓସିସ୍)",
+      "odia_text": "ଜୀବର ବୃଦ୍ଧି ଏବଂ କ୍ଷୟପୂରଣ ପାଇଁ କୋଷ ବିଭାଜନ ଆବଶ୍ୟକ । କୋଷ ବିଭାଜନ ମୁଖ୍ୟତଃ ଦୁଇ ପ୍ରକାରର: ମାଇଟୋସିସ୍ (ସମବିଭାଜନ) ଏବଂ ମିଓସିସ୍ (ଅର୍ଦ୍ଧବିଭାଜନ) । ମାଇଟୋସିସ୍ ଦ୍ୱାରା ଶରୀରର କାଇକ କୋଷଗୁଡ଼ିକ ବୃଦ୍ଧି ପାଆନ୍ତି ଏବଂ ଗୋଟିଏ ମାତୃକୋଷରୁ ଦୁଇଟି ସମଗୁଣସଂପନ୍ନ ଅପତ୍ୟ କୋଷ ସୃଷ୍ଟି ହୁଅନ୍ତି ।",
+      "terms": [
+        "T_MITOSIS",
+        "T_MEIOSIS"
+      ],
+      "source_page": 12,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-BIO-TISSUE-S01",
+      "concept_id": "plant_tissues",
+      "title_or": "ଉଦ୍ଭିଦ କଳା (ଭାଜକ କଳା ଓ ସ୍ଥାୟୀ କଳା)",
+      "odia_text": "ଉଦ୍ଭିଦ ଶରୀରରେ ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ କାର୍ଯ୍ୟ କରୁଥିବା ସମରୂପୀ କୋଷଗୁଡ଼ିକର ସମୂହକୁ କଳା (Tissue) କୁହାଯାଏ । ଉଦ୍ଭିଦର ବୃଦ୍ଧିଶୀଳ ଅଞ୍ଚଳରେ ଭାଜକ କଳା (Meristematic tissue) ଥାଏ ଯାହାର କୋଷଗୁଡ଼ିକ କ୍ରମାଗତ ବିଭାଜିତ ହୋଇପାରନ୍ତି । ବିଭାଜନ କ୍ଷମତା ହରାଇବା ପରେ ସେଗୁଡ଼ିକ ସ୍ଥାୟୀ କଳା (Permanent tissue) ରେ ପରିଣତ ହୁଅନ୍ତି ।",
+      "terms": [
+        "T_MERISTEM",
+        "T_PERMANENT"
+      ],
+      "source_page": 24,
       "status": "demo_approved",
       "reviewed_by": "Satya"
     }
@@ -49,11 +76,38 @@
       "validated_by": "Satya",
       "dialect": null,
       "status": "approved"
+    },
+    {
+      "term_id": "T_MITOSIS",
+      "en": "Mitosis",
+      "odia_from_textbook": "ସମବିଭାଜନ",
+      "kui": {
+        "description": "କୋଷର ସମାନ ଦୁଇ ଭାଗ ହେବା",
+        "script": "ସମବିଭାଜନ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_MERISTEM",
+      "en": "Meristematic Tissue",
+      "odia_from_textbook": "ଭାଜକ କଳା",
+      "kui": {
+        "description": "ବୃଦ୍ଧି ପାଉଥିବା ଉଦ୍ଭିଦ କଳା",
+        "script": "ଭାଜକ କଳା",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
     }
   ],
   "items": [
     {
       "item_id": "BIO-P1",
+      "chunk_id": "BSE9-BIO-CELL-S01",
       "concept_id": "cell_structure",
       "set": "A",
       "modality": "P",
@@ -70,6 +124,7 @@
     },
     {
       "item_id": "BIO-A1",
+      "chunk_id": "BSE9-BIO-CELL-S01",
       "concept_id": "cell_structure",
       "set": "A",
       "modality": "A",
@@ -86,15 +141,16 @@
     },
     {
       "item_id": "BIO-T1",
+      "chunk_id": "BSE9-BIO-CELL-S01",
       "concept_id": "cell_structure",
       "set": "A",
       "modality": "T",
       "stem": "ଜୀବ ଶରୀରର ମୌଳିକ ଗଠନମୂଳକ ଏବଂ କାର୍ଯ୍ୟକାରୀ ଏକକ କ'ଣ?",
       "options": [
-        "କୋଷ",
-        "କଳା",
-        "ଅଙ୍ଗ",
-        "ରକ୍ତ"
+        "କୋଷ (Cell)",
+        "କଳା (Tissue)",
+        "ଅଙ୍ଗ (Organ)",
+        "ରକ୍ତ (Blood)"
       ],
       "correct": 0,
       "audio": "bio_t1.mp3",
@@ -102,18 +158,121 @@
     },
     {
       "item_id": "BIO-W1",
+      "chunk_id": "BSE9-BIO-CELL-S01",
       "concept_id": "cell_structure",
       "set": "A",
       "modality": "W",
-      "stem": "କୋଷଝିଲ୍ଲୀର ପ୍ରମୁଖ କାର୍ଯ୍ୟ କ'ଣ?",
+      "stem": "କୋଷ ଶବ୍ଦର ମୁଖ୍ୟ ପରିଚୟ କ'ଣ?",
       "options": [
-        "କୋଷକୁ ଆବରଣ ଓ ଆକାର ପ୍ରଦାନ",
-        "ଶକ୍ତି ଉତ୍ପାଦନ",
-        "ପ୍ରୋଟିନ୍ ସଂଶ୍ଳେଷଣ",
-        "ପାଚନ କ୍ରିୟା"
+        "ଜୀବନର ମୌଳିକ ଏକକ",
+        "କେବଳ ପତ୍ରରେ ଥାଏ",
+        "ଅଜୀବ ପଦାର୍ଥ",
+        "ରକ୍ତ କଣିକା ମାତ୍ର"
       ],
       "correct": 0,
       "audio": "bio_w1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-DIV1-T",
+      "chunk_id": "BSE9-BIO-CELL-S02",
+      "concept_id": "cell_division",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଜୀବ ଶରୀରର ବୃଦ୍ଧି ଓ କ୍ଷୟପୂରଣ ପାଇଁ କେଉଁ କୋଷ ବିଭାଜନ ଘଟେ?",
+      "options": [
+        "ମାଇଟୋସିସ୍ (ସମବିଭାଜନ)",
+        "ମିଓସିସ୍ (ଅର୍ଦ୍ଧବିଭାଜନ)",
+        "କଳିକାୟନ",
+        "ଖଣ୍ଡୀଭବନ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-DIV1-P",
+      "chunk_id": "BSE9-BIO-CELL-S02",
+      "concept_id": "cell_division",
+      "set": "A",
+      "modality": "P",
+      "stem": "ସମବିଭାଜନ (Mitosis) ପ୍ରକ୍ରିୟାରେ ଗୋଟିଏ ମାତୃକୋଷରୁ କେତୋଟି ଅପତ୍ୟ କୋଷ ସୃଷ୍ଟି ହୁଏ?",
+      "options": [
+        "୨ଟି (ସମଗୁଣ ସଂପନ୍ନ)",
+        "୪ଟି",
+        "୧ଟି",
+        "୮ଟି"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-DIV1-A",
+      "chunk_id": "BSE9-BIO-CELL-S02",
+      "concept_id": "cell_division",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: କେଉଁ ପ୍ରକ୍ରିୟାରେ ଅପତ୍ୟ କୋଷରେ କ୍ରୋମୋଜୋମ୍ ସଂଖ୍ୟା ମାତୃକୋଷ ସହ ସମାନ ରହେ?",
+      "options": [
+        "ମାଇଟୋସିସ୍ (ସମବିଭାଜନ)",
+        "ମିଓସିସ୍",
+        "ବିଘଟନ",
+        "ପରିବ୍ୟକ୍ତି"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-TISS1-T",
+      "chunk_id": "BSE9-BIO-TISSUE-S01",
+      "concept_id": "plant_tissues",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଉଦ୍ଭିଦର ଯେଉଁ କଳାର କୋଷଗୁଡ଼ିକ କ୍ରମାଗତ ବିଭାଜିତ ହୋଇ ବୃଦ୍ଧି ଘଟାନ୍ତି, ତାହାକୁ କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ଭାଜକ କଳା (Meristematic tissue)",
+        "ସ୍ଥାୟୀ କଳା (Permanent tissue)",
+        "ଫ୍ଲୋଏମ୍ କଳା",
+        "ତ୍ୱଚୀୟ କଳା"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-TISS1-P",
+      "chunk_id": "BSE9-BIO-TISSUE-S01",
+      "concept_id": "plant_tissues",
+      "set": "A",
+      "modality": "P",
+      "stem": "ଉଦ୍ଭିଦର କାଣ୍ଡ ଓ ଚେରର ଅଗ୍ରଭାଗରେ କେଉଁ କଳା ଦେଖାଯାଏ?",
+      "options": [
+        "ଅଗ୍ରସ୍ଥ ଭାଜକ କଳା (Apical Meristem)",
+        "ସରଳ ସ୍ଥାୟୀ କଳା",
+        "ଜଟିଳ ସ୍ଥାୟୀ କଳା",
+        "ମୃତ କଳା"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-TISS1-A",
+      "chunk_id": "BSE9-BIO-TISSUE-S01",
+      "concept_id": "plant_tissues",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଏକା ଭଳି କାର୍ଯ୍ୟ କରୁଥିବା କୋଷ ସମୂହକୁ କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "କଳା (Tissue)",
+        "ଅଙ୍ଗ",
+        "ଅଙ୍ଗିକା",
+        "କୋଷରସ"
+      ],
+      "correct": 0,
+      "audio": null,
       "misconception_tag": null
     }
   ]

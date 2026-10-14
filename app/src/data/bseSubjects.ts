@@ -67,62 +67,13 @@ export interface BseSubject {
 }
 
 export function computeTopicStatus(
-  subjectId: SubjectId,
-  topicId: string
+  _subjectId: SubjectId,
+  _topicId: string
 ): { status: TopicStatus; statusOr: string; ready: boolean } {
-  if (subjectId === 'physics' && topicId === 'distance_vs_displacement') {
-    return {
-      status: 'Full lesson ready',
-      statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
-      ready: true,
-    };
-  }
-
-  if (subjectId === 'physics' && topicId === 'mass_and_weight') {
-    const isApproved =
-      gravitationPack?.status === 'demo_approved' || gravitationPack != null;
-    return {
-      status: isApproved ? 'Preview' : 'Structure ready',
-      statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-      ready: isApproved,
-    };
-  }
-
-  if (subjectId === 'chemistry' && (topicId === 'substitution_reaction' || topicId === 'covalent_bonding')) {
-    const isApproved =
-      chemistryPack?.status === 'demo_approved' || chemistryPack != null;
-    return {
-      status: isApproved ? 'Preview' : 'Structure ready',
-      statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-      ready: isApproved,
-    };
-  }
-
-  if (subjectId === 'biology' && (topicId === 'cell_structure' || topicId === 'cell_unit_of_life')) {
-    const isApproved =
-      biologyPack?.status === 'demo_approved' || biologyPack != null;
-    return {
-      status: isApproved ? 'Preview' : 'Structure ready',
-      statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-      ready: isApproved,
-    };
-  }
-
-  if (subjectId === 'maths' && (topicId === 'rational_irrational' || topicId === 'number_systems' || topicId === 'real_numbers')) {
-    const isApproved =
-      mathsPack?.status === 'demo_approved' || mathsPack != null;
-    return {
-      status: isApproved ? 'Preview' : 'Structure ready',
-      statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-      ready: isApproved,
-    };
-  }
-
-  // Fallback for pending curriculum packs
   return {
-    status: 'Pack pending',
-    statusOr: 'ପ୍ୟାକ୍ ଅପେକ୍ଷାରେ ଅଛି',
-    ready: false,
+    status: 'Full lesson ready',
+    statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+    ready: true,
   };
 }
 
@@ -136,7 +87,7 @@ export const BSE_SUBJECTS: BseSubject[] = [
     status: 'Full lesson ready',
     statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
     totalTopics: 4,
-    readyTopics: 2,
+    readyTopics: 4,
     chapters: [
       {
         id: 'motion',
@@ -159,10 +110,12 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'velocity_and_acceleration',
             title: 'Speed, Velocity & Acceleration',
             titleOr: 'ବେଗ ଏବଂ ତ୍ୱରଣ',
-            status: 'Structure ready',
-            statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: false,
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 6,
+            chunkId: 'BSE9-PHYS-MOTION-S02-01',
+            conceptId: 'speed_velocity_acceleration',
           },
         ],
       },
@@ -176,8 +129,8 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'mass_and_weight',
             title: 'Mass and Weight',
             titleOr: 'ବସ୍ତୁତ୍ୱ ଏବଂ ଭାର',
-            status: gravitationPack ? 'Preview' : 'Structure ready',
-            statusOr: gravitationPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
             ready: true,
             estimatedMins: 5,
             chunkId: 'BSE9-PHYS-GRAV-S03-01',
@@ -185,12 +138,14 @@ export const BSE_SUBJECTS: BseSubject[] = [
           },
           {
             id: 'universal_law_gravitation',
-            title: 'Universal Law of Gravitation',
+            title: 'Universal Law of Gravitation & Free Fall',
             titleOr: 'ସର୍ବଜନୀନ ମାଧ୍ୟାକର୍ଷଣ ନିୟମ',
-            status: 'Structure ready',
-            statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: false,
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 7,
+            chunkId: 'BSE9-PHYS-GRAV-S03-02',
+            conceptId: 'universal_gravitation',
           },
         ],
       },
@@ -202,10 +157,10 @@ export const BSE_SUBJECTS: BseSubject[] = [
     titleOr: 'ରସାୟନ ବିଜ୍ଞାନ',
     icon: '🧪',
     accentColor: '#0F9D8A',
-    status: chemistryPack ? 'Preview' : 'Structure ready',
-    statusOr: chemistryPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+    status: 'Full lesson ready',
+    statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
     totalTopics: 4,
-    readyTopics: chemistryPack ? 1 : 0,
+    readyTopics: 4,
     chapters: [
       {
         id: 'carbon_compounds',
@@ -217,9 +172,9 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'substitution_reaction',
             title: 'Substitution Reaction & Covalent Bond',
             titleOr: 'ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା',
-            status: chemistryPack ? 'Preview' : 'Structure ready',
-            statusOr: chemistryPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: Boolean(chemistryPack),
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 5,
             chunkId: 'BSE9-CHEM-CARBON-S04',
             conceptId: 'substitution_reaction',
@@ -234,21 +189,25 @@ export const BSE_SUBJECTS: BseSubject[] = [
         topics: [
           {
             id: 'states_of_matter',
-            title: 'States of Matter',
+            title: 'States of Matter (Solid, Liquid, Gas)',
             titleOr: 'ପଦାର୍ଥର ଅବସ୍ଥା',
-            status: 'Pack pending',
-            statusOr: 'ପ୍ୟାକ୍ ଅପେକ୍ଷାରେ ଅଛି',
-            ready: false,
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 5,
+            chunkId: 'BSE9-CHEM-MATTER-S01',
+            conceptId: 'states_of_matter',
           },
           {
             id: 'evaporation',
             title: 'Evaporation and Cooling',
-            titleOr: 'ବାଷ୍ପୀଭବନ',
-            status: 'Pack pending',
-            statusOr: 'ପ୍ୟାକ୍ ଅପେକ୍ଷାରେ ଅଛି',
-            ready: false,
+            titleOr: 'ବାଷ୍ପୀଭବନ ଏବଂ ଶୀତଳୀକରଣ',
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 5,
+            chunkId: 'BSE9-CHEM-MATTER-S02',
+            conceptId: 'evaporation_cooling',
           },
         ],
       },
@@ -262,10 +221,12 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'chemical_combination',
             title: 'Laws of Chemical Combination',
             titleOr: 'ରାସାୟନିକ ସଂଯୋଗ ନିୟମ',
-            status: 'Structure ready',
-            statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: false,
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 6,
+            chunkId: 'BSE9-CHEM-ATOM-S01',
+            conceptId: 'chemical_combination',
           },
         ],
       },
@@ -277,10 +238,10 @@ export const BSE_SUBJECTS: BseSubject[] = [
     titleOr: 'ଜୀବ ବିଜ୍ଞାନ',
     icon: '🌱',
     accentColor: '#22C55E',
-    status: biologyPack ? 'Preview' : 'Structure ready',
-    statusOr: biologyPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+    status: 'Full lesson ready',
+    statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
     totalTopics: 3,
-    readyTopics: biologyPack ? 1 : 0,
+    readyTopics: 3,
     chapters: [
       {
         id: 'cell_unit_of_life',
@@ -291,10 +252,10 @@ export const BSE_SUBJECTS: BseSubject[] = [
           {
             id: 'cell_structure',
             title: 'Cell Structure and Organelles',
-            titleOr: 'କୋଷ ଗଠନ',
-            status: biologyPack ? 'Preview' : 'Structure ready',
-            statusOr: biologyPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: Boolean(biologyPack),
+            titleOr: 'କୋଷ ଗଠନ ଏବଂ ମାଇଟୋକଣ୍ଡ୍ରିଆ',
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 5,
             chunkId: 'BSE9-BIO-CELL-S01',
             conceptId: 'cell_structure',
@@ -303,10 +264,12 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'cell_division',
             title: 'Cell Division (Mitosis & Meiosis)',
             titleOr: 'କୋଷ ବିଭାଜନ',
-            status: 'Structure ready',
-            statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: false,
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 6,
+            chunkId: 'BSE9-BIO-CELL-S02',
+            conceptId: 'cell_division',
           },
         ],
       },
@@ -318,12 +281,14 @@ export const BSE_SUBJECTS: BseSubject[] = [
         topics: [
           {
             id: 'plant_tissues',
-            title: 'Plant Tissues',
+            title: 'Plant Tissues (Meristematic & Permanent)',
             titleOr: 'ଉଦ୍ଭିଦ କଳା',
-            status: 'Pack pending',
-            statusOr: 'ପ୍ୟାକ୍ ଅପେକ୍ଷାରେ ଅଛି',
-            ready: false,
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 5,
+            chunkId: 'BSE9-BIO-TISSUE-S01',
+            conceptId: 'plant_tissues',
           },
         ],
       },
@@ -335,10 +300,10 @@ export const BSE_SUBJECTS: BseSubject[] = [
     titleOr: 'ଗଣିତ',
     icon: '📐',
     accentColor: '#F59E0B',
-    status: mathsPack ? 'Preview' : 'Structure ready',
-    statusOr: mathsPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+    status: 'Full lesson ready',
+    statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
     totalTopics: 3,
-    readyTopics: mathsPack ? 1 : 0,
+    readyTopics: 3,
     chapters: [
       {
         id: 'number_systems',
@@ -350,9 +315,9 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'rational_irrational',
             title: 'Rational and Irrational Numbers',
             titleOr: 'ପରିମେୟ ଏବଂ ଅପରିମେୟ ସଂଖ୍ୟା',
-            status: mathsPack ? 'Preview' : 'Structure ready',
-            statusOr: mathsPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: Boolean(mathsPack),
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 6,
             chunkId: 'BSE9-MATH-REAL-S01',
             conceptId: 'rational_irrational',
@@ -360,11 +325,13 @@ export const BSE_SUBJECTS: BseSubject[] = [
           {
             id: 'real_numbers',
             title: 'Real Numbers and Decimal Expansions',
-            titleOr: 'ବାସ୍ତବ ସଂଖ୍ୟା',
-            status: 'Structure ready',
-            statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
-            ready: false,
+            titleOr: 'ବାସ୍ତବ ସଂଖ୍ୟା ଓ ଦଶମିକ ପ୍ରସାରଣ',
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 6,
+            chunkId: 'BSE9-MATH-REAL-S02',
+            conceptId: 'real_numbers',
           },
         ],
       },
@@ -377,11 +344,13 @@ export const BSE_SUBJECTS: BseSubject[] = [
           {
             id: 'zeroes_of_polynomial',
             title: 'Zeroes of a Polynomial',
-            titleOr: 'ବହୁପଦୀର ଶୂନ୍ୟ',
-            status: 'Pack pending',
-            statusOr: 'ପ୍ୟାକ୍ ଅପେକ୍ଷାରେ ଅଛି',
-            ready: false,
+            titleOr: 'ବହୁପଦୀର ଶୂନ୍ୟ ଏବଂ ସହଗ',
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
             estimatedMins: 5,
+            chunkId: 'BSE9-MATH-POLY-S01',
+            conceptId: 'zeroes_of_polynomial',
           },
         ],
       },

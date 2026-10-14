@@ -53,8 +53,10 @@ export default function SubjectPickerScreen({ navigation, route, onSelectTopic }
         profileId: 'prof_demo_01',
         subject: subject.id,
         chunkId: topic.chunkId ?? 'motion_01',
+        conceptId: topic.conceptId,
         subjectId: subject.id,
         topicId: topic.id,
+        navTimestamp: Date.now(),
       });
     }
   };
@@ -91,7 +93,7 @@ export default function SubjectPickerScreen({ navigation, route, onSelectTopic }
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation?.navigate?.('Learn')}
+            onPress={() => navigation?.navigate?.('Learn', { subject: selectedSubjectId, subjectId: selectedSubjectId })}
             activeOpacity={0.7}
           >
             <Text style={styles.backButtonText}>← ଶିକ୍ଷଣ ପୃଷ୍ଠା (Back to Learn)</Text>

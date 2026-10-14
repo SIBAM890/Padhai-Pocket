@@ -13,5 +13,6 @@ module.exports = {
     '^expo-secure-store$': '<rootDir>/tests/mocks/expo-secure-store.js',
     '^@react-navigation/native$': '<rootDir>/tests/mocks/react-navigation.js',
     '^@react-navigation/native-stack$': '<rootDir>/tests/mocks/react-navigation.js',
+    '^react-native-svg$': '<rootDir>/tests/mocks/react-native-svg.js',
   },
 };

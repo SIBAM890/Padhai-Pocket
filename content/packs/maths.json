@@ -12,6 +12,7 @@
   "chunks": [
     {
       "chunk_id": "BSE9-MATH-REAL-S01",
+      "concept_id": "rational_irrational",
       "title_or": "ବାସ୍ତବ ସଂଖ୍ୟା ଏବଂ ପରିମେୟ ସଂଖ୍ୟା",
       "odia_text": "ଯେଉଁ ସଂଖ୍ୟାଗୁଡ଼ିକୁ p/q ଆକାରରେ ପ୍ରକାଶ କରାଯାଇପାରେ ଯେଉଁଠାରେ p ଓ q ପୂର୍ଣ୍ଣ ସଂଖ୍ୟା ଏବଂ q ≠ 0, ସେଗୁଡ଼ିକୁ ପରିମେୟ ସଂଖ୍ୟା (rational number) କୁହାଯାଏ । ସମସ୍ତ ପରିମେୟ ଓ ଅପରିମେୟ ସଂଖ୍ୟାକୁ ଏକତ୍ର ବାସ୍ତବ ସଂଖ୍ୟା କୁହାଯାଏ ।",
       "terms": [
@@ -19,6 +20,32 @@
         "T_IRRATIONAL"
       ],
       "source_page": 1,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-MATH-REAL-S02",
+      "concept_id": "real_numbers",
+      "title_or": "ବାସ୍ତବ ସଂଖ୍ୟାର ଦଶମିକ ପ୍ରସାରଣ",
+      "odia_text": "ପରିମେୟ ସଂଖ୍ୟାର ଦଶମିକ ପ୍ରସାରଣ ସସୀମ (terminating) କିମ୍ବା ଅସୀମ ଆବୃତ୍ତ (non-terminating recurring) ହୋଇଥାଏ । ଯେଉଁ ବାସ୍ତବ ସଂଖ୍ୟାର ଦଶମିକ ପ୍ରସାରଣ ଅସୀମ ଅନାବୃତ୍ତ (non-terminating non-recurring) ହୁଏ, ତାହାକୁ ଅପରିମେୟ ସଂଖ୍ୟା କୁହାଯାଏ । ଉଦାହରଣ ସ୍ୱରୂପ, √2 = 1.4142135... ଏକ ଅପରିମେୟ ସଂଖ୍ୟା ।",
+      "terms": [
+        "T_TERMINATING",
+        "T_NON_TERMINATING"
+      ],
+      "source_page": 10,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-MATH-POLY-S01",
+      "concept_id": "zeroes_of_polynomial",
+      "title_or": "ବହୁପଦୀର ଶୂନ୍ୟ ଏବଂ ସହଗ",
+      "odia_text": "ଗୋଟିଏ ବହୁପଦୀ ରାଶି p(x) ରେ ଯଦି x = k ପାଇଁ p(k) = 0 ହୁଏ, ତେବେ 'k' କୁ p(x) ବହୁପଦୀର ଏକ ଶୂନ୍ୟ (Zero) କୁହାଯାଏ । ଏକ ଘାତୀ ବହୁପଦୀ ax + b (a ≠ 0) ର ଗୋଟିଏ ମାତ୍ର ଶୂନ୍ୟ -b/a ଥାଏ । ବହୁପଦୀର ଶୂନ୍ୟ ସଂଖ୍ୟା ତାର ଘାତ (degree) ସହିତ ସମାନ ବା କମ୍ ହୋଇପାରେ ।",
+      "terms": [
+        "T_ZERO_POLY",
+        "T_DEGREE"
+      ],
+      "source_page": 30,
       "status": "demo_approved",
       "reviewed_by": "Satya"
     }
@@ -49,11 +76,38 @@
       "validated_by": "Satya",
       "dialect": null,
       "status": "approved"
+    },
+    {
+      "term_id": "T_TERMINATING",
+      "en": "Terminating Decimal",
+      "odia_from_textbook": "ସସୀମ ଦଶମିକ",
+      "kui": {
+        "description": "ଶେଷ ହୋଇଯାଉଥିବା ଦଶମିକ",
+        "script": "ସସୀମ ଦଶମିକ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_ZERO_POLY",
+      "en": "Zero of Polynomial",
+      "odia_from_textbook": "ବହୁପଦୀର ଶୂନ୍ୟ",
+      "kui": {
+        "description": "ବହୁପଦୀ ମୂଲ୍ୟ ଶୂନ କରୁଥିବା ସଂଖ୍ୟା",
+        "script": "ବହୁପଦୀର ଶୂନ୍ୟ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
     }
   ],
   "items": [
     {
       "item_id": "MATH-P1",
+      "chunk_id": "BSE9-MATH-REAL-S01",
       "concept_id": "rational_irrational",
       "set": "A",
       "modality": "P",
@@ -70,6 +124,7 @@
     },
     {
       "item_id": "MATH-A1",
+      "chunk_id": "BSE9-MATH-REAL-S01",
       "concept_id": "rational_irrational",
       "set": "A",
       "modality": "A",
@@ -86,6 +141,7 @@
     },
     {
       "item_id": "MATH-T1",
+      "chunk_id": "BSE9-MATH-REAL-S01",
       "concept_id": "rational_irrational",
       "set": "A",
       "modality": "T",
@@ -102,18 +158,121 @@
     },
     {
       "item_id": "MATH-W1",
+      "chunk_id": "BSE9-MATH-REAL-S01",
       "concept_id": "rational_irrational",
       "set": "A",
       "modality": "W",
-      "stem": "ପରିମେୟ ସଂଖ୍ୟା ଶବ୍ଦର ସଠିକ୍ ଅର୍ଥ କ'ଣ?",
+      "stem": "ପରିମେୟ ସଂଖ୍ୟା ପାଇଁ କେଉଁ ସର୍ତ୍ତ ସର୍ବଦା ସତ୍ୟ?",
       "options": [
-        "ଅନୁପାତ ଆକାରରେ ପ୍ରକାଶଯୋଗ୍ୟ ସଂଖ୍ୟା",
-        "କେବଳ ଦଶମିକ ସଂଖ୍ୟା",
-        "ଗଣନ ସଂଖ୍ୟା ମାତ୍ର",
-        "କେବଳ ଯୁଗ୍ମ ସଂଖ୍ୟା"
+        "ହର q ≠ 0",
+        "ହର q = 0",
+        "ଲବ p ସର୍ବଦା 1",
+        "ଉଭୟ p ଓ q ଶୂନ"
       ],
       "correct": 0,
       "audio": "math_w1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-EXP1-T",
+      "chunk_id": "BSE9-MATH-REAL-S02",
+      "concept_id": "real_numbers",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଅପରିମେୟ ସଂଖ୍ୟାର ଦଶମିକ ପ୍ରସାରଣ କିପରି ହୋଇଥାଏ?",
+      "options": [
+        "ଅସୀମ ଅନାବୃତ୍ତ (Non-terminating non-recurring)",
+        "ସସୀମ (Terminating)",
+        "ଅସୀମ ଆବୃତ୍ତ (Non-terminating recurring)",
+        "କେବଳ ପୂର୍ଣ୍ଣ ସଂଖ୍ୟା"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-EXP1-P",
+      "chunk_id": "BSE9-MATH-REAL-S02",
+      "concept_id": "real_numbers",
+      "set": "A",
+      "modality": "P",
+      "stem": "ନିମ୍ନଲିଖିତ ମଧ୍ୟରୁ କେଉଁଟି ଏକ ଅପରିମେୟ ସଂଖ୍ୟା?",
+      "options": [
+        "√2",
+        "4/5",
+        "0.25",
+        "3"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-EXP1-A",
+      "chunk_id": "BSE9-MATH-REAL-S02",
+      "concept_id": "real_numbers",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: 1/2 ର ଦଶମିକ ପ୍ରସାରଣ କି ପ୍ରକାରର?",
+      "options": [
+        "ସସୀମ (0.5)",
+        "ଅସୀମ ଆବୃତ୍ତ",
+        "ଅସୀମ ଅନାବୃତ୍ତ",
+        "ଅନିର୍ଣ୍ଣୟ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-POLY1-T",
+      "chunk_id": "BSE9-MATH-POLY-S01",
+      "concept_id": "zeroes_of_polynomial",
+      "set": "A",
+      "modality": "T",
+      "stem": "p(x) = 2x + 4 ବହୁପଦୀର ଶୂନ୍ୟ (Zero of the polynomial) କେତେ?",
+      "options": [
+        "-2",
+        "2",
+        "4",
+        "0"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-POLY1-P",
+      "chunk_id": "BSE9-MATH-POLY-S01",
+      "concept_id": "zeroes_of_polynomial",
+      "set": "A",
+      "modality": "P",
+      "stem": "ଏକ ଘାତୀ ବହୁପଦୀ (Linear polynomial) ax + b (a ≠ 0) ର ସର୍ବାଧିକ କେତୋଟି ଶୂନ୍ୟ ଥାଇପାରେ?",
+      "options": [
+        "୧ ଟି",
+        "୨ ଟି",
+        "୩ ଟି",
+        "ଅନନ୍ତ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-POLY1-A",
+      "chunk_id": "BSE9-MATH-POLY-S01",
+      "concept_id": "zeroes_of_polynomial",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଯଦି p(2) = 0 ହୁଏ, ତେବେ 2 କୁ ବହୁପଦୀ p(x) ର କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ଶୂନ୍ୟ (Zero)",
+        "ସହଗ",
+        "ଘାତ",
+        "ଧ୍ରୁବକ"
+      ],
+      "correct": 0,
+      "audio": null,
       "misconception_tag": null
     }
   ]

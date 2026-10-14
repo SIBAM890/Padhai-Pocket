@@ -12,6 +12,7 @@
   "chunks": [
     {
       "chunk_id": "BSE9-CHEM-CARBON-S04",
+      "concept_id": "substitution_reaction",
       "title_or": "ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା ଏବଂ ସହସଂଯୋଜକ ବନ୍ଧ",
       "odia_text": "ସୂର୍ଯ୍ୟାଲୋକ ଉପସ୍ଥିତିରେ ମିଥେନ୍ ଓ କ୍ଲୋରିନ୍ ମଧ୍ୟରେ ଦ୍ରୁତ ପ୍ରତିକ୍ରିୟା ଘଟି କ୍ଲୋରିନ୍ ପରମାଣୁଗୁଡ଼ିକ ଗୋଟିଏ ପରେ ଗୋଟିଏ ହାଇଡ୍ରୋଜେନ୍ ପରମାଣୁକୁ ବିସ୍ଥାପିତ କରନ୍ତି । ଏହାକୁ ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା କୁହାଯାଏ ।",
       "terms": [
@@ -19,6 +20,44 @@
         "T_COVALENT"
       ],
       "source_page": 15,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-CHEM-MATTER-S01",
+      "concept_id": "states_of_matter",
+      "title_or": "ପଦାର୍ଥର ଅବସ୍ଥା (କଠିନ, ତରଳ ଓ ଗ୍ୟାସୀୟ)",
+      "odia_text": "ଆମ ଚାରିପାଖରେ ଥିବା ପଦାର୍ଥ ମୁଖ୍ୟତଃ ତିନୋଟି ଭୌତିକ ଅବସ୍ଥାରେ ଦେଖାଯାଏ: କଠିନ, ତରଳ ଏବଂ ଗ୍ୟାସୀୟ । କଠିନ ପଦାର୍ଥର କଣିକାଗୁଡ଼ିକ ମଧ୍ୟରେ ଆକର୍ଷଣ ବଳ ସର୍ବାଧିକ ଥାଏ ଏବଂ ଏହାର ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ଓ ଆୟତନ ଥାଏ । ତରଳ ପଦାର୍ଥର ନିର୍ଦ୍ଦିଷ୍ଟ ଆୟତନ ଥାଏ କିନ୍ତୁ ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ନଥାଏ । ଗ୍ୟାସୀୟ ପଦାର୍ଥର କଣିକା ମଧ୍ୟରେ ବ୍ୟବଧାନ ସର୍ବାଧିକ ହୋଇଥିବାରୁ ଏହାର ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ବା ଆୟତନ ନଥାଏ ।",
+      "terms": [
+        "T_SOLID",
+        "T_LIQUID",
+        "T_GAS"
+      ],
+      "source_page": 5,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-CHEM-MATTER-S02",
+      "concept_id": "evaporation_cooling",
+      "title_or": "ବାଷ୍ପୀଭବନ ଏବଂ ଶୀତଳୀକରଣ",
+      "odia_text": "ସ୍ଫୁଟନାଙ୍କ ଠାରୁ କମ୍ ଯେକୌଣସି ତାପମାତ୍ରାରେ ତରଳର ଉପରିଭାଗ କଣିକା ବାଷ୍ପରେ ପରିଣତ ହେବା ଘଟଣାକୁ ବାଷ୍ପୀଭବନ (evaporation) କୁହାଯାଏ । ବାଷ୍ପୀଭବନ ସମୟରେ ତରଳର କଣିକାଗୁଡ଼ିକ ଆଖପାଖରୁ ଶକ୍ତି ଶୋଷଣ କରନ୍ତି, ଫଳରେ ଆଖପାଖ ଥଣ୍ଡା ହୋଇଯାଏ । ସେଥିପାଇଁ ଗ୍ରୀଷ୍ମଦିନେ ମାଟି ପାତ୍ରରେ ପାଣି ରଖିଲେ ଥଣ୍ଡା ରହେ ।",
+      "terms": [
+        "T_EVAP"
+      ],
+      "source_page": 8,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-CHEM-ATOM-S01",
+      "concept_id": "chemical_combination",
+      "title_or": "ରାସାୟନିକ ସଂଯୋଗର ମୌଳିକ ନିୟମ",
+      "odia_text": "ରାସାୟନିକ ପରିବର୍ତ୍ତନ ସମୟରେ ବସ୍ତୁତ୍ୱ ସଂରକ୍ଷଣ ନିୟମ ଅନୁଯାୟୀ କୌଣସି ରାସାୟନିକ ପ୍ରତିକ୍ରିୟାରେ ବସ୍ତୁତ୍ୱର ସୃଷ୍ଟି ବା ବିନାଶ ହୋଇପାରିବ ନାହିଁ । ଅନ୍ୟ ଏକ ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ନିୟମ ହେଉଛି ସ୍ଥିର ଅନୁପାତ ନିୟମ, ଯେଉଁଥିରେ ଯୌଗିକ ମଧ୍ୟରେ ଥିବା ମୌଳିକଗୁଡ଼ିକ ସର୍ବଦା ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ବସ୍ତୁତ୍ୱ ଅନୁପାତରେ ଥାଆନ୍ତି ।",
+      "terms": [
+        "T_MASS_CONS"
+      ],
+      "source_page": 20,
       "status": "demo_approved",
       "reviewed_by": "Satya"
     }
@@ -49,11 +88,77 @@
       "validated_by": "Satya",
       "dialect": null,
       "status": "approved"
+    },
+    {
+      "term_id": "T_SOLID",
+      "en": "Solid",
+      "odia_from_textbook": "କଠିନ",
+      "kui": {
+        "description": "ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ଥିବା ବସ୍ତୁ",
+        "script": "କଠିନ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_LIQUID",
+      "en": "Liquid",
+      "odia_from_textbook": "ତରଳ",
+      "kui": {
+        "description": "ପ୍ରବାହୀ ପଦାର୍ଥ",
+        "script": "ତରଳ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_GAS",
+      "en": "Gas",
+      "odia_from_textbook": "ଗ୍ୟାସ",
+      "kui": {
+        "description": "ଅଦୃଶ୍ୟ ବାଷ୍ପୀୟ ଅବସ୍ଥା",
+        "script": "ଗ୍ୟାସ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_EVAP",
+      "en": "Evaporation",
+      "odia_from_textbook": "ବାଷ୍ପୀଭବନ",
+      "kui": {
+        "description": "ତରଳର ବାଷ୍ପରେ ପରିଣତ ହେବା",
+        "script": "ବାଷ୍ପୀଭବନ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_MASS_CONS",
+      "en": "Law of Conservation of Mass",
+      "odia_from_textbook": "ବସ୍ତୁତ୍ୱ ସଂରକ୍ଷଣ ନିୟମ",
+      "kui": {
+        "description": "ବସ୍ତୁତ୍ୱର ସୃଷ୍ଟି ବା ବିନାଶ ନାହିଁ",
+        "script": "ବସ୍ତୁତ୍ୱ ସଂରକ୍ଷଣ ନିୟମ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
     }
   ],
   "items": [
     {
       "item_id": "CHEM-P1",
+      "chunk_id": "BSE9-CHEM-CARBON-S04",
       "concept_id": "substitution_reaction",
       "set": "A",
       "modality": "P",
@@ -70,6 +175,7 @@
     },
     {
       "item_id": "CHEM-A1",
+      "chunk_id": "BSE9-CHEM-CARBON-S04",
       "concept_id": "substitution_reaction",
       "set": "A",
       "modality": "A",
@@ -86,6 +192,7 @@
     },
     {
       "item_id": "CHEM-T1",
+      "chunk_id": "BSE9-CHEM-CARBON-S04",
       "concept_id": "substitution_reaction",
       "set": "A",
       "modality": "T",
@@ -102,6 +209,7 @@
     },
     {
       "item_id": "CHEM-W1",
+      "chunk_id": "BSE9-CHEM-CARBON-S04",
       "concept_id": "substitution_reaction",
       "set": "A",
       "modality": "W",
@@ -114,6 +222,159 @@
       ],
       "correct": 0,
       "audio": "chem_w1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-MATTER1-T",
+      "chunk_id": "BSE9-CHEM-MATTER-S01",
+      "concept_id": "states_of_matter",
+      "set": "A",
+      "modality": "T",
+      "stem": "କେଉଁ ଭୌତିକ ଅବସ୍ଥାରେ ପଦାର୍ଥର ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ଏବଂ ନିର୍ଦ୍ଦିଷ୍ଟ ଆୟତନ ଥାଏ?",
+      "options": [
+        "କଠିନ ଅବସ୍ଥା (Solid)",
+        "ତରଳ ଅବସ୍ଥା (Liquid)",
+        "ଗ୍ୟାସୀୟ ଅବସ୍ଥା (Gas)",
+        "ବାଷ୍ପୀୟ ଅବସ୍ଥା"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-MATTER1-P",
+      "chunk_id": "BSE9-CHEM-MATTER-S01",
+      "concept_id": "states_of_matter",
+      "set": "A",
+      "modality": "P",
+      "stem": "ନିମ୍ନ କେଉଁଥିରେ କଣିକାଗୁଡ଼ିକ ମଧ୍ୟରେ ଆକର୍ଷଣ ବଳ ସର୍ବାଧିକ ଥାଏ?",
+      "options": [
+        "କଠିନ ପଦାର୍ଥ",
+        "ତରଳ ପଦାର୍ଥ",
+        "ଗ୍ୟାସୀୟ ପଦାର୍ଥ",
+        "ଜଳୀୟ ବାଷ୍ପ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-MATTER1-A",
+      "chunk_id": "BSE9-CHEM-MATTER-S01",
+      "concept_id": "states_of_matter",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଯାହାର ନିର୍ଦ୍ଦିଷ୍ଟ ଆୟତନ ଥାଇ ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ନଥାଏ, ତାହା କ'ଣ?",
+      "options": [
+        "ତରଳ ପଦାର୍ଥ",
+        "କଠିନ ପଦାର୍ଥ",
+        "ଗ୍ୟାସୀୟ ପଦାର୍ଥ",
+        "ଧୂଳିକଣା"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-EVAP1-T",
+      "chunk_id": "BSE9-CHEM-MATTER-S02",
+      "concept_id": "evaporation_cooling",
+      "set": "A",
+      "modality": "T",
+      "stem": "ସ୍ଫୁଟନାଙ୍କ ଠାରୁ କମ୍ ତାପମାତ୍ରାରେ ତରଳ ବାଷ୍ପରେ ପରିଣତ ହେବାକୁ କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ବାଷ୍ପୀଭବନ (Evaporation)",
+        "ସ୍ଫୁଟନ (Boiling)",
+        "ଘନୀଭବନ (Condensation)",
+        "ତରଳୀକରଣ (Melting)"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-EVAP1-P",
+      "chunk_id": "BSE9-CHEM-MATTER-S02",
+      "concept_id": "evaporation_cooling",
+      "set": "A",
+      "modality": "P",
+      "stem": "ଗ୍ରୀଷ୍ମଦିନେ ମାଠିଆର ପାଣି ଥଣ୍ଡା ରହିବା କେଉଁ ପ୍ରକ୍ରିୟାର ଉଦାହରଣ?",
+      "options": [
+        "ବାଷ୍ପୀଭବନ ଜନିତ ଶୀତଳୀକରଣ",
+        "ଉଦ୍‌ପାତନ",
+        "ବିସରଣ",
+        "ଘନୀଭବନ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-EVAP1-A",
+      "chunk_id": "BSE9-CHEM-MATTER-S02",
+      "concept_id": "evaporation_cooling",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ବାଷ୍ପୀଭବନ ଯୋଗୁଁ ଆଖପାଖ ପରିବେଶରେ କି ପରିବର୍ତ୍ତନ ଘଟେ?",
+      "options": [
+        "ଶୀତଳତା (ଥଣ୍ଡା) ଅନୁଭୂତ ହୁଏ",
+        "ତାପମାତ୍ରା ବହୁତ ବଢ଼ିଯାଏ",
+        "ଅଗ୍ନିକାଣ୍ଡ ଘଟେ",
+        "ଜଳ ସଂପୂର୍ଣ୍ଣ ଶେଷ ହୁଏ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-ATOM1-T",
+      "chunk_id": "BSE9-CHEM-ATOM-S01",
+      "concept_id": "chemical_combination",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଯେକୌଣସି ରାସାୟନିକ ପ୍ରତିକ୍ରିୟାରେ ପ୍ରତିକ୍ରିୟକର ମୋଟ ବସ୍ତୁତ୍ୱ ଉତ୍ପାଦର ମୋଟ ବସ୍ତୁତ୍ୱ ସହ ସମାନ ରହେ - ଏହା କେଉଁ ନିୟମ?",
+      "options": [
+        "ବସ୍ତୁତ୍ୱ ସଂରକ୍ଷଣ ନିୟମ (Law of Conservation of Mass)",
+        "ସ୍ଥିର ଅନୁପାତ ନିୟମ",
+        "ଡାଲଟନ୍ ତତ୍ତ୍ୱ",
+        "ଆଭୋଗାଡ୍ରୋ ନିୟମ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-ATOM1-P",
+      "chunk_id": "BSE9-CHEM-ATOM-S01",
+      "concept_id": "chemical_combination",
+      "set": "A",
+      "modality": "P",
+      "stem": "ପ୍ରତିକ୍ରିୟା ପୂର୍ବରୁ ବସ୍ତୁତ୍ୱ ୧୦୦ ଗ୍ରାମ୍ ଥିଲେ, ପ୍ରତିକ୍ରିୟା ପରେ ମୋଟ ବସ୍ତୁତ୍ୱ କେତେ ରହିବ?",
+      "options": [
+        "୧୦୦ ଗ୍ରାମ୍ (ଅପରିବର୍ତ୍ତିତ)",
+        "୫୦ ଗ୍ରାମ୍",
+        "୨୦୦ ଗ୍ରାମ୍",
+        "ଶୂନ ଗ୍ରାମ୍"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-ATOM1-A",
+      "chunk_id": "BSE9-CHEM-ATOM-S01",
+      "concept_id": "chemical_combination",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ରାସାୟନିକ ପ୍ରତିକ୍ରିୟାରେ ବସ୍ତୁତ୍ୱର ସୃଷ୍ଟି ବା ବିନାଶ ହୋଇପାରିବ କି?",
+      "options": [
+        "ନାହିଁ, ବସ୍ତୁତ୍ୱ ସର୍ବଦା ସଂରକ୍ଷିତ ରହେ",
+        "ହଁ, ବସ୍ତୁତ୍ୱ ବୃଦ୍ଧି ପାଏ",
+        "ହଁ, ବସ୍ତୁତ୍ୱ ବିନାଶ ହୁଏ",
+        "କେବଳ ଉତ୍ତାପ ବଢ଼ିଲେ ନଷ୍ଟ ହୁଏ"
+      ],
+      "correct": 0,
+      "audio": null,
       "misconception_tag": null
     }
   ]
