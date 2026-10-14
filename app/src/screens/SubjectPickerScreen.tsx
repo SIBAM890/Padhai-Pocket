@@ -175,6 +175,35 @@ export default function SubjectPickerScreen({ navigation, route, onSelectTopic }
             </Text>
           </View>
 
+          {selectedSubject.id === 'physics' && (
+            <TouchableOpacity
+              style={styles.jugaadSubjectBanner}
+              onPress={() => {
+                if (navigation) {
+                  navigation.navigate('Learn', {
+                    openJugaadLab: true,
+                    subject: 'physics',
+                    navTimestamp: Date.now(),
+                  });
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <View style={styles.jugaadBannerHeader}>
+                <View style={styles.jugaadBannerBadge}>
+                  <Text style={styles.jugaadBannerBadgeText}>0% INTERNET · REAL HARDWARE SENSORS</Text>
+                </View>
+                <Text style={styles.jugaadBannerArrow}>➔</Text>
+              </View>
+              <Text style={styles.jugaadBannerTitle}>
+                🔬 ପକେଟ୍ ଜୁଗାଡ଼ ଲ୍ୟାବ୍ (Pocket Jugaad Sensor Lab)
+              </Text>
+              <Text style={styles.jugaadBannerSub}>
+                ପଥର, ସୂତା, ପଟା ଓ ଶବ୍ଦ ମାଧ୍ୟମରେ ସେନ୍ସର ପରୀକ୍ଷା (Motion Ramp · Pendulum g · Sound Echo)
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {selectedSubject.chapters.map((chapter) => (
             <View key={chapter.id} style={styles.chapterBox}>
               <View style={styles.chapterHeader}>
@@ -630,5 +659,48 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+  },
+  jugaadSubjectBanner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: '#38BDF8',
+    marginBottom: spacing.md,
+    ...shadows.card,
+  },
+  jugaadBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  jugaadBannerBadge: {
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
+    borderWidth: 1,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  jugaadBannerBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0284C7',
+  },
+  jugaadBannerArrow: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  jugaadBannerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  jugaadBannerSub: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
   },
 });

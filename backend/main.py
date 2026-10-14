@@ -226,6 +226,17 @@ async def get_tts(request: Request, text: Optional[str] = None, key: Optional[st
             text = request.query_params.get("text", "")
             key = request.query_params.get("key", "")
 
+    assets_audio_dir = Path(__file__).resolve().parent.parent / "app" / "assets" / "audio"
+    if key and (assets_audio_dir / f"{key}.mp3").exists():
+        return Response(
+            content=(assets_audio_dir / f"{key}.mp3").read_bytes(),
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "X-TTS-Cached": "pre-recorded",
+            },
+        )
+
     if key and key in CORE_ODIA_PHRASES:
         text = CORE_ODIA_PHRASES[key]
 
@@ -281,6 +292,16 @@ async def get_tts(request: Request, text: Optional[str] = None, key: Optional[st
         )
     except Exception as e:
         print(f"TTS synthesis error: {e}")
+        fallback_clip = assets_audio_dir / "sound_check.mp3"
+        if fallback_clip.exists():
+            return Response(
+                content=fallback_clip.read_bytes(),
+                media_type="audio/mpeg",
+                headers={
+                    "Cache-Control": "public, max-age=86400",
+                    "X-TTS-Cached": "fallback",
+                },
+            )
         raise HTTPException(status_code=500, detail=f"TTS synthesis error: {str(e)}")
     finally:
         for p in [wav_p, mp3_p]:
