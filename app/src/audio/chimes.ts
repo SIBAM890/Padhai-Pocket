@@ -8,7 +8,7 @@
  *
  * Universal Web & Native support:
  * - Web: Synthesizes pleasant harmonic chimes via AudioContext (zero network, instant, offline)
- * - Mobile: Uses expo-av Sound or Web Audio API fallback.
+ * - Mobile: Crash-proof safe fallback (silent or native audio).
  */
 
 import { Platform } from 'react-native';
@@ -76,15 +76,6 @@ export async function playCorrectChime(): Promise<void> {
   try {
     if (Platform.OS === 'web') {
       playToneSequence([523.25, 659.25, 783.99], [0.12, 0.12, 0.25]);
-      return;
-    }
-
-    // Native mobile via expo-av
-    const { Audio } = require('expo-av');
-    if (Audio?.Sound) {
-      if (!soundCache.correct) {
-        // Safe fallback tone if no binary asset
-      }
     }
   } catch {
     // Silent fail on any error (engine purity rule)
@@ -98,12 +89,6 @@ export async function playRetryChime(): Promise<void> {
   try {
     if (Platform.OS === 'web') {
       playToneSequence([440.0, 349.23], [0.18, 0.28]);
-      return;
-    }
-
-    const { Audio } = require('expo-av');
-    if (Audio?.Sound) {
-      // Native mobile
     }
   } catch {
     // Silent fail
@@ -117,12 +102,6 @@ export async function playCompleteChime(): Promise<void> {
   try {
     if (Platform.OS === 'web') {
       playToneSequence([523.25, 659.25, 783.99, 1046.5], [0.15, 0.15, 0.15, 0.45]);
-      return;
-    }
-
-    const { Audio } = require('expo-av');
-    if (Audio?.Sound) {
-      // Native mobile
     }
   } catch {
     // Silent fail
@@ -130,7 +109,7 @@ export async function playCompleteChime(): Promise<void> {
 }
 
 /**
- * Releases all cached Audio.Sound instances.
+ * Releases all cached sound instances.
  */
 export async function unloadAllChimes(): Promise<void> {
   try {

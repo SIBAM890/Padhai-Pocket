@@ -10,7 +10,8 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-audio"
     ],
     "ios": {
       "bundleIdentifier": "com.padhaipocket.app"
