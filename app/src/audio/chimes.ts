@@ -24,21 +24,17 @@ const soundCache: Record<string, SoundInstance | null> = {
   complete: null,
 };
 
-let expoAudioModule: { Audio?: { Sound: { createAsync: (source: unknown) => Promise<{ sound: SoundInstance }> } } } | null = null;
-let attemptedRequire = false;
+interface AudioModule {
+  Sound: { createAsync: (source: unknown) => Promise<{ sound: SoundInstance }> };
+}
 
-function getAudioModule() {
-  if (!attemptedRequire) {
-    attemptedRequire = true;
-    try {
-      // Dynamic require ensures no build or compile errors when expo-av is uninstalled
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      expoAudioModule = require('expo-av');
-    } catch {
-      expoAudioModule = null;
-    }
-  }
-  return expoAudioModule?.Audio;
+// expo-av is not installed in this build. Returning null forces all
+// chime functions into their stub path (silent no-op). When expo-av is
+// added to package.json, replace this with:
+//   const { Audio } = require('expo-av');
+// and adjust createAsync calls accordingly.
+function getAudioModule(): AudioModule | null {
+  return null;
 }
 
 /**

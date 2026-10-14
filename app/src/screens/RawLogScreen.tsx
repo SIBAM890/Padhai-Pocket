@@ -36,18 +36,9 @@ export default function RawLogScreen({ navigation }: any) {
 
   const handleCopy = async () => {
     try {
-      // Cross-platform clipboard support: expo-clipboard if present, navigator.clipboard on web
+      // Cross-platform clipboard support: web/navigator fallback (expo-clipboard omitted to prevent native Metro missing module resolution)
       let copied = false;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Clipboard = require('expo-clipboard');
-        if (Clipboard && Clipboard.setStringAsync) {
-          await Clipboard.setStringAsync(jsonText);
-          copied = true;
-        }
-      } catch {}
-
-      if (!copied && typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(jsonText);
         copied = true;
       }
