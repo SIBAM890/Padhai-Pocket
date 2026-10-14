@@ -352,11 +352,15 @@ async def register_device(request: Request):
             detail="Invalid registration code",
         )
 
+    DEMO_REGISTRATION_CODES = {"REG-DEMO-2026", "PADHAI-DEMO-2026"}
     if reg["used_at"] is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration code already used",
-        )
+        if os.environ.get("ENV") == "demo" and code in DEMO_REGISTRATION_CODES:
+            print(f"[DEMO] Code reuse allowed for device {device_id}")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Registration code already used",
+            )
 
     now = datetime.now(timezone.utc)
     if now > reg["expires_at"]:
