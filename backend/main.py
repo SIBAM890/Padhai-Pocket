@@ -18,6 +18,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import jsonschema
 
 from failure_hooks import FailureInjectionMiddleware
@@ -37,6 +38,15 @@ app = FastAPI(
 
 # Register Failure Hooks Middleware
 app.add_middleware(FailureInjectionMiddleware)
+
+# Register CORS Middleware as outermost middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ==============================================================================
 # Ephemeral Demo Storage (Option B)
@@ -88,6 +98,7 @@ def seed_registration_code(code: str, hours_valid: int = 24):
 
 # Seed default valid code for testing
 seed_registration_code("REG-DEMO-2026")
+seed_registration_code("PADHAI-DEMO-2026")
 
 
 def verify_device_token(authorization: Optional[str]) -> str:
@@ -122,6 +133,7 @@ def verify_device_token(authorization: Optional[str]) -> str:
 # ==============================================================================
 
 
+@app.options("/healthz")
 @app.get("/healthz")
 async def healthz():
     """

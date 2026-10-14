@@ -105,3 +105,54 @@ test('Full loop: correct MCQ advances lesson, mastery increases', async () => {
   // BKT correct: mastery must be > initial 0.42
   expect(result.state.concept_mastery).toBeGreaterThan(0.42);
 });
+
+test('Golden chain end-to-end: exact mastery values reached through nextAction', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { nextAction: na, createInitialState: cis } = require('../src/engine');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { computeSeed: cs } = require('../src/engine/seed');
+
+  // Initial: concept 0.42, term 0.40
+  let state = cis('prof_demo_01', 'sess_01', 'distance_vs_displacement', 0.42, 1, 'OFFLINE');
+  expect(state.concept_mastery).toBeCloseTo(0.42, 4);
+  expect(state.term_masteries['T_DISP']).toBeCloseTo(0.40, 4);
+
+  const ctx = {
+    now: 1792059821234,
+    seed: await cs('prof_demo_01', 'distance_vs_displacement', 'A'),
+    device_id: 'dev-tab-01',
+  };
+
+  // 1. After wrong MCQ: concept → 0.2248
+  let out = na(state, { type: 'OBSERVE_MCQ', correct: false, misconception_tag: 'path_equals_displacement' }, ctx);
+  state = out.state;
+  expect(state.concept_mastery).toBeCloseTo(0.2248, 4);
+
+  // 2. Probe P=1: concept → 0.5842
+  out = na(state, { type: 'OBSERVE_PROBE_ITEM', modality: 'P', correct: true }, ctx);
+  state = out.state;
+  expect(state.concept_mastery).toBeCloseTo(0.5842, 4);
+
+  // Probe A=0, T=0 to finish 3-way probe set
+  out = na(state, { type: 'OBSERVE_PROBE_ITEM', modality: 'A', correct: false, audio_available: true }, ctx);
+  state = out.state;
+  out = na(state, { type: 'OBSERVE_PROBE_ITEM', modality: 'T', correct: false }, ctx);
+  state = out.state;
+
+  // 3. Confirm W fail: term → 0.1735
+  out = na(state, { type: 'OBSERVE_CONFIRM_ITEM', correct: false, term_id: 'T_DISP' }, ctx);
+  state = out.state;
+  expect(state.term_masteries['T_DISP']).toBeCloseTo(0.1735, 4);
+
+  // 4. Remediation + W pass: term → 0.4873
+  out = na(state, { type: 'OBSERVE_REMEDIATION_W', correct: true, term_id: 'T_DISP' }, ctx);
+  state = out.state;
+  expect(state.term_masteries['T_DISP']).toBeCloseTo(0.4873, 4);
+  expect(state.step).toBe('POST_REMEDIATION_MCQ');
+
+  // 5. PM1 correct: concept → 0.8597
+  out = na(state, { type: 'OBSERVE_POST_REMEDIATION_MCQ', correct: true }, ctx);
+  state = out.state;
+  expect(state.concept_mastery).toBeCloseTo(0.8597, 4);
+  expect(state.step).toBe('EPISODE_DONE');
+});

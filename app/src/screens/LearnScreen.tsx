@@ -45,7 +45,7 @@ import { nextAction, createInitialState, type EngineState, type EngineContext } 
 import { computeSeed, probeOrder } from '../engine/seed';
 import { insertEvent, listEvents, pendingEvents } from '../db/database';
 import { syncPending } from '../sync/syncClient';
-import { getHeroChunk, getHeroItem, getPackHash } from '../content/loader';
+import { getHeroChunk, getHeroItem, getPackHash, getConfirmItem, getKuiGlossary } from '../content/loader';
 import { getDeviceId } from '../utils/device';
 import type { RootStackParamList } from '../../App';
 
@@ -77,6 +77,8 @@ export default function LearnScreen({ navigation }: Props) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [voiceState, setVoiceState] = useState<VoiceState>('Ready');
   const [selectedProbeChoice, setSelectedProbeChoice] = useState<string | null>(null);
+  const [probeOrderSeq, setProbeOrderSeq] = useState<Array<'P' | 'A' | 'T'>>(['T', 'A', 'P']);
+  const [probeIndex, setProbeIndex] = useState<number>(0);
 
   // Modals (isolated from student navigation)
   // Launches on first open to guide student through Welcome -> Name -> Language -> Subject -> "You're all set!" -> Home
@@ -115,6 +117,8 @@ export default function LearnScreen({ navigation }: Props) {
     });
     computeSeed(profileId, conceptId, 'A').then((seed) => {
       engineContextRef.current.seed = seed;
+      const order = probeOrder(seed);
+      setProbeOrderSeq(order);
     });
   }, []);
 
@@ -169,7 +173,32 @@ export default function LearnScreen({ navigation }: Props) {
     if (correct) {
       setTimeout(() => setFlowStep('COMPLETION'), 700);
     } else {
-      setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
+      setProbeIndex(0);
+      const firstModality = probeOrderSeq[0] || 'T';
+      const nextStep =
+        firstModality === 'P'
+          ? 'PROBE_PICTURE'
+          : firstModality === 'A'
+          ? 'PROBE_AUDIO'
+          : 'PROBE_TEXT';
+      setTimeout(() => setFlowStep(nextStep), 700);
+    }
+  };
+
+  const advanceProbeStep = (nextIdx: number) => {
+    setSelectedProbeChoice(null);
+    setProbeIndex(nextIdx);
+    if (nextIdx >= probeOrderSeq.length) {
+      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+    } else {
+      const mod = probeOrderSeq[nextIdx];
+      const nextStep =
+        mod === 'P'
+          ? 'PROBE_PICTURE'
+          : mod === 'A'
+          ? 'PROBE_AUDIO'
+          : 'PROBE_TEXT';
+      setTimeout(() => setFlowStep(nextStep), 700);
     }
   };
 
@@ -195,8 +224,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     await refreshPending();
 
-    setSelectedProbeChoice(null);
-    setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+    advanceProbeStep(probeIndex + 1);
   };
 
   // 3. Audio Probe Selection -> calls nextAction (modality A)
@@ -222,8 +250,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     await refreshPending();
 
-    setSelectedProbeChoice(null);
-    setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
+    advanceProbeStep(probeIndex + 1);
   };
 
   // 4. Text Probe Selection -> calls nextAction (modality T)
@@ -248,8 +275,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     await refreshPending();
 
-    setSelectedProbeChoice(null);
-    setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+    advanceProbeStep(probeIndex + 1);
   };
 
   // 5. Confirmation Selection -> calls nextAction (OBSERVE_CONFIRM_ITEM)
@@ -533,34 +559,54 @@ export default function LearnScreen({ navigation }: Props) {
               />
             )}
 
-            {flowStep === 'CONFIRMATION' && (
-              <ConfirmationCard
-                question="If you start at point A, run 100 meters, and return to point A, what is your displacement?"
-                questionOr="ଯଦି ଆପଣ A ବିନ୍ଦୁରୁ ଦୌଡ଼ି ପୁଣି A କୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"
-                options={[
-                  { id: 'c1', label: 'A', text: '0 m (Zero displacement)' },
-                  { id: 'c2', label: 'B', text: '100 m' },
-                  { id: 'c3', label: 'C', text: '200 m' },
-                ]}
-                selectedOptionId={selectedProbeChoice}
-                onSelect={handleSelectConfirmation}
-                onContinue={handleContinueConfirmation}
-              />
-            )}
+            {flowStep === 'CONFIRMATION' && (() => {
+              const confirmItem = getConfirmItem();
+              const questionStem = confirmItem?.stem || "‘ଦୂରତା’ (Distance) — ବସ୍ତୁ ଅତିକ୍ରମ କରିଥିବା ପଥର ମୋଟ ଦୈର୍ଘ୍ୟକୁ ବୁଝାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।";
+              const optionsList = confirmItem?.options && confirmItem.options.length > 0
+                ? confirmItem.options.map((opt: string, idx: number) => ({
+                    id: `c${idx + 1}`,
+                    label: String.fromCharCode(65 + idx),
+                    text: opt,
+                  }))
+                : [
+                    { id: 'c1', label: 'A', text: '0 m (Zero displacement)' },
+                    { id: 'c2', label: 'B', text: '100 m' },
+                    { id: 'c3', label: 'C', text: '200 m' },
+                  ];
 
-            {flowStep === 'REMEDIATION' && (
-              <RemediationCard
-                explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and west 3 meters, you are back at 0 meters!"
-                explanationOr="ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।"
-                onListen={() => {}}
-                onTryAgain={() => {
-                  setSelectedOption(null);
-                  setSelectedProbeChoice(null);
-                  setFlowStep('QUESTION_INTERACTION');
-                }}
-                onContinue={handleCompleteRemediation}
-              />
-            )}
+              return (
+                <ConfirmationCard
+                  question="W1 Confirmation: Verify understanding of distance vs displacement"
+                  questionOr={questionStem}
+                  options={optionsList}
+                  selectedOptionId={selectedProbeChoice}
+                  onSelect={handleSelectConfirmation}
+                  onContinue={handleContinueConfirmation}
+                />
+              );
+            })()}
+
+            {flowStep === 'REMEDIATION' && (() => {
+              const glossary = getKuiGlossary();
+              const dispTerm = glossary.find((t: any) => t.term_id === 'T_DISP');
+              const kuiDesc = dispTerm?.kui?.description || 'ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।';
+              const odiaTerm = dispTerm?.odia_from_textbook || 'ବିସ୍ଥାପନ';
+
+              return (
+                <RemediationCard
+                  conceptTitle={`Understanding Displacement (${odiaTerm})`}
+                  explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and west 3 meters, you are back at 0 meters!"
+                  explanationOr={kuiDesc}
+                  onListen={() => {}}
+                  onTryAgain={() => {
+                    setSelectedOption(null);
+                    setSelectedProbeChoice(null);
+                    setFlowStep('QUESTION_INTERACTION');
+                  }}
+                  onContinue={handleCompleteRemediation}
+                />
+              );
+            })()}
 
             {flowStep === 'COMPLETION' && (
               <CompletionCard

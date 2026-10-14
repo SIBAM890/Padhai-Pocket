@@ -40,6 +40,7 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
       <View style={styles.badge}>
         <Text style={styles.badgeText}>AUDIO FIRST ACTIVITY</Text>
       </View>
+      <Text style={styles.fallbackNotice}>[Audio simulated — native Odia TTS pending]</Text>
 
       <Text style={styles.title}>{title}</Text>
       {titleOr && <Text style={styles.titleOr}>{titleOr}</Text>}
@@ -102,6 +103,12 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.primary,
     fontWeight: '800',
+  },
+  fallbackNotice: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: spacing.xs,
   },
   title: {
     ...typography.h2,
