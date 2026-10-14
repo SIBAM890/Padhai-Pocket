@@ -182,6 +182,15 @@ export function JugaadLabModal({
 
             {/* School Lab Missing vs Village Jugaad Replacement Card */}
             <View style={styles.jugaadCard}>
+              <View style={styles.cagAuditBadge}>
+                <Text style={styles.cagAuditBadgeText}>
+                  🏛️ Grounded in Sept 30, 2026 CAG Audit Finding
+                </Text>
+              </View>
+              <Text style={styles.cagAuditText}>
+                54 audited Odisha high schools lack functional laboratories due to missing equipment and zero internet. Pocket Jugaad Lab turns budget phone hardware sensors + everyday village objects into an autonomous offline physics lab.
+              </Text>
+
               <Text style={styles.jugaadTitle}>School Lab Equipment vs. Village Jugaad</Text>
 
               <View style={styles.comparisonBox}>
@@ -556,6 +565,28 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     padding: spacing.md,
     marginBottom: spacing.md,
+  },
+  cagAuditBadge: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.xs,
+  },
+  cagAuditBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#92400E',
+    letterSpacing: 0.3,
+  },
+  cagAuditText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    lineHeight: 16,
+    marginBottom: spacing.sm,
   },
   jugaadTitle: {
     fontSize: 13,
