@@ -1,0 +1,10 @@
+T_GRAV | gravitation | ମହାକର୍ଷଣ | 95
+T_GRAV_FORCE | force of gravity | ମାଧ୍ୟାକର୍ଷଣ ବଳ | 96
+T_FREEFALL | free fall | ମୁକ୍ତ ପତନ | 98
+T_ACC_GRAV | acceleration due to gravity | ମାଧ୍ୟାକର୍ଷଣଜନିତ ତ୍ୱରଣ | 98
+T_MASS | mass | ବସ୍ତୁତ୍ୱ | 100
+T_WEIGHT | weight | ଓଜନ | 100
+T_THRUST | thrust | ସଂଘାତ | 102
+T_PRESSURE | pressure | ଚାପ | 102
+T_BUOY | buoyancy | ପ୍ଲବତା | 103
+T_REL_DENS | relative density | ଆପେକ୍ଷିକ ସାନ୍ଦ୍ରତା | 106
