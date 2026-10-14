@@ -35,6 +35,7 @@ import { FriendlyState } from '../components/FriendlyState';
 import { BottomNavigation, type MainNavTab } from '../components/BottomNavigation';
 import { StudentSetupModal } from '../components/StudentSetupModal';
 import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
+import { JugaadLabModal } from '../components/JugaadLabModal';
 import { JudgeTelemetryPanel } from '../components/JudgeTelemetryPanel';
 import {
   mockProfile,
@@ -161,6 +162,7 @@ export default function LearnScreen({ navigation, route }: Props) {
   // Modals (isolated from student navigation)
   const [setupModalVisible, setSetupModalVisible] = useState(true);
   const [teacherModalVisible, setTeacherModalVisible] = useState(false);
+  const [jugaadModalVisible, setJugaadModalVisible] = useState(false);
   const [judgeToolsVisible, setJudgeToolsVisible] = useState(false);
 
   // Profile data in local state
@@ -854,6 +856,27 @@ export default function LearnScreen({ navigation, route }: Props) {
               onPress={() => setFlowStep('SOUND_CHECK')}
             />
 
+            {/* Pocket Jugaad Lab Launch Card */}
+            <Pressable
+              style={styles.jugaadCardLaunch}
+              onPress={() => setJugaadModalVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Open Pocket Jugaad Lab"
+            >
+              <View style={styles.jugaadLaunchHeader}>
+                <View style={styles.jugaadLaunchBadge}>
+                  <Text style={styles.jugaadLaunchBadgeText}>0% INTERNET · HARDWARE SENSORS</Text>
+                </View>
+                <Text style={styles.jugaadLaunchArrow}>➔</Text>
+              </View>
+              <Text style={styles.jugaadLaunchTitle}>
+                🔬 ପକେଟ୍ ଜୁଗାଡ଼ ଲ୍ୟାବ୍ (Sensor Lab)
+              </Text>
+              <Text style={styles.jugaadLaunchSub}>
+                Village-Object Physics Lab with Accelerometer & Microphone
+              </Text>
+            </Pressable>
+
             {/* Subject Modules */}
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Your learning subjects</Text>
@@ -1223,6 +1246,12 @@ export default function LearnScreen({ navigation, route }: Props) {
               >
                 <Text style={styles.judgeBtnText}>Teacher Overview</Text>
               </Pressable>
+              <Pressable
+                style={styles.judgeBtn}
+                onPress={() => setJugaadModalVisible(true)}
+              >
+                <Text style={styles.judgeBtnText}>🔬 Jugaad Lab</Text>
+              </Pressable>
             </View>
           </View>
         )}
@@ -1261,6 +1290,25 @@ export default function LearnScreen({ navigation, route }: Props) {
       <TeacherDashboardModal
         visible={teacherModalVisible}
         onClose={() => setTeacherModalVisible(false)}
+      />
+
+      <JugaadLabModal
+        visible={jugaadModalVisible}
+        onClose={() => setJugaadModalVisible(false)}
+        profileId={profileId}
+        sessionId={engineStateRef.current?.session_id || 'sess_01'}
+        currentMastery={engineStateRef.current?.concept_mastery ?? 0.42}
+        onExperimentComplete={async (events, newMastery) => {
+          for (const ev of events) {
+            await insertEvent(ev as any);
+          }
+          if (engineStateRef.current) {
+            engineStateRef.current.concept_mastery = newMastery;
+          }
+          triggerTelemetryUpdate();
+          await refreshPending();
+          loadStreakAndStats();
+        }}
       />
     </SafeAreaView>
   );
@@ -1491,5 +1539,48 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: '700',
     color: colors.primary,
+  },
+  jugaadCardLaunch: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: '#38BDF8',
+    marginBottom: spacing.md,
+    ...shadows.card,
+  },
+  jugaadLaunchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  jugaadLaunchBadge: {
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
+    borderWidth: 1,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  jugaadLaunchBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0284C7',
+  },
+  jugaadLaunchArrow: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  jugaadLaunchTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  jugaadLaunchSub: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
   },
 });
