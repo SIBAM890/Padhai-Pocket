@@ -10,11 +10,13 @@
  *            swap(a[i], a[j])
  */
 
+import { sha256Bytes } from './sha256';
+
 /**
  * PRD §4.9: compute deterministic probe seed.
  * seed = uint32 (big-endian first 4 bytes) of SHA-256("<profileId>|<conceptId>|<setId>").
  * Same learner, same concept, same set → same probe order every session.
- * Uses Web Crypto API (available in React Native / Expo / browsers).
+ * Uses Web Crypto when available, with pure-JS SHA-256 fallback for Hermes / JSC / offline.
  *
  * Reference test: computeSeed('prof_demo_01','distance_vs_displacement','A') === 1806635391
  */
@@ -26,8 +28,22 @@ export async function computeSeed(
   const key = `${profileId}|${conceptId}|${setId}`;
   const encoder = new TextEncoder();
   const data = encoder.encode(key);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hash = new Uint8Array(hashBuffer);
+
+  let hash: Uint8Array;
+
+  // Prefer Web Crypto on Web / Node (fast, native)
+  if (typeof crypto !== 'undefined' && crypto?.subtle?.digest) {
+    try {
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      hash = new Uint8Array(hashBuffer);
+    } catch {
+      hash = sha256Bytes(data); // pure-JS fallback
+    }
+  } else {
+    // Native Hermes/JSC: pure-JS SHA-256 (byte-identical to Web Crypto)
+    hash = sha256Bytes(data);
+  }
+
   // big-endian uint32 from first 4 bytes
   return ((hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]) >>> 0;
 }
