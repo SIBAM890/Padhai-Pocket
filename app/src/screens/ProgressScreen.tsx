@@ -19,6 +19,7 @@ import {
 } from '../db/queries/progressQueries';
 import { StreakGrid } from '../components/StreakGrid';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { t } from '../utils/stringsLoader';
 
 /**
  * ProgressScreen — child-safe progress & pace dashboard.
@@ -126,7 +127,7 @@ export function ProgressScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       )}
 
-      <Text style={styles.h1}>{COPY.title_or}</Text>
+      <Text style={styles.h1}>{t('progress_title', COPY.title_or)}</Text>
       <Text style={styles.sub}>{COPY.title_en}</Text>
 
       <View style={styles.card}>
