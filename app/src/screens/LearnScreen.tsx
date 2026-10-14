@@ -148,13 +148,16 @@ export default function LearnScreen({ navigation, route }: Props) {
 
   // When a specific chunk or topic is navigated to, launch the question interaction & switch to Learn tab
   useEffect(() => {
+    if (route?.params?.openJugaadLab) {
+      setJugaadModalVisible(true);
+    }
     if (route?.params?.chunkId || route?.params?.topicId) {
       setFlowStep('QUESTION_INTERACTION');
       setCurrentTab('Learn');
       setSelectedOption(null);
       setSelectedProbeChoice(null);
     }
-  }, [route?.params?.chunkId, route?.params?.topicId, route?.params?.conceptId, (route?.params as any)?.navTimestamp]);
+  }, [route?.params?.chunkId, route?.params?.topicId, route?.params?.conceptId, (route?.params as any)?.navTimestamp, (route?.params as any)?.openJugaadLab]);
 
   // Interactive Question & Probe states
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -974,6 +977,14 @@ export default function LearnScreen({ navigation, route }: Props) {
                   <View style={styles.subjectPillBadge}>
                     <Text style={styles.subjectPillBadgeText}>{activeSubjectTitleOr}</Text>
                   </View>
+                  {subject === 'physics' && (
+                    <Pressable
+                      style={styles.jugaadTopPill}
+                      onPress={() => setJugaadModalVisible(true)}
+                    >
+                      <Text style={styles.jugaadTopPillText}>🔬 Jugaad Lab</Text>
+                    </Pressable>
+                  )}
                 </View>
 
                 <LessonContentCard
@@ -988,7 +999,11 @@ export default function LearnScreen({ navigation, route }: Props) {
                 />
 
                 {/* Interactive 2D SVG Subject Visualizer (Physics / Chemistry / Biology / Maths) */}
-                <SubjectVisualizer subject={subject} chunkId={chunkId} />
+                <SubjectVisualizer
+                  subject={subject}
+                  chunkId={chunkId}
+                  onOpenJugaadLab={() => setJugaadModalVisible(true)}
+                />
 
                 <View style={styles.optionsList}>
                   {question.options.map((opt) => (
@@ -1022,7 +1037,12 @@ export default function LearnScreen({ navigation, route }: Props) {
             {flowStep === 'PROBE_PICTURE' && (
               <View>
                 {/* 2D SVG Subject Visualizer in probe mode for diagram stimulus */}
-                <SubjectVisualizer subject={subject} chunkId={chunkId} mode="probe" />
+                <SubjectVisualizer
+                  subject={subject}
+                  chunkId={chunkId}
+                  mode="probe"
+                  onOpenJugaadLab={() => setJugaadModalVisible(true)}
+                />
                 <PictureProbe
                   prompt={pictureProbe.prompt}
                   titleOr={pictureProbe.titleOr}
@@ -1353,6 +1373,7 @@ export default function LearnScreen({ navigation, route }: Props) {
             forcedOffline={forcedOffline}
             onToggleForcedOffline={setForcedOffline}
             onRefreshParent={refreshPending}
+            onOpenJugaadLab={() => setJugaadModalVisible(true)}
           />
         </View>
       </View>
@@ -1607,5 +1628,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 2,
+  },
+  jugaadTopPill: {
+    backgroundColor: '#0284C7',
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.sm + 4,
+    borderRadius: radius.full,
+  },
+  jugaadTopPillText: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

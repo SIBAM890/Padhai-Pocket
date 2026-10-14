@@ -17,7 +17,7 @@ import { colors } from './src/theme/theme';
 
 export type RootStackParamList = {
   SubjectPicker: { initialSubjectId?: string } | undefined;
-  Learn: { profileId?: string; subject?: string; chunkId?: string; subjectId?: string; topicId?: string; conceptId?: string; navTimestamp?: number } | undefined;
+  Learn: { profileId?: string; subject?: string; chunkId?: string; subjectId?: string; topicId?: string; conceptId?: string; navTimestamp?: number; openJugaadLab?: boolean } | undefined;
   Trace: undefined;
   RawLog: undefined;
   Progress: { profileId: string };

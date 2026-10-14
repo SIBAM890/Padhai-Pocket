@@ -17,12 +17,14 @@ export interface SubjectVisualizerProps {
   subject: string;
   chunkId?: string;
   mode?: 'interactive' | 'probe' | 'compact';
+  onOpenJugaadLab?: () => void;
 }
 
 export function SubjectVisualizer({
   subject,
   chunkId,
   mode = 'interactive',
+  onOpenJugaadLab,
 }: SubjectVisualizerProps) {
   const [playingKey, setPlayingKey] = useState<OdiaAudioKey | null>(null);
 
@@ -492,12 +494,41 @@ export function SubjectVisualizer({
             ✓ ବସ୍ତୁତ୍ୱ (10 kg) ସବୁ ସ୍ଥାନରେ ସମାନ ରହେ; କିନ୍ତୁ ଚନ୍ଦ୍ରରେ ମାଧ୍ୟାକର୍ଷଣ କମ୍ ଥିବାରୁ ଓଜନ 1/6 ହୋଇଯାଏ (W = mg)
           </Text>
         </View>
+
+        {onOpenJugaadLab && (
+          <Pressable
+            style={styles.jugaadBannerBtn}
+            onPress={onOpenJugaadLab}
+            accessibilityRole="button"
+            accessibilityLabel="Open Pocket Jugaad Lab Pendulum Experiment"
+          >
+            <Text style={styles.jugaadBannerBtnText}>
+              🔬 ପକେଟ୍ ଜୁଗାଡ଼ ଲ୍ୟାବ୍ ରେ ମାଧ୍ୟାକର୍ଷଣ (g) ମାପନ୍ତୁ (Launch Pendulum Lab) ➔
+            </Text>
+          </Pressable>
+        )}
       </View>
     );
   }
 
   // 5. Default: Physics Motion Simulation (Distance vs Displacement)
-  return <MotionSimulation mode={mode} />;
+  return (
+    <View>
+      <MotionSimulation mode={mode} />
+      {onOpenJugaadLab && (
+        <Pressable
+          style={styles.jugaadMotionBtn}
+          onPress={onOpenJugaadLab}
+          accessibilityRole="button"
+          accessibilityLabel="Open Pocket Jugaad Lab Ramp Experiment"
+        >
+          <Text style={styles.jugaadBannerBtnText}>
+            🔬 ପକେଟ୍ ଜୁଗାଡ଼ ଲ୍ୟାବ୍ ରେ ଦୂରତା ଓ ବିସ୍ଥାପନ ପରୀକ୍ଷା (Launch Ramp Lab) ➔
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -591,5 +622,30 @@ const styles = StyleSheet.create({
   },
   voiceBtnTextActive: {
     color: '#15803D',
+  },
+  jugaadBannerBtn: {
+    backgroundColor: '#0284C7',
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  jugaadMotionBtn: {
+    backgroundColor: '#0284C7',
+    borderRadius: radius.card,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.card,
+  },
+  jugaadBannerBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 });

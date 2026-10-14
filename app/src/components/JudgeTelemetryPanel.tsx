@@ -33,6 +33,7 @@ interface JudgeTelemetryPanelProps {
   currentEpisodeId?: string;
   episodeId?: string;
   events?: StoredEvent[];
+  onOpenJugaadLab?: () => void;
 }
 
 export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
@@ -46,6 +47,7 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   currentEpisodeId: propCurrentEpisodeId,
   episodeId: propEpisodeId,
   events: propEvents,
+  onOpenJugaadLab,
 }) => {
   const [localEvents, setLocalEvents] = useState<StoredEvent[]>([]);
   const events = propEvents ?? localEvents;
@@ -383,6 +385,17 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
             <Pressable style={styles.actionBtnDanger} onPress={handleResetProfile}>
               <Text style={styles.actionBtnDangerText}>🗑️ Reset Profile</Text>
             </Pressable>
+
+            {onOpenJugaadLab && (
+              <Pressable
+                style={[styles.actionBtn, { backgroundColor: '#0284C7' }]}
+                onPress={onOpenJugaadLab}
+                accessibilityRole="button"
+                accessibilityLabel="Launch Pocket Jugaad Lab from Telemetry Panel"
+              >
+                <Text style={styles.actionBtnText}>🔬 Jugaad Lab</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
