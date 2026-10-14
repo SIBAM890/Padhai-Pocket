@@ -5,7 +5,7 @@
 ### Q: How does the system verify and audit learning episodes?
 **A:** Through our deterministic replay verification system (FR-22).
 
-> **Note on Verify Episode (FR-22 — Reconstruct & Replay):** Because our event schema stores `input_hash` rather than raw student inputs, Verify Episode performs a deterministic "reconstruct & replay" from the logged episode trajectory through `nextAction(state, input, ctx)` to verify byte-identical `MATCH` transitions.
+> **Note on Verify Episode (FR-22 — Reconstruct & Replay):** Because raw inputs aren't stored (`input_hash` is used instead for privacy and compact schema compliance), Verify Episode performs a deterministic "reconstruct & replay" from the logged trajectory via `nextAction(state, input, ctx)` to verify byte-identical `MATCH` transitions.
 
 ### Key Technical Guarantees
 1. **Zero Raw Input Storage**: Raw learner inputs, keystrokes, and audio are never persisted in the event ledger. Only cryptographic `input_hash` (12 hex characters) is retained for compact schema compliance and student privacy.
