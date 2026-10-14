@@ -1,237 +1,274 @@
 """
-prompts.py — Standardized Gemini / LLM Prompts for Padhai Pocket
-Phase 4 Deliverable (Item 7)
+Padhai Pocket — Gemini Prompts, Version Hashing & Intent Mapping Specification.
+PRD v4.0 §6.4, §6.5, §6.8 and FR-13, FR-16, FR-26.
 
-Constraints & Rules:
-- R9: No live API calls.
-- PRD: Gemini PLAN input is ONLY {candidate_concept_ids, mastery_bucket, tier_history}.
-- Prompts enforce strict JSON output: "JSON only, no prose, no fences".
-- MODEL_ID is pinned with Sibam.
+Designed for drop-in compatibility with /backend/graph/prompts.py.
 """
 
-from typing import Dict, Any, List, Set
-import json
+import hashlib
 import re
+from typing import Dict, Any, List, Optional, Tuple
 
-
+# Pinned model ID and prompt semantic version
+MODEL_ID = "gemini-1.5-flash-002"
+PINNED_MODEL_ID = MODEL_ID
 PROMPT_VERSION = "1.0.0"
-MODEL_ID = "[PIN WITH SIBAM]"
 
-# Closed concept enum per PRD §9.1 & Chapter 5 syllabus
-VALID_CONCEPT_ENUM = [
-    "motion_and_rest",
+# Closed enumeration boundaries
+ALLOWED_CONCEPT_IDS = (
     "distance_vs_displacement",
-    "average_speed",
-    "velocity",
-    "acceleration",
-    "graphs"
+    "mass_vs_weight",
+)
+
+ALLOWED_INTENTS = (
+    "TEACH_CONCEPT",
+    "REPEAT",
+    "HELP",
+    "UNKNOWN",
+)
+
+BANNED_CHILD_FACING_WORDS = (
+    "wrong",
+    "gap",
+    "diagnosis",
+    "ଭୁଲ",
+    "ତ୍ରୁଟି",
+    "ଅଭାବ",
+    "ରୋଗ ନିର୍ଣ୍ଣୟ",
+)
+
+# -----------------------------------------------------------------------------
+# a) PLAN_PROMPT (PRD §6.8 Data Minimisation & Closed-Set Constraints)
+# -----------------------------------------------------------------------------
+PLAN_PROMPT = """You are a pedagogical planner for Class 9 science in Odisha (Padhai Pocket).
+Given candidate concept IDs, the learner's current mastery bucket, and past tier history, select the next concept_id, remediation tier (1, 2, or 3), and a concise pedagogical reason.
+
+DATA MINIMISATION RULES (PRD §6.8):
+- Input contains ONLY candidate_concept_ids, mastery_bucket, and tier_history.
+- NEVER request, accept, or process profile_id, device_id, student names, or student voice transcripts.
+
+CLOSED-SET CONSTRAINTS:
+- concept_id MUST be one of: "distance_vs_displacement", "mass_vs_weight".
+- tier MUST be an integer in: 1, 2, 3.
+
+OUTPUT FORMAT:
+Output strict, valid JSON only. Do not include markdown formatting, code fences (e.g. ```json), or explanatory prose.
+{
+  "concept_id": "<concept_id>",
+  "tier": 1,
+  "reason": "<one-line pedagogical rationale>"
+}"""
+
+# Alias for backward compatibility with existing backend/graph/prompts.py
+PLAN_SYSTEM_PROMPT = PLAN_PROMPT
+
+# -----------------------------------------------------------------------------
+# b) GEN_EXPLANATION_PROMPT (PRD §6.4, §6.5 Grounding & Child Safety)
+# -----------------------------------------------------------------------------
+GEN_EXPLANATION_PROMPT = """You are generating a simpler pedagogical explanation in Odia for Class 9 secondary students in Odisha (Padhai Pocket).
+Input parameters:
+- chunk_id: Approved textbook chunk identifier.
+- odia_chunk_text: Verified Odia textbook source text.
+- tier: Remediation tier level (1, 2, or 3).
+- mastery_bucket: Current mastery bucket ("low", "mid", "high").
+- allowed_terms: Allowed Odia textbook science glossary terms.
+
+GROUNDING & CHILD-SAFETY RULES (PRD §6.4, §6.5, FR-13, FR-16):
+1. GROUNDING: The explanation MUST be grounded strictly in odia_chunk_text. Do not introduce outside physics claims.
+2. CITATION: You MUST cite chunk_id in the "cites" array.
+3. GLOSSARY: You MUST only use scientific glossary terms present in allowed_terms.
+4. CHILD-SAFE COPY: You must NEVER use negative or deficit labels such as "wrong", "gap", "diagnosis", "ଭୁଲ", "ତ୍ରୁଟି", or "ଅଭାବ". Keep language affirmative, encouraging, and focused on conceptual inquiry.
+5. GOVERNANCE STATUS: Output status must ALWAYS be "draft" pending native speaker review (FR-27).
+
+OUTPUT FORMAT:
+Output strict, valid JSON only. Do not include markdown code fences or explanatory prose.
+{
+  "text": "<simple affirmative Odia explanation>",
+  "cites": ["<chunk_id>"],
+  "terms_used": ["<term1>", "<term2>"],
+  "status": "draft"
+}"""
+
+# Alias for backward compatibility
+EXPLANATION_SYSTEM_PROMPT = GEN_EXPLANATION_PROMPT
+
+# -----------------------------------------------------------------------------
+# c) REFLECT_MODEL_SOURCE_CHECK_PROMPT (PRD §6.5, FR-7)
+# -----------------------------------------------------------------------------
+REFLECT_MODEL_SOURCE_CHECK_PROMPT = """You are an independent factual verifier evaluating a generated Odia physics explanation for Class 9 students (Padhai Pocket REFLECT pipeline).
+Input parameters:
+- chunk_id: Approved textbook chunk identifier.
+- odia_chunk_text: Source textbook excerpt in Odia.
+- generated_explanation: Proposed student explanation in Odia.
+- allowed_terms: List of authorized Odia scientific terms.
+
+VERIFICATION RULES (PRD §6.5, FR-7):
+1. Check whether EVERY factual statement in generated_explanation is directly supported by odia_chunk_text.
+2. Check whether all specialized physics terms in generated_explanation belong to allowed_terms.
+3. If unsupported statements, hallucinated facts, or unauthorized terms appear, return FAIL. Otherwise return PASS.
+
+OUTPUT FORMAT:
+Output strict, valid JSON only. Do not include markdown code fences or explanatory prose.
+{
+  "model_source_check": "PASS",
+  "reason": "<concise one-line verification summary>"
+}"""
+
+# -----------------------------------------------------------------------------
+# e) get_prompt_version_hash() (PRD §6.8 Plan Event Audit Logging)
+# -----------------------------------------------------------------------------
+def get_prompt_version_hash(prompt_text: Optional[str] = None) -> str:
+    """
+    Computes the first 12 hex characters of SHA-256 hash.
+    When called without arguments: hashes concatenated PROMPT_VERSION + PLAN_PROMPT +
+    GEN_EXPLANATION_PROMPT + REFLECT_MODEL_SOURCE_CHECK_PROMPT per Item 7.1.e.
+    When called with a prompt_text string: hashes f"{PROMPT_VERSION}:{prompt_text}"
+    for backward compatibility with existing backend/graph/prompts.py.
+    """
+    if prompt_text is not None:
+        content = f"{PROMPT_VERSION}:{prompt_text}"
+    else:
+        content = (
+            f"{PROMPT_VERSION}"
+            f"{PLAN_PROMPT}"
+            f"{GEN_EXPLANATION_PROMPT}"
+            f"{REFLECT_MODEL_SOURCE_CHECK_PROMPT}"
+        )
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()[:12]
+
+
+PLAN_PROMPT_HASH = get_prompt_version_hash(PLAN_PROMPT)
+EXPLANATION_PROMPT_HASH = get_prompt_version_hash(GEN_EXPLANATION_PROMPT)
+PROMPT_SUITE_HASH = get_prompt_version_hash()
+
+# -----------------------------------------------------------------------------
+# d) INTENT_MAPPER_SPEC & map_closed_intent() (FR-26 Closed Student Channel)
+# -----------------------------------------------------------------------------
+INTENT_MAPPER_SPEC = {
+    "description": (
+        "Deterministic rule-based intent mapper that projects raw student voice/text "
+        "utterances onto a closed enum {TEACH_CONCEPT, REPEAT, HELP, UNKNOWN}. "
+        "Raw text is strictly discarded and NEVER forwarded into an LLM prompt (FR-26)."
+    ),
+    "allowed_intents": ALLOWED_INTENTS,
+    "allowed_concept_ids": ALLOWED_CONCEPT_IDS,
+}
+
+# Known injection and prompt leakage triggers (English & Odia)
+INJECTION_KEYWORDS = [
+    r"ignore.*(?:instructions|rules|prompt)",
+    r"system\s*prompt",
+    r"api\s*key",
+    r"developer",
+    r"politics",
+    r"jailbreak",
+    r"developer\s*mode",
+    r"print.*key",
+    r"reveal.*instructions",
+    r"ନିୟମ\s*ଭୁଲି",
+    r"ନିର୍ଦ୍ଦେଶ\s*ଭୁଲି",
+    r"ସିଷ୍ଟମ୍\s*ପ୍ରମ୍ପ୍ଟ",
+    r"ଗୁପ୍ତ\s*ଚାବି",
 ]
 
-VALID_MASTERY_BUCKETS = ["low", "mid", "high"]
-VALID_TIERS = [1, 2, 3]
+REPEAT_KEYWORDS = [
+    "repeat",
+    "again",
+    "say again",
+    "one more time",
+    "pardon",
+    "ଆଉଥରେ",
+    "ପୁଣି କୁହ",
+    "ଆଉ ଥରେ",
+    "ଦୋହରାନ୍ତୁ",
+]
 
-# ==============================================================================
-# 1. PLAN PROMPT
-# Input: ONLY {candidate_concept_ids, mastery_bucket, tier_history}
-# Output: Strict JSON {concept_id, tier, reason}
-# ==============================================================================
+HELP_KEYWORDS = [
+    "help",
+    "assist",
+    "i don't understand",
+    "explain",
+    "confused",
+    "ସାହାଯ୍ୟ",
+    "ମଦତ",
+    "ବୁଝିପାରୁନି",
+    "ବୁଝାଇ ଦିଅନ୍ତୁ",
+    "ସାହାଯ୍ୟ କର",
+]
 
-PLAN_SYSTEM_PROMPT = """You are the offline diagnostic planner for Padhai Pocket, a science learning agent for Class 9 Odia-medium students.
-Your task is to select the next diagnostic concept and instructional tier.
-
-INPUT RESTRICTIONS:
-Your input contains ONLY three fields:
-1. candidate_concept_ids: list of concept identifiers from the closed enum.
-2. mastery_bucket: student's current mastery level ("low", "mid", or "high").
-3. tier_history: list of previously assigned instructional tiers (integers 1, 2, or 3).
-
-CLOSED CONCEPT ENUM:
-Only the following concept IDs are valid:
-- "motion_and_rest"
-- "distance_vs_displacement"
-- "average_speed"
-- "velocity"
-- "acceleration"
-- "graphs"
-
-DECISION RULES:
-- If mastery_bucket is "low", assign tier 1 (foundational concrete example, highest scaffolding).
-- If mastery_bucket is "mid", assign tier 2 (standard curriculum explanation).
-- If mastery_bucket is "high", assign tier 3 (advanced application / minimal scaffolding).
-- If tier_history shows repeated tier 1 failures, do not escalate tier; select the earliest unresolved candidate concept at tier 1.
-
-OUTPUT FORMAT:
-Respond with a single valid JSON object. No explanation, no markdown backticks, no prose outside JSON.
-JSON Schema:
-{
-  "concept_id": "<one concept from closed enum>",
-  "tier": <1 | 2 | 3>,
-  "reason": "<concise one-line rationale for selection>"
+CONCEPT_KEYWORDS: Dict[str, List[str]] = {
+    "distance_vs_displacement": [
+        "distance",
+        "displacement",
+        "ଦୂରତା",
+        "ବିସ୍ଥାପନ",
+    ],
+    "mass_vs_weight": [
+        "mass",
+        "weight",
+        "ବସ୍ତୁତ୍ୱ",
+        "ଓଜନ",
+    ],
 }
 
-JSON only, no prose, no fences."""
 
-PLAN_USER_TEMPLATE = """Select the next plan based on this student state:
-{{
-  "candidate_concept_ids": {candidate_concept_ids},
-  "mastery_bucket": "{mastery_bucket}",
-  "tier_history": {tier_history}
-}}"""
+def map_closed_intent(raw_text: str) -> str:
+    """
+    Deterministic rule fallback mapper (FR-26).
+    Maps Odia and English student utterances strictly to the closed enum:
+      - 'TEACH_CONCEPT' (or 'TEACH_CONCEPT:<concept_id>')
+      - 'REPEAT'
+      - 'HELP'
+      - 'UNKNOWN'
 
+    Discards raw_text immediately. If any injection pattern, adversarial token,
+    or unmapped query is detected, safely returns 'UNKNOWN'.
+    """
+    if not raw_text or not isinstance(raw_text, str):
+        return "UNKNOWN"
 
-# ==============================================================================
-# 2. GENERATE EXPLANATION PROMPT
-# Input: {chunk_id, tier, mastery_bucket, chunk_text, allowed_glossary_terms}
-# Output: Strict JSON {text, cites:[chunk_id], terms_used:[], status:"draft"}
-# ==============================================================================
+    normalized = raw_text.strip().lower()
 
-GEN_EXPLANATION_SYSTEM_PROMPT = """You are the targeted remediation explainer for Padhai Pocket.
-Your task is to generate a short, focused instructional explanation strictly grounded in a single verified textbook chunk.
+    # 1. Adversarial & Injection Filter: Immediate abstention
+    for pat in INJECTION_KEYWORDS:
+        if re.search(pat, normalized, re.IGNORECASE):
+            return "UNKNOWN"
 
-STRICT GROUNDING RULES:
-1. NO FACTS BEYOND THE CHUNK: You may NOT use any scientific facts, numbers, scenarios, or assertions not explicitly stated in the source chunk text.
-2. ONLY GLOSSARY TERMS: You may ONLY use scientific terms that exist in the provided allowed glossary terms list. Do not introduce extraneous technical terms.
-3. CITATIONS: The "cites" field must contain exactly the source chunk_id.
-4. STATUS: The "status" field must always be "draft".
-5. TIER ADAPTATION:
-   - Tier 1: Concrete, short sentences, active voice, everyday village-familiar context from the chunk.
-   - Tier 2: Standard textbook formulation.
-   - Tier 3: Concise conceptual summary.
+    # 2. Benign Repeat Keywords
+    for kw in REPEAT_KEYWORDS:
+        if kw in normalized:
+            return "REPEAT"
 
-OUTPUT FORMAT:
-Respond with a single valid JSON object. No markdown backticks, no introductory or concluding text.
-JSON Schema:
-{
-  "text": "<verbatim-grounded explanation in target language>",
-  "cites": ["<chunk_id>"],
-  "terms_used": ["<term_ids from allowed glossary appearing in text>"],
-  "status": "draft"
-}
+    # 3. Benign Help Keywords
+    for kw in HELP_KEYWORDS:
+        if kw in normalized:
+            return "HELP"
 
-JSON only, no prose, no fences."""
+    # 4. Closed Concept Queries
+    for concept_id, keywords in CONCEPT_KEYWORDS.items():
+        for kw in keywords:
+            if kw in normalized:
+                return f"TEACH_CONCEPT:{concept_id}"
 
-GEN_EXPLANATION_USER_TEMPLATE = """Generate explanation:
-{{
-  "chunk_id": "{chunk_id}",
-  "tier": {tier},
-  "mastery_bucket": "{mastery_bucket}",
-  "chunk_text": "{chunk_text}",
-  "allowed_glossary_terms": {allowed_glossary_terms}
-}}"""
+    # 5. Default Fallback
+    return "UNKNOWN"
 
 
-# ==============================================================================
-# 3. REFLECT: MODEL SOURCE CHECK PROMPT
-# Input: {chunk_id, chunk_text, generated_explanation, allowed_glossary_terms}
-# Output: Strict JSON {verdict: "PASS"|"FAIL", reason: "<one-line reason>"}
-# ==============================================================================
-
-REFLECT_SYSTEM_PROMPT = """You are the verification reflection auditor for Padhai Pocket.
-Your task is to independently audit a generated explanation against its source textbook chunk.
-
-EVALUATION CRITERIA:
-1. FACTUAL GROUNDING: Every claim, number, and relationship in the explanation must be directly present in the source chunk. If the explanation hallucinates any fact or external knowledge, FAIL.
-2. CITATION INTEGRITY: The explanation's "cites" list must contain exactly the source chunk_id. If missing or altered, FAIL.
-3. GLOSSARY RESTRICTION: Any term listed in "terms_used" must be in the allowed glossary and must actually be present in the explanation text. If an unauthorized technical term is introduced, FAIL.
-4. CHILD SAFETY: Child-facing text must not contain forbidden words ("wrong", "gap", "diagnosis" or equivalents). If found, FAIL.
-5. FORMAT INTEGRITY: Output must be valid JSON with fields "verdict" and "reason".
-
-OUTPUT FORMAT:
-Respond with a single valid JSON object. No markdown fences, no extra text.
-JSON Schema:
-{
-  "verdict": "PASS" | "FAIL",
-  "reason": "<one-line specific rationale for pass or fail>"
-}
-
-JSON only, no prose, no fences."""
-
-REFLECT_USER_TEMPLATE = """Audit this generated explanation:
-{{
-  "chunk_id": "{chunk_id}",
-  "chunk_text": "{chunk_text}",
-  "generated_explanation": {generated_explanation},
-  "allowed_glossary_terms": {allowed_glossary_terms}
-}}"""
-
-
-# ==============================================================================
-# HELPER FUNCTIONS (OFFLINE FORMATTING & VALIDATION)
-# ==============================================================================
-
-def format_plan_prompt(candidate_concept_ids: List[str], mastery_bucket: str, tier_history: List[int]) -> Dict[str, str]:
-    """Formats plan prompt strictly verifying input boundaries."""
-    if mastery_bucket not in VALID_MASTERY_BUCKETS:
-        raise ValueError(f"Invalid mastery_bucket '{mastery_bucket}', must be in {VALID_MASTERY_BUCKETS}")
-    for cid in candidate_concept_ids:
-        if cid not in VALID_CONCEPT_ENUM:
-            raise ValueError(f"Invalid concept_id '{cid}', must be in closed enum {VALID_CONCEPT_ENUM}")
-
-    user_content = PLAN_USER_TEMPLATE.format(
-        candidate_concept_ids=json.dumps(candidate_concept_ids),
-        mastery_bucket=mastery_bucket,
-        tier_history=json.dumps(tier_history)
-    )
-    return {
-        "system": PLAN_SYSTEM_PROMPT,
-        "user": user_content
-    }
-
-
-def format_explanation_prompt(
-    chunk_id: str,
-    tier: int,
+def build_plan_input(
+    candidate_concept_ids: List[str],
     mastery_bucket: str,
-    chunk_text: str,
-    allowed_glossary_terms: List[str]
-) -> Dict[str, str]:
-    """Formats gen_explanation prompt."""
-    if tier not in VALID_TIERS:
-        raise ValueError(f"Invalid tier {tier}, must be in {VALID_TIERS}")
-    if mastery_bucket not in VALID_MASTERY_BUCKETS:
-        raise ValueError(f"Invalid mastery_bucket '{mastery_bucket}'")
-
-    user_content = GEN_EXPLANATION_USER_TEMPLATE.format(
-        chunk_id=chunk_id,
-        tier=tier,
-        mastery_bucket=mastery_bucket,
-        chunk_text=chunk_text.replace('"', '\\"'),
-        allowed_glossary_terms=json.dumps(allowed_glossary_terms)
-    )
-    return {
-        "system": GEN_EXPLANATION_SYSTEM_PROMPT,
-        "user": user_content
-    }
-
-
-def format_reflect_prompt(
-    chunk_id: str,
-    chunk_text: str,
-    generated_explanation: Dict[str, Any],
-    allowed_glossary_terms: List[str]
-) -> Dict[str, str]:
-    """Formats reflection model_source_check prompt."""
-    user_content = REFLECT_USER_TEMPLATE.format(
-        chunk_id=chunk_id,
-        chunk_text=chunk_text.replace('"', '\\"'),
-        generated_explanation=json.dumps(generated_explanation, ensure_ascii=False),
-        allowed_glossary_terms=json.dumps(allowed_glossary_terms)
-    )
-    return {
-        "system": REFLECT_SYSTEM_PROMPT,
-        "user": user_content
-    }
-
-
-def get_all_prompt_strings() -> List[str]:
-    """Returns canonical list of all prompt strings for hashing."""
-    return [
-        f"PROMPT_VERSION={PROMPT_VERSION}",
-        f"MODEL_ID={MODEL_ID}",
-        PLAN_SYSTEM_PROMPT,
-        PLAN_USER_TEMPLATE,
-        GEN_EXPLANATION_SYSTEM_PROMPT,
-        GEN_EXPLANATION_USER_TEMPLATE,
-        REFLECT_SYSTEM_PROMPT,
-        REFLECT_USER_TEMPLATE
+    tier_history: List[int],
+) -> Dict[str, Any]:
+    """
+    Constructs privacy-preserving PLAN input payload conforming to PRD §6.8.
+    NO profile_id, NO device_id, NO names, NO voice transcripts.
+    """
+    # Validation against closed enum
+    validated_candidates = [
+        cid for cid in candidate_concept_ids if cid in ALLOWED_CONCEPT_IDS
     ]
+    return {
+        "candidate_concept_ids": validated_candidates,
+        "mastery_bucket": mastery_bucket,
+        "tier_history": list(tier_history),
+    }
