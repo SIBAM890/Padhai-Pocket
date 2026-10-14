@@ -92,6 +92,34 @@ export default function MotionSimulation({
       ? 300
       : Math.round(pixelDisplacement * 1.103);
 
+  // Voice-picking helper: Odia -> Hindi -> Indian English -> any Indian -> default
+  const pickBestVoice = (): any => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    const priorities = ['or-IN', 'or', 'hi-IN', 'hi', 'en-IN', 'en_IN'];
+    for (const lang of priorities) {
+      const match = voices.find((v: any) => v.lang === lang || v.lang?.startsWith(lang));
+      if (match) return match;
+    }
+    const anyIndian = voices.find(
+      (v: any) => v.lang?.includes('IN') || v.lang?.includes('in-')
+    );
+    if (anyIndian) return anyIndian;
+    return voices.find((v: any) => v.default) ?? voices[0] ?? null;
+  };
+
+  // One-time voice warm-up on mount (asynchronous enumeration in Chrome)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }, []);
+
   // Audio / Narration hook when Play is tapped
   const triggerNarration = () => {
     try {
@@ -105,8 +133,16 @@ export default function MotionSimulation({
         const text =
           'ସୁନୀତା ଘରୁ ବିଦ୍ୟାଳୟକୁ ଯାଉଛନ୍ତି। ଦୂରତା ହେଉଛି ବକ୍ର ପଥର ମୋଟ ଦୈର୍ଘ୍ୟ, ଏବଂ ବିସ୍ଥାପନ ହେଉଛି ସିଧା ସଳଖ ଦୂରତା।';
         const utterance = new (window as any).SpeechSynthesisUtterance(text);
-        utterance.lang = 'or-IN';
-        utterance.rate = 0.9;
+        const voice = pickBestVoice();
+        if (voice) {
+          utterance.voice = voice;
+          utterance.lang = voice.lang;
+        } else {
+          utterance.lang = 'hi-IN'; // safe fallback if no voices enumerated yet
+        }
+        utterance.rate = 0.85; // slower for young learners
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
         window.speechSynthesis.speak(utterance);
       }
     } catch {
