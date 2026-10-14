@@ -19,7 +19,7 @@ export type OdiaAudioKey =
   | 'maths';
 
 let activeHtml5Audio: any = null;
-let activeExpoSound: any = null;
+let activeNativePlayer: any = null;
 let isAudioPlaying = false;
 
 export function isOdiaAudioPlaying(): boolean {
@@ -28,6 +28,8 @@ export function isOdiaAudioPlaying(): boolean {
 
 export function stopOdiaAudio(): void {
   isAudioPlaying = false;
+
+  // Stop Web Audio
   if (activeHtml5Audio) {
     try {
       activeHtml5Audio.pause();
@@ -35,13 +37,20 @@ export function stopOdiaAudio(): void {
     } catch {}
     activeHtml5Audio = null;
   }
-  if (activeExpoSound) {
+
+  // Stop Native Player (expo-audio)
+  if (activeNativePlayer) {
     try {
-      activeExpoSound.stopAsync().catch(() => {});
-      activeExpoSound.unloadAsync().catch(() => {});
+      if (typeof activeNativePlayer.pause === 'function') {
+        activeNativePlayer.pause();
+      }
+      if (typeof activeNativePlayer.remove === 'function') {
+        activeNativePlayer.remove();
+      }
     } catch {}
-    activeExpoSound = null;
+    activeNativePlayer = null;
   }
+
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel();
@@ -57,6 +66,36 @@ export interface PlayOdiaOptions {
   onError?: (err: any) => void;
 }
 
+/**
+ * Safely checks if the ExpoAudio native module is registered in the current native binary.
+ * Uses requireOptionalNativeModule to avoid unhandled native exceptions.
+ */
+function isExpoAudioAvailable(): boolean {
+  try {
+    const { requireOptionalNativeModule } = require('expo-modules-core');
+    if (typeof requireOptionalNativeModule === 'function') {
+      const nativeMod = requireOptionalNativeModule('ExpoAudio');
+      return !!nativeMod;
+    }
+  } catch {}
+  return false;
+}
+
+/**
+ * Safely resolves the expo-audio module if its native component is available.
+ */
+function getExpoAudio(): any {
+  try {
+    if (isExpoAudioAvailable()) {
+      const mod = require('expo-audio');
+      if (mod && (typeof mod.createAudioPlayer === 'function' || mod.AudioModule)) {
+        return mod;
+      }
+    }
+  } catch {}
+  return null;
+}
+
 async function playNativeAudio(
   soundSource: string,
   key?: string,
@@ -65,20 +104,15 @@ async function playNativeAudio(
   onError?: (err: any) => void
 ): Promise<void> {
   try {
-    const ExpoAV = require('expo-av');
-    if (!ExpoAV?.Audio?.Sound) {
+    const expoAudio = getExpoAudio();
+
+    if (!expoAudio) {
+      if (__DEV__) {
+        console.warn('[odiaAudio] ExpoAudio native module not detected in this client. Gracefully skipping native playback.');
+      }
       onEnd?.();
       return;
     }
-
-    try {
-      await ExpoAV.Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-    } catch {}
 
     let playableUri = soundSource;
 
@@ -105,27 +139,33 @@ async function playNativeAudio(
       }
     }
 
-    isAudioPlaying = true;
-    onStart?.();
+    if (expoAudio && typeof expoAudio.createAudioPlayer === 'function') {
+      isAudioPlaying = true;
+      onStart?.();
 
-    const { sound } = await ExpoAV.Audio.Sound.createAsync(
-      { uri: playableUri },
-      { shouldPlay: true }
-    );
-    activeExpoSound = sound;
+      const player = expoAudio.createAudioPlayer(playableUri);
+      activeNativePlayer = player;
+      player.play();
 
-    sound.setOnPlaybackStatusUpdate((status: any) => {
-      if (status?.didJustFinish || status?.error) {
-        isAudioPlaying = false;
-        activeExpoSound = null;
-        sound.unloadAsync().catch(() => {});
-        onEnd?.();
+      if (typeof player.addListener === 'function') {
+        const sub = player.addListener('playbackStatusUpdate', (status: any) => {
+          if (status?.didJustFinish || status?.playbackState === 'ended') {
+            isAudioPlaying = false;
+            activeNativePlayer = null;
+            try { player.remove(); } catch {}
+            try { sub.remove(); } catch {}
+            onEnd?.();
+          }
+        });
       }
-    });
+      return;
+    }
+
+    onEnd?.();
   } catch (err) {
-    console.warn('Native Audio.Sound error:', err);
+    console.warn('playNativeAudio exception safely handled:', err);
     isAudioPlaying = false;
-    activeExpoSound = null;
+    activeNativePlayer = null;
     onError?.(err);
     onEnd?.();
   }
@@ -146,7 +186,9 @@ function playWebAudio(
     isAudioPlaying = true;
     onStart?.();
 
-    const audio = new (window as any).Audio(soundSource);
+    const audio = new (window as any).Audio();
+    audio.src = soundSource;
+    audio.preload = 'auto';
     activeHtml5Audio = audio;
 
     audio.onended = () => {
