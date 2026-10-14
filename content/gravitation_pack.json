@@ -1,8 +1,8 @@
 {
   "pack_version": "1.0",
   "manifest": {
-    "sha256": "c823dbfdfd076bd5dc4680602d2153bb7e0de057cad55325f90b22e03bd86819",
-    "built_at": "2026-10-14T14:21:37Z"
+    "sha256": "a3c7abc0ef8488c9851821fcbc562ae3fc6066b956f45cf372de2bb4d031aab2",
+    "built_at": "2026-10-14T14:43:56Z"
   },
   "chapter": {
     "subject": "Physical Science",
@@ -126,5 +126,198 @@
       "status": "pending"
     }
   ],
-  "items": []
+  "items": [
+    {
+      "item_id": "MW-A-P",
+      "concept_id": "mass_vs_weight",
+      "set": "A",
+      "modality": "P",
+      "stem": "ନିମ୍ନ ଚିତ୍ରରେ ଏକ ବସ୍ତୁକୁ ପୃଥିବୀରୁ ଚନ୍ଦ୍ର ପୃଷ୍ଠକୁ ନିଆଗଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବସ୍ତୁତ୍ୱ (mass) ଏବଂ ଓଜନ (weight) ର ପରିବର୍ତ୍ତନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଦର୍ଶାଉଛି?",
+      "options": [
+        "assets/mw_ap_opt0.png",
+        "assets/mw_ap_opt1.png",
+        "assets/mw_ap_opt2.png",
+        "assets/mw_ap_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "MW-A-P.opus",
+      "misconception_tag": "mass_changes_with_gravity"
+    },
+    {
+      "item_id": "MW-A-A",
+      "concept_id": "mass_vs_weight",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଧ୍ୟାନ ଦେଇ ଶୁଣନ୍ତୁ: ଏକ ବସ୍ତୁର ବସ୍ତୁତ୍ୱ 10 କିଲୋଗ୍ରାମ । ପୃଥିବୀ ପୃଷ୍ଠରେ ଏହାର ଓଜନ କେତେ ହେବ ଶୁଣି ବାଛନ୍ତୁ ।",
+      "options": [
+        "MW-A-A-opt0.opus",
+        "MW-A-A-opt1.opus",
+        "MW-A-A-opt2.opus",
+        "MW-A-A-opt3.opus"
+      ],
+      "correct": 0,
+      "audio": "MW-A-A.opus",
+      "misconception_tag": "confuses_mass_unit_with_weight_unit"
+    },
+    {
+      "item_id": "MW-A-T",
+      "concept_id": "mass_vs_weight",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଗୋଟିଏ ବସ୍ତୁର ବସ୍ତୁତ୍ୱ 10 kg । ପୃଥିବୀ ପୃଷ୍ଠରେ ଏହାର ଓଜନ କେତେ ହେବ? (g = 9.8 m/s²)",
+      "options": [
+        "98 N",
+        "10 N",
+        "9.8 N",
+        "98 kg"
+      ],
+      "correct": 0,
+      "audio": "MW-A-T.opus",
+      "misconception_tag": "weight_equals_mass_without_g"
+    },
+    {
+      "item_id": "MW-B-P",
+      "concept_id": "mass_vs_weight",
+      "set": "B",
+      "modality": "P",
+      "stem": "ଏକ ବସ୍ତୁର ଓଜନ ମାପିବା ପାଇଁ ଏବଂ ବସ୍ତୁତ୍ୱ ମାପିବା ପାଇଁ ବ୍ୟବହୃତ ଯନ୍ତ୍ର କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଦର୍ଶାଉଛି?",
+      "options": [
+        "assets/mw_bp_opt0.png",
+        "assets/mw_bp_opt1.png",
+        "assets/mw_bp_opt2.png",
+        "assets/mw_bp_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "MW-B-P.opus",
+      "misconception_tag": "spring_balance_measures_mass"
+    },
+    {
+      "item_id": "MW-B-A",
+      "concept_id": "mass_vs_weight",
+      "set": "B",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ପୃଥିବୀ ପୃଷ୍ଠରେ ଏକ ବସ୍ତୁର ଓଜନ 60 ନିଉଟନ୍ ହେଲେ, ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ତାର ଓଜନ କେତେ ହେବ ଶୁଣି ବାଛନ୍ତୁ ।",
+      "options": [
+        "MW-B-A-opt0.opus",
+        "MW-B-A-opt1.opus",
+        "MW-B-A-opt2.opus",
+        "MW-B-A-opt3.opus"
+      ],
+      "correct": 0,
+      "audio": "MW-B-A.opus",
+      "misconception_tag": "weight_same_on_moon"
+    },
+    {
+      "item_id": "MW-B-T",
+      "concept_id": "mass_vs_weight",
+      "set": "B",
+      "modality": "T",
+      "stem": "ପୃଥିବୀ ପୃଷ୍ଠରେ ମପାଯାଇଥିବା ଏକ ବସ୍ତୁର ଓଜନ 10 N ହେଲେ, ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଏହାର ଓଜନ କେତେ ହେବ?",
+      "options": [
+        "1.67 N",
+        "10 N",
+        "60 N",
+        "0 N"
+      ],
+      "correct": 0,
+      "audio": "MW-B-T.opus",
+      "misconception_tag": "weight_invariant_across_space"
+    },
+    {
+      "item_id": "MW-CONF-W1",
+      "concept_id": "mass_vs_weight",
+      "set": "C",
+      "modality": "W",
+      "stem": "‘ବସ୍ତୁତ୍ୱ’ (Mass) — ବସ୍ତୁରେ ଥିବା ପଦାର୍ଥର ପରିମାଣ ବା ଜଡ଼ତାର ପରିମାପକକୁ ବୁଝାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।",
+      "options": [
+        "assets/mw_w1_opt0.png",
+        "assets/mw_w1_opt1.png",
+        "assets/mw_w1_opt2.png",
+        "assets/mw_w1_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "MW-CONF-W1.opus",
+      "misconception_tag": "term_misidentification_mass"
+    },
+    {
+      "item_id": "MW-CONF-W2",
+      "concept_id": "mass_vs_weight",
+      "set": "C",
+      "modality": "W",
+      "stem": "‘ଓଜନ’ (Weight) — ପୃଥିବୀ ବସ୍ତୁକୁ ନିଜ କେନ୍ଦ୍ର ଆଡ଼କୁ ଟାଣୁଥିବା ମାଧ୍ୟାକର୍ଷଣ ବଳକୁ ଦର୍ଶାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।",
+      "options": [
+        "assets/mw_w2_opt0.png",
+        "assets/mw_w2_opt1.png",
+        "assets/mw_w2_opt2.png",
+        "assets/mw_w2_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "MW-CONF-W2.opus",
+      "misconception_tag": "term_misidentification_weight"
+    },
+    {
+      "item_id": "MW-CONF-TX",
+      "concept_id": "mass_vs_weight",
+      "set": "C",
+      "modality": "TX",
+      "stem": "ବସ୍ତୁରେ ଥିବା ପଦାର୍ଥର ପରିମାଣକୁ କ’ଣ କୁହାଯାଏ ଏବଂ ଏହାର SI ଏକକ କ’ଣ?",
+      "options": [
+        "ବସ୍ତୁତ୍ୱ, କିଲୋଗ୍ରାମ (kg)",
+        "ଓଜନ, ନିଉଟନ୍ (N)",
+        "ଚାପ, ପାସ୍କାଲ (Pa)",
+        "ବଳ, ଡାଇନ୍ (dyn)"
+      ],
+      "correct": 0,
+      "audio": "MW-CONF-TX.opus",
+      "misconception_tag": "reading_comprehension_mass_weight"
+    },
+    {
+      "item_id": "MW-CONF-PX",
+      "concept_id": "mass_vs_weight",
+      "set": "C",
+      "modality": "PX",
+      "stem": "ମହାକାଶରେ ଯେଉଁଠାରେ ମାଧ୍ୟାକର୍ଷଣ ବଳ ନଥାଏ, ସେଠାରେ ଏକ ବସ୍ତୁର ଓଜନ ଓ ବସ୍ତୁତ୍ୱର ସ୍ଥିତି କେଉଁ ଚିତ୍ରରେ ସଠିକ୍ ଦର୍ଶାଯାଇଛି?",
+      "options": [
+        "assets/mw_px_opt0.png",
+        "assets/mw_px_opt1.png",
+        "assets/mw_px_opt2.png",
+        "assets/mw_px_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "MW-CONF-PX.opus",
+      "misconception_tag": "concept_confusion_gravity_free_weight"
+    },
+    {
+      "item_id": "MW-EXIT-PM1",
+      "concept_id": "mass_vs_weight",
+      "set": "C",
+      "modality": "T",
+      "stem": "ଏକ ବସ୍ତୁକୁ ପୃଥିବୀ ପୃଷ୍ଠରୁ ଚନ୍ଦ୍ର ପୃଷ୍ଠକୁ ନେଲେ, ତାର କେଉଁ ଗୁଣଟି ସର୍ବଦା ଅପରିବର୍ତ୍ତିତ ରହିବ?",
+      "options": [
+        "ବସ୍ତୁତ୍ୱ",
+        "ଓଜନ",
+        "ମାଧ୍ୟାକର୍ଷଣଜନିତ ତ୍ୱରଣ",
+        "ଉଭୟ ବସ୍ତୁତ୍ୱ ଓ ଓଜନ"
+      ],
+      "correct": 0,
+      "audio": "MW-EXIT-PM1.opus",
+      "misconception_tag": "mass_varies_with_location"
+    },
+    {
+      "item_id": "MW-EXIT-PM2",
+      "concept_id": "mass_vs_weight",
+      "set": "C",
+      "modality": "T",
+      "stem": "ଗୋଟିଏ ବସ୍ତୁର ବସ୍ତୁତ୍ୱ 6 kg । ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଏହାର ବସ୍ତୁତ୍ୱ କେତେ ହେବ?",
+      "options": [
+        "6 kg",
+        "1 kg",
+        "36 kg",
+        "0 kg"
+      ],
+      "correct": 0,
+      "audio": "MW-EXIT-PM2.opus",
+      "misconception_tag": "divides_mass_by_six_on_moon"
+    }
+  ]
 }
