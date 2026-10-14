@@ -32,6 +32,7 @@ interface JudgeTelemetryPanelProps {
   profileId?: string;
   currentEpisodeId?: string;
   episodeId?: string;
+  events?: StoredEvent[];
 }
 
 export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
@@ -44,6 +45,7 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   profileId: propProfileId,
   currentEpisodeId: propCurrentEpisodeId,
   episodeId: propEpisodeId,
+  events: propEvents,
 }) => {
   const [events, setEvents] = useState<StoredEvent[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -130,18 +132,20 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   const pat = engineState.current_probe_pattern || [null, null, null];
   const formatBit = (b: number | null) => (b === 1 ? '✓ (1)' : b === 0 ? '✗ (0)' : '—');
 
-  // Derive profileId & currentEpisodeId safely for deterministic episode replay
+  // Derive events, profileId & currentEpisodeId safely for deterministic episode replay
+  const resolvedEvents = propEvents ?? events ?? [];
+
   const profileId =
     propProfileId ??
     engineState?.profile_id ??
-    events[0]?.profile_id ??
+    resolvedEvents[0]?.profile_id ??
     'prof_demo_01';
 
   const currentEpisodeId =
     propCurrentEpisodeId ??
     propEpisodeId ??
     engineState?.episode_id ??
-    [...events].reverse().find((e) => Boolean(e.episode_id))?.episode_id ??
+    [...resolvedEvents].reverse().find((e) => Boolean(e.episode_id))?.episode_id ??
     null;
 
   return (
@@ -454,9 +458,9 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
               {currentEpisodeId && (
                 <View style={{ marginTop: spacing.md }}>
                   <ReplayVerifyButton
-                    episodeId={currentEpisodeId}
-                    events={events}
                     profileId={profileId}
+                    episodeId={currentEpisodeId}
+                    events={resolvedEvents}
                   />
                 </View>
               )}
