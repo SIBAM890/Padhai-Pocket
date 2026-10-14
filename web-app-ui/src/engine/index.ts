@@ -13,6 +13,7 @@ import { Verdict, finalLabel } from './finalLabel';
 import { EventData, EventNode, buildEvent } from './eventBuilder';
 import { handleOfflineWrongAnswer } from './branch';
 import { uuidv4 } from '../utils/device';
+import { matchResources, ResourceMatchOutput } from './resourceMatch';
 
 export interface EngineContext {
   now: number; // Injected timestamp (epoch ms)
@@ -53,6 +54,8 @@ export interface EngineState {
   current_set_label: SetLabel | null;
   set_labels: SetLabel[];
   verdict: Verdict;
+  used_resource_ids?: string[];
+  last_resource_match?: ResourceMatchOutput | null;
 
   // Offline revision state
   queued_revisions: string[];
@@ -123,6 +126,8 @@ export function createInitialState(
     chosen_tier: 1,
     audio_first: false,
     reading_load: 0,
+    used_resource_ids: [],
+    last_resource_match: null,
   };
 }
 
@@ -454,10 +459,32 @@ export function nextAction(
     });
 
     if (v.done) {
+      const resourceMatch = matchResources({
+        final_label: v.label,
+        pattern: state.current_probe_pattern,
+        concept_id: state.concept_id,
+        term_id: termId,
+        concept_mastery: state.concept_mastery,
+        reading_load: state.reading_load,
+        audio_available: !state.current_probe_pattern.includes(null),
+        network_mode: state.network_mode,
+        used_resource_ids: state.used_resource_ids ?? [],
+      });
+
       emit('ACT', `REMEDIATION_${v.label}`, {
         final_label: v.label,
         agreement: v.agreement,
         status: v.status,
+        resource_match: {
+          selected_id: resourceMatch.selected.resource_id,
+          selected_title: resourceMatch.selected.title_en,
+          chunk_id: resourceMatch.selected.chunk_id,
+          score: resourceMatch.selected.score,
+          reasons: resourceMatch.selected.reasons,
+          runner_up_id: resourceMatch.runner_up?.resource_id ?? null,
+          runner_up_score: resourceMatch.runner_up?.score ?? null,
+          disqualified: resourceMatch.disqualified,
+        },
       });
 
       return {
@@ -469,6 +496,8 @@ export function nextAction(
           set_labels: nextSetLabels,
           verdict: v,
           step: 'REMEDIATION_ACTIVE',
+          last_resource_match: resourceMatch,
+          used_resource_ids: [...(state.used_resource_ids ?? []), resourceMatch.selected.resource_id],
         },
         events,
         action: `ACT_${v.label}`,
@@ -606,3 +635,4 @@ export * from './seed';
 export * from './finalLabel';
 export * from './eventBuilder';
 export * from './branch';
+export * from './resourceMatch';

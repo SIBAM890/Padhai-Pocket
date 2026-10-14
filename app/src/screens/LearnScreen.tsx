@@ -118,6 +118,31 @@ export default function LearnScreen({ navigation }: Props) {
     computeStreakData([], false)
   );
 
+  // Supabase live connection status from /healthz
+  const [supabaseConnected, setSupabaseConnected] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (forcedOffline || networkMode !== 'ONLINE') {
+      setSupabaseConnected(false);
+      return;
+    }
+    const checkSupabase = async () => {
+      try {
+        const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+        const res = await fetch(`${baseUrl}/healthz`);
+        if (res.ok) {
+          const data = await res.json();
+          setSupabaseConnected(!!data.supabase_connected);
+        }
+      } catch {
+        setSupabaseConnected(false);
+      }
+    };
+    checkSupabase();
+    const interval = setInterval(checkSupabase, 10000);
+    return () => clearInterval(interval);
+  }, [forcedOffline, networkMode]);
+
   const loadStreakAndStats = useCallback(async () => {
     try {
       const allEvents = await listEvents(200);
@@ -590,6 +615,7 @@ export default function LearnScreen({ navigation }: Props) {
         gender={profile.gender}
         networkMode={networkMode}
         forcedOffline={forcedOffline}
+        supabaseConnected={supabaseConnected}
         onAvatarPress={() => setCurrentTab('Profile')}
       />
 
@@ -786,19 +812,27 @@ export default function LearnScreen({ navigation }: Props) {
               />
             )}
 
-            {flowStep === 'REMEDIATION' && (
-              <RemediationCard
-                explanation={remediationKuiText}
-                explanationOr={`ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
-                onListen={() => {}}
-                onTryAgain={() => {
-                  setSelectedOption(null);
-                  setSelectedProbeChoice(null);
-                  setFlowStep('QUESTION_INTERACTION');
-                }}
-                onContinue={handleCompleteRemediation}
-              />
-            )}
+            {flowStep === 'REMEDIATION' && (() => {
+              const matched = engineStateRef.current?.last_resource_match?.selected;
+              return (
+                <RemediationCard
+                  conceptTitle={matched?.title_en ? `${matched.title_en}` : 'Understanding Displacement (ବିସ୍ଥାପନ)'}
+                  explanation={remediationKuiText}
+                  explanationOr={matched?.title_or ? `${matched.title_or} — ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।` : `ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
+                  resourceId={matched?.resource_id}
+                  resourceModality={matched?.modality}
+                  resourceReasons={matched?.reasons}
+                  matchScore={matched?.score}
+                  onListen={() => {}}
+                  onTryAgain={() => {
+                    setSelectedOption(null);
+                    setSelectedProbeChoice(null);
+                    setFlowStep('QUESTION_INTERACTION');
+                  }}
+                  onContinue={handleCompleteRemediation}
+                />
+              );
+            })()}
 
             {flowStep === 'COMPLETION' && (
               <CompletionCard
