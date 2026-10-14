@@ -323,7 +323,112 @@ export function SubjectVisualizer({
     );
   }
 
-  // 4. Default: Physics Motion Simulation (Distance vs Displacement)
+  // 4. Physics Gravitation Simulation (Mass vs Weight & Earth vs Moon)
+  if (
+    c.includes('grav') ||
+    c.includes('mass') ||
+    c.includes('weight') ||
+    c.includes('universal') ||
+    c === 'BSE9-PHYS-GRAV-S03-01' ||
+    c === 'BSE9-PHYS-GRAV-S03-02'
+  ) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.headerRow}>
+          <View style={styles.titleCol}>
+            <Text style={styles.titleOr}>ବସ୍ତୁତ୍ୱ ଓ ଭାର • 2D Gravitation Sim</Text>
+            <Text style={styles.titleEn}>
+              Earth (g = 9.8 m/s²) vs Moon (g = 1.6 m/s² · 1/6th)
+            </Text>
+          </View>
+          <View style={[styles.badge, { backgroundColor: '#EDE9FE', borderColor: '#8B5CF6' }]}>
+            <Text style={[styles.badgeText, { color: '#6D28D9' }]}>
+              ମାଧ୍ୟାକର୍ଷଣ • W = mg
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.svgContainer}>
+          <Svg width="100%" height={190} viewBox="0 0 340 190">
+            <Rect x="0" y="0" width="340" height="190" fill="#F8FAFC" />
+
+            {/* Middle Divider */}
+            <Line x1={170} y1={15} x2={170} y2={175} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="3, 3" />
+
+            {/* --- LEFT: EARTH (ପୃଥିବୀ) --- */}
+            {/* Earth Surface Sphere */}
+            <Circle cx={85} cy={185} r={55} fill="#DBEAFE" stroke="#3B82F6" strokeWidth={2} />
+            <SvgText x={55} y={160} fontSize="11" fontWeight="bold" fill="#1D4ED8">
+              ପୃଥିବୀ (Earth)
+            </SvgText>
+
+            {/* Earth Data Badge */}
+            <Rect x={15} y={15} width="68" height="28" rx="4" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth={1} />
+            <SvgText x={19} y={27} fontSize="9" fontWeight="bold" fill="#1E40AF">g = 9.8 m/s²</SvgText>
+            <SvgText x={19} y={38} fontSize="9" fontWeight="bold" fill="#2563EB">W = 98 N</SvgText>
+
+            {/* Earth Spring Scale */}
+            <Line x1={85} y1={20} x2={85} y2={45} stroke="#64748B" strokeWidth={2} />
+            <Rect x={70} y={45} width="30" height="38" rx="4" fill="#E2E8F0" stroke="#475569" strokeWidth={2} />
+            <Path d="M 78 52 L 92 56 L 78 60 L 92 64 L 85 70" stroke="#3B82F6" strokeWidth={2} fill="none" />
+            <Line x1={85} y1={83} x2={85} y2={92} stroke="#475569" strokeWidth={2} />
+
+            {/* 10 kg Block on Earth */}
+            <Rect x={67} y={92} width="36" height="28" rx="4" fill="#3B82F6" stroke="#1D4ED8" strokeWidth={2} />
+            <SvgText x={73} y={110} fontSize="11" fontWeight="bold" fill="#FFFFFF">10 kg</SvgText>
+
+            {/* Earth Gravity Vector (Heavy Downward Force) */}
+            <Line x1={85} y1={123} x2={85} y2={143} stroke="#DC2626" strokeWidth={3} />
+            <Polygon points="81,141 85,147 89,141" fill="#DC2626" />
+            <SvgText x={94} y={137} fontSize="9" fontWeight="bold" fill="#DC2626">98 N</SvgText>
+
+            {/* --- CENTER: CONSTANT MASS BADGE --- */}
+            <Rect x={135} y={65} width="70" height="32" rx="6" fill="#FEF3C7" stroke="#F59E0B" strokeWidth={1} />
+            <SvgText x={141} y={78} fontSize="8" fontWeight="bold" fill="#92400E">ବସ୍ତୁତ୍ୱ ସମାନ</SvgText>
+            <SvgText x={140} y={90} fontSize="9" fontWeight="bold" fill="#B45309">Mass = 10 kg</SvgText>
+            <SvgText x={143} y={120} fontSize="10" fontWeight="bold" fill="#7C3AED">W ÷ 6 ➔</SvgText>
+
+            {/* --- RIGHT: MOON (ଚନ୍ଦ୍ର) --- */}
+            {/* Moon Surface Sphere */}
+            <Circle cx={255} cy={185} r={55} fill="#E2E8F0" stroke="#94A3B8" strokeWidth={2} />
+            <Circle cx={235} cy={155} r={4} fill="#CBD5E1" />
+            <Circle cx={275} cy={165} r={6} fill="#CBD5E1" />
+            <SvgText x={232} y={160} fontSize="11" fontWeight="bold" fill="#475569">
+              ଚନ୍ଦ୍ର (Moon)
+            </SvgText>
+
+            {/* Moon Data Badge */}
+            <Rect x={255} y={15} width="72" height="28" rx="4" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={1} />
+            <SvgText x={259} y={27} fontSize="9" fontWeight="bold" fill="#334155">g = 1.6 m/s²</SvgText>
+            <SvgText x={259} y={38} fontSize="9" fontWeight="bold" fill="#64748B">W = 16.3 N (1/6)</SvgText>
+
+            {/* Moon Spring Scale (Slightly Stretched) */}
+            <Line x1={255} y1={20} x2={255} y2={45} stroke="#64748B" strokeWidth={2} />
+            <Rect x={240} y={45} width="30" height="38" rx="4" fill="#F1F5F9" stroke="#64748B" strokeWidth={2} />
+            <Path d="M 248 54 L 262 57 L 248 60 L 255 65" stroke="#94A3B8" strokeWidth={2} fill="none" />
+            <Line x1={255} y1={83} x2={255} y2={92} stroke="#64748B" strokeWidth={2} />
+
+            {/* Same 10 kg Block on Moon */}
+            <Rect x={237} y={92} width="36" height="28" rx="4" fill="#3B82F6" stroke="#1D4ED8" strokeWidth={2} />
+            <SvgText x={243} y={110} fontSize="11" fontWeight="bold" fill="#FFFFFF">10 kg</SvgText>
+
+            {/* Moon Gravity Vector (1/6th Force) */}
+            <Line x1={255} y1={123} x2={255} y2={133} stroke="#DC2626" strokeWidth={2} />
+            <Polygon points="252,131 255,137 258,131" fill="#DC2626" />
+            <SvgText x={262} y={133} fontSize="8" fontWeight="bold" fill="#DC2626">16.3 N</SvgText>
+          </Svg>
+        </View>
+
+        <View style={[styles.pillBox, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
+          <Text style={[styles.pillText, { color: '#6D28D9' }]}>
+            ✓ ବସ୍ତୁତ୍ୱ (10 kg) ସବୁ ସ୍ଥାନରେ ସମାନ ରହେ; କିନ୍ତୁ ଚନ୍ଦ୍ରରେ ମାଧ୍ୟାକର୍ଷଣ କମ୍ ଥିବାରୁ ଓଜନ 1/6 ହୋଇଯାଏ (W = mg)
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // 5. Default: Physics Motion Simulation (Distance vs Displacement)
   return <MotionSimulation mode={mode} />;
 }
 

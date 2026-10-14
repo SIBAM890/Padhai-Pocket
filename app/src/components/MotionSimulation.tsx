@@ -11,8 +11,6 @@ import Svg, {
   Line,
   Circle,
   Text as SvgText,
-  Defs,
-  Marker,
   Polygon,
   G,
   Rect,
@@ -100,12 +98,13 @@ export default function MotionSimulation({
       if (
         Platform.OS === 'web' &&
         typeof window !== 'undefined' &&
-        'speechSynthesis' in window
+        'speechSynthesis' in window &&
+        typeof (window as any).SpeechSynthesisUtterance === 'function'
       ) {
         window.speechSynthesis.cancel();
         const text =
           'ସୁନୀତା ଘରୁ ବିଦ୍ୟାଳୟକୁ ଯାଉଛନ୍ତି। ଦୂରତା ହେଉଛି ବକ୍ର ପଥର ମୋଟ ଦୈର୍ଘ୍ୟ, ଏବଂ ବିସ୍ଥାପନ ହେଉଛି ସିଧା ସଳଖ ଦୂରତା।';
-        const utterance = new SpeechSynthesisUtterance(text);
+        const utterance = new (window as any).SpeechSynthesisUtterance(text);
         utterance.lang = 'or-IN';
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
@@ -194,21 +193,6 @@ export default function MotionSimulation({
       {/* 2D SVG Canvas */}
       <View style={styles.svgContainer}>
         <Svg width="100%" height={200} viewBox="0 0 340 200">
-          <Defs>
-            {/* Arrow marker for displacement vector */}
-            <Marker
-              id="arrow"
-              viewBox="0 0 10 10"
-              refX="6"
-              refY="5"
-              markerWidth="6"
-              markerHeight="6"
-              orient="auto-start-reverse"
-            >
-              <Polygon points="0,1 10,5 0,9" fill="#304FFE" />
-            </Marker>
-          </Defs>
-
           {/* Background village scenery touches */}
           <Rect x="0" y="0" width="340" height="200" fill="#FDF6E3" />
           <Circle cx="80" cy="50" r="14" fill="#E2E8F0" opacity={0.6} />
@@ -224,8 +208,9 @@ export default function MotionSimulation({
             stroke="#304FFE"
             strokeWidth={3}
             strokeDasharray="5, 4"
-            markerEnd="url(#arrow)"
           />
+          {/* Vector Arrowhead pointing to School (300, 60) without markerEnd */}
+          <Polygon points="286,52 300,60 292,70" fill="#304FFE" />
 
           {/* Curved Road Path: Distance (ଦୂରତା) */}
           <Path

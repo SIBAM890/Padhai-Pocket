@@ -311,12 +311,56 @@ export default function LearnScreen({ navigation, route }: Props) {
     correctOptionId: `opt_${typeof heroItem?.correct === 'number' ? heroItem.correct : 0}`,
   };
 
-  // Real probe objects from content pack
+  // Real probe objects from content pack with clean human-readable Odia labels
+  const formatPictureProbeLabel = (opt: string, i: number) => {
+    if (!opt || opt.includes('.png') || opt.includes('assets/')) {
+      if (conceptId === 'mass_vs_weight' || chunkId.includes('grav')) {
+        return i === 0
+          ? 'ଚିତ୍ର A: ପୃଥିବୀରେ 98 N ଏବଂ ଚନ୍ଦ୍ରରେ 16.3 N'
+          : i === 1
+          ? 'ଚିତ୍ର B: ପୃଥିବୀରେ 10 N ଏବଂ ଚନ୍ଦ୍ରରେ 10 N'
+          : i === 2
+          ? 'ଚିତ୍ର C: ଉଭୟ ସ୍ଥାନରେ ଶୂନ'
+          : 'ଚିତ୍ର D: ପୃଥିବୀରେ କମ୍, ଚନ୍ଦ୍ରରେ ବେଶୀ';
+      }
+      return i === 0
+        ? 'ଚିତ୍ର ୧: ସର୍ବନିମ୍ନ ଦୂରତା (ବିସ୍ଥାପନ 35 km)'
+        : i === 1
+        ? 'ଚିତ୍ର ୨: ମୋଟ ପଥ (ଦୂରତା 85 km)'
+        : i === 2
+        ? 'ଚିତ୍ର ୩: ପୂର୍ଣ୍ଣ ଚକ୍ର (0 km)'
+        : 'ଚିତ୍ର ୪: ଅନିୟମିତ ପଥ';
+    }
+    return opt;
+  };
+
+  const formatAudioProbeLabel = (opt: string, i: number) => {
+    if (!opt || opt.includes('.opus') || opt.includes('.mp3')) {
+      if (conceptId === 'mass_vs_weight' || chunkId.includes('grav')) {
+        return i === 0
+          ? 'ଉତ୍ତର ୧: 98 N (ଓଜନ W = mg)'
+          : i === 1
+          ? 'ଉତ୍ତର ୨: 10 kg (ବସ୍ତୁତ୍ୱ m)'
+          : i === 2
+          ? 'ଉତ୍ତର ୩: 16.3 N (ଚନ୍ଦ୍ରରେ)'
+          : 'ଉତ୍ତର ୪: ଶୂନ ନିଉଟନ୍';
+      }
+      return i === 0
+        ? 'ଉତ୍ତର ୧: 35 km (ବିସ୍ଥାପନ)'
+        : i === 1
+        ? 'ଉତ୍ତର ୨: 85 km (ମୋଟ ଦୂରତା)'
+        : i === 2
+        ? 'ଉତ୍ତର ୩: 0 km (ଆରମ୍ଭ ବିନ୍ଦୁକୁ ଫେରିବା)'
+        : 'ଉତ୍ତର ୪: 120 km';
+    }
+    return opt;
+  };
+
   const pictureProbeChoices = Array.isArray(probeItems?.P?.options) && probeItems.P.options.length > 0
     ? probeItems.P.options.map((opt: string, i: number) => ({
         id: `p_${i}`,
         icon: i === 0 ? '🚩' : i === 1 ? '➡️' : i === 2 ? '⬅️' : '🔹',
-        label: opt,
+        label: formatPictureProbeLabel(opt, i),
         desc: '',
       }))
     : [
@@ -336,7 +380,7 @@ export default function LearnScreen({ navigation, route }: Props) {
     ? probeItems.A.options.map((opt: string, i: number) => ({
         id: `a_${i}`,
         icon: i === 0 ? '📍' : i === 1 ? '📏' : i === 2 ? '🔄' : '🔹',
-        label: opt,
+        label: formatAudioProbeLabel(opt, i),
       }))
     : [
         { id: 'a_0', icon: '📍', label: 'Original Spot (ଆରମ୍ଭ ସ୍ଥାନ)' },
