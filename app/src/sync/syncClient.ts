@@ -1,5 +1,5 @@
 import { detectNetworkMode } from '../network/network';
-import { markAcked, markError, pendingEvents } from '../db/database';
+import { markAcked, markError, markRejected, pendingEvents } from '../db/database';
 import type { PadhaiEvent } from '../types/events';
 import * as SecureStore from 'expo-secure-store';
 
@@ -16,7 +16,24 @@ export interface SyncResult {
   skipped: boolean;
 }
 
-const REGISTRATION_CODE = 'PADHAI-DEMO-2026';
+const REGISTRATION_CODE = 'REG-DEMO-2026';
+
+const isWeb = typeof window !== 'undefined';
+
+async function getStoredToken(): Promise<string | null> {
+  if (isWeb) {
+    return window.localStorage.getItem('device_token');
+  }
+  return await SecureStore.getItemAsync('device_token');
+}
+
+async function storeToken(token: string): Promise<void> {
+  if (isWeb) {
+    window.localStorage.setItem('device_token', token);
+    return;
+  }
+  await SecureStore.setItemAsync('device_token', token);
+}
 
 /**
  * Registers the device with the backend and stores the returned token.
@@ -38,7 +55,7 @@ export async function registerDevice(
   }
 
   const data = (await response.json()) as { token: string };
-  await SecureStore.setItemAsync('device_token', data.token);
+  await storeToken(data.token);
   return data.token;
 }
 
@@ -48,7 +65,7 @@ export async function registerDevice(
  * In production, this would call registerDevice().
  */
 export async function getDeviceToken(baseUrl: string, deviceId: string): Promise<string> {
-  const stored = await SecureStore.getItemAsync('device_token');
+  const stored = await getStoredToken();
   if (stored) return stored;
 
   // Demo mode: use a dev token the backend accepts without registration
@@ -80,6 +97,11 @@ export async function syncPending(config: SyncConfig): Promise<SyncResult> {
       body: JSON.stringify({ device_id: config.deviceId, events }),
     });
 
+    if (response.status === 401 || response.status === 403) {
+      await markRejected(ids, `AUTH_${response.status}`);
+      return { acked: 0, duplicates: 0, rejected: ids.length, skipped: false };
+    }
+
     if (!response.ok) {
       throw new Error(`SYNC_${response.status}`);
     }
@@ -94,7 +116,9 @@ export async function syncPending(config: SyncConfig): Promise<SyncResult> {
     await markAcked(acked);
 
     const rejected = (data.rejected ?? []).map((x) => x.event_id);
-    await markError(rejected);
+    if (rejected.length > 0) {
+      await markRejected(rejected, 'SERVER_REJECTED');
+    }
 
     return {
       acked: data.acked?.length ?? 0,
@@ -102,7 +126,8 @@ export async function syncPending(config: SyncConfig): Promise<SyncResult> {
       rejected: rejected.length,
       skipped: false,
     };
-  } catch {
+  } catch (err: any) {
+    // If not already marked rejected by 401/403
     await markError(ids);
     return { acked: 0, duplicates: 0, rejected: ids.length, skipped: false };
   }

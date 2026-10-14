@@ -28,11 +28,16 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
       payload_json TEXT NOT NULL,
       sync_status TEXT NOT NULL DEFAULT 'PENDING',
       retry_count INTEGER NOT NULL DEFAULT 0,
-      next_retry_at INTEGER NOT NULL DEFAULT 0
+      next_retry_at INTEGER NOT NULL DEFAULT 0,
+      reject_reason TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_events_profile_seq ON events(profile_id, seq);
     CREATE INDEX IF NOT EXISTS idx_events_sync ON events(sync_status, next_retry_at);
   `);
+
+  try {
+    await db.execAsync('ALTER TABLE events ADD COLUMN reject_reason TEXT;');
+  } catch {}
 
   const version = await db.getFirstAsync<{ version: number }>(
     'SELECT version FROM schema_version LIMIT 1'
@@ -140,6 +145,19 @@ export async function markError(ids: string[]): Promise<void> {
       'ERROR',
       retry,
       Date.now() + delay,
+      id
+    );
+  }
+}
+
+export async function markRejected(ids: string[], reason: string): Promise<void> {
+  if (!ids.length) return;
+  const db = await getDatabase();
+  for (const id of ids) {
+    await db.runAsync(
+      'UPDATE events SET sync_status = ?, reject_reason = ? WHERE event_id = ?',
+      'REJECTED',
+      reason,
       id
     );
   }

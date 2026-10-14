@@ -86,6 +86,17 @@ export async function markError(ids: string[]): Promise<void> {
   }
 }
 
+export async function markRejected(ids: string[], reason: string): Promise<void> {
+  for (const id of ids) {
+    const event = eventsMap.get(id);
+    if (event) {
+      event.sync_status = 'REJECTED';
+      (event as any).reject_reason = reason;
+      eventsMap.set(id, event);
+    }
+  }
+}
+
 export async function purgeProfile(profileId: string): Promise<void> {
   for (const [id, event] of eventsMap.entries()) {
     if (event.profile_id === profileId) {

@@ -1,924 +1,938 @@
-/**
- * LearnScreen — PRD v4.0
- *
- * FR-23: Sound check once per session. If failed → A-items skipped, engine abstains
- *        with reason=AUDIO_UNAVAILABLE.
- * FR-24: Skip button on each MCQ option row. A skip produces no event and no mastery
- *        change. Two skips in one set abort the set as INCONSISTENT (reason=SKIPPED).
- *
- * Engine wiring:
- *  - nextAction() called with PRD §4.9 deterministic seed.
- *  - concept_mastery comes from BKT inside nextAction (no hardcoding).
- *  - input_hash computed by buildEvent inside nextAction (no placeholder).
- */
-
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
-  Text,
   View,
+  Text,
+  Switch,
+  Pressable,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { insertEvent, listEvents } from '../db/database';
-import { useNetworkStatus } from '../network/network';
-import { syncPending } from '../sync/syncClient';
-import type { NetworkMode } from '../types/events';
-import type { RootStackParamList } from '../../App';
+import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { AppHeader } from '../components/AppHeader';
+import { ContinueLearningCard } from '../components/ContinueLearningCard';
+import { StreakGrid } from '../components/StreakGrid';
+import { GoalCard } from '../components/GoalCard';
+import { SubjectCard } from '../components/SubjectCard';
+import { LessonBrowserCard } from '../components/LessonBrowserCard';
+import { LessonIntroCard } from '../components/LessonIntroCard';
+import { LessonContentCard } from '../components/LessonContentCard';
+import { MCQOption, type OptionState } from '../components/MCQOption';
+import { MicButton, type VoiceState } from '../components/MicButton';
+import { SoundCheck } from '../components/SoundCheck';
+import { PictureProbe } from '../components/PictureProbe';
+import { AudioProbe } from '../components/AudioProbe';
+import { TextProbe } from '../components/TextProbe';
+import { ConfirmationCard } from '../components/ConfirmationCard';
+import { RemediationCard } from '../components/RemediationCard';
+import { CompletionCard } from '../components/CompletionCard';
+import { LearnerProfileCard } from '../components/LearnerProfileCard';
+import { FriendlyState } from '../components/FriendlyState';
+import { BottomNavigation, type MainNavTab } from '../components/BottomNavigation';
+import { StudentSetupModal } from '../components/StudentSetupModal';
+import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
 import {
-  type EngineState,
-  type EngineInput,
-  createInitialState,
-  nextAction,
-} from '../engine';
+  mockProfile,
+  mockStreakGrid,
+  mockSubjects,
+  mockLessonsList,
+  mockLessonQuestion,
+  mockProbes,
+} from '../mock/mockData';
+import { useNetworkStatus } from '../network/network';
+import { nextAction, createInitialState, type EngineState, type EngineContext } from '../engine';
 import { computeSeed, probeOrder } from '../engine/seed';
-import { getHeroChunk, getHeroItem, getPackHash, getProbeItems, getConfirmItem, getKuiGlossary } from '../content/loader';
+import { insertEvent, listEvents, pendingEvents } from '../db/database';
+import { syncPending } from '../sync/syncClient';
+import { getHeroChunk, getHeroItem, getPackHash, getConfirmItem, getKuiGlossary } from '../content/loader';
 import { getDeviceId } from '../utils/device';
-import * as SecureStore from 'expo-secure-store';
+import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
 
-export type Step =
-  | 'sound_check'
-  | 'mcq'
-  | 'probe_p'
-  | 'probe_a'
-  | 'probe_t'
-  | 'confirm'
-  | 'remediation'
-  | 'done';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
-const HEALTH_URL = `${API_URL}/healthz`;
-const PROFILE_ID = 'demo-profile-01';
-const SESSION_ID = '11111111-2222-4333-8444-555555555555';
-
-// PRD §4.9: seed is stable per (learner, concept, set).
-const CONCEPT_ID = 'distance_vs_displacement';
-const SET_ID = 'A';
-
-// FR-24: max skips before set is aborted as INCONSISTENT.
-const MAX_SKIPS_PER_SET = 2;
+export type LessonFlowStep =
+  | 'DASHBOARD'
+  | 'LESSON_LIST'
+  | 'LESSON_INTRO'
+  | 'SOUND_CHECK'
+  | 'QUESTION_INTERACTION'
+  | 'PROBE_PICTURE'
+  | 'PROBE_AUDIO'
+  | 'PROBE_TEXT'
+  | 'CONFIRMATION'
+  | 'REMEDIATION'
+  | 'COMPLETION';
 
 export default function LearnScreen({ navigation }: Props) {
-  const {
-    networkMode: mode,
-    forcedOffline,
-    setForcedOffline,
-  } = useNetworkStatus(HEALTH_URL);
+  const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus();
 
-  const [pending, setPending] = useState(0);
-  const [step, setStep] = useState<Step>('sound_check');
-  const [answered, setAnswered] = useState(false);
-  const [seq, setSeq] = useState(1);
-  const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
-  const [deviceId, setDeviceId] = useState<string>('');
+  // Navigation tab state (Home, Learn, Progress, Profile)
+  const [currentTab, setCurrentTab] = useState<MainNavTab>('Home');
 
-  // Initialize device ID on mount
-  useEffect(() => {
-    getDeviceId().then((id) => setDeviceId(id));
-  }, []);
+  // Progressive student lesson flow
+  const [flowStep, setFlowStep] = useState<LessonFlowStep>('DASHBOARD');
 
-  // Pre-compute seeded probe order for Set A (PRD §4.9)
-  const [probeOrderSeq, setProbeOrderSeq] = useState<Array<'P' | 'A' | 'T'>>([]);
-  const [probeIndex, setProbeIndex] = useState(0);
+  // Interactive Question & Probe states
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [voiceState, setVoiceState] = useState<VoiceState>('Ready');
+  const [selectedProbeChoice, setSelectedProbeChoice] = useState<string | null>(null);
+  const [probeOrderSeq, setProbeOrderSeq] = useState<Array<'P' | 'A' | 'T'>>(['T', 'A', 'P']);
+  const [probeIndex, setProbeIndex] = useState<number>(0);
 
-  useEffect(() => {
-    computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID).then((seed: number) => {
-      setProbeOrderSeq(probeOrder(seed));
-    });
-  }, []);
+  // Modals (isolated from student navigation)
+  // Launches on first open to guide student through Welcome -> Name -> Language -> Subject -> "You're all set!" -> Home
+  const [setupModalVisible, setSetupModalVisible] = useState(true);
+  const [teacherModalVisible, setTeacherModalVisible] = useState(false);
+  const [judgeToolsVisible, setJudgeToolsVisible] = useState(false);
 
-  // Advance step based on last emitted event's node
-  const advanceStep = (result: { events: any[]; state: EngineState }) => {
-    const lastEvent = result.events[result.events.length - 1];
-    if (!lastEvent) return;
+  // Profile data in local state
+  const [profile, setProfile] = useState(mockProfile);
+  const [deviceId, setDeviceId] = useState<string>('device_init');
 
-    const node = lastEvent.node;
-    const action = lastEvent.action;
+  // Deterministic Engine Context & State Ref
+  const profileId = 'prof_demo_01';
+  const conceptId = 'distance_vs_displacement';
+  const engineContextRef = useRef<EngineContext>({
+    now: Date.now(),
+    seed: 1806635391,
+    device_id: 'device_init',
+  });
 
-    // OFFLINE branch: engine returns EPISODE_DONE after OFFLINE_REMEDIATION
-    if (result.state.step === 'EPISODE_DONE' && node === 'ACT' && action === 'OFFLINE_REMEDIATION') {
-      setStep('done');
-      return;
-    }
-
-    // PROBE node → advance to next probe in seeded order
-    if (node === 'PROBE') {
-      if (probeIndex < probeOrderSeq.length) {
-        const nextModality = probeOrderSeq[probeIndex];
-        setProbeIndex(probeIndex + 1);
-        setStep(`probe_${nextModality.toLowerCase()}` as Step);
-      }
-      return;
-    }
-
-    // CONFIRM node → go to confirm step
-    if (node === 'CONFIRM') {
-      setStep('confirm');
-      return;
-    }
-
-    // REFLECT node with TERM_GAP label → remediation
-    if (node === 'REFLECT' && result.state.current_set_label === 'TERM_GAP') {
-      setStep('remediation');
-      return;
-    }
-
-    // ACT node with REMEDIATION → remediation
-    if (node === 'ACT' && action.startsWith('REMEDIATION_')) {
-      setStep('remediation');
-      return;
-    }
-
-    // MASTERY or ACT after remediation → done
-    if (node === 'MASTERY' || (node === 'ACT' && action.includes('REMEDIATION'))) {
-      setStep('done');
-      return;
-    }
-
-    // RESOLVED → done (no remediation needed)
-    if (result.state.current_set_label === 'RESOLVED' && result.state.step === 'EPISODE_DONE') {
-      setStep('done');
-      return;
-    }
-
-    // INCONSISTENT with threshold=1 (demo) → done
-    // INCONSISTENT with threshold=2 and all 3 sets exhausted → done
-    if (result.state.current_set_label === 'INCONSISTENT' && result.state.step === 'EPISODE_DONE') {
-      setStep('done');
-      return;
-    }
-
-    // Default: if episode done, go to done
-    if (result.state.step === 'EPISODE_DONE') {
-      setStep('done');
-    }
-  };
-
-  // Reset for next MCQ round
-  const resetForNextRound = () => {
-    setAnswered(false);
-    setLastCorrect(null);
-    setSetAborted(false);
-    skipCountRef.current = 0;
-    setProbeIndex(0);
-    setStep('mcq');
-  };
-
-  // FR-23: sound check state. null = not yet checked, true = OK, false = failed.
-  const [soundOk, setSoundOk] = useState<boolean | null>(null);
-  const [audioUnavailable, setAudioUnavailable] = useState(false);
-
-  // FR-24: skip tracking.
-  const skipCountRef = useRef(0);
-  const [setAborted, setSetAborted] = useState(false);
-
-  // Engine state persisted across renders — initialised once per session.
   const engineStateRef = useRef<EngineState>(
     createInitialState(
-      PROFILE_ID,
-      SESSION_ID,
-      CONCEPT_ID,
-      0.42, // initial concept mastery
-      1,    // threshold = 1 (demo mode, PRD §4.5)
-      'OFFLINE'
+      profileId,
+      'sess_01',
+      conceptId,
+      0.42,
+      1,
+      forcedOffline ? 'OFFLINE' : networkMode
     )
   );
 
-  const refreshPending = async () => {
-    const rows = await listEvents(200);
-    setPending(rows.filter((r) => r.sync_status !== 'ACKED').length);
-    if (rows.length > 0) {
-      const maxSeq = Math.max(...rows.map((r) => r.seq));
-      setSeq(maxSeq + 1);
-    }
-  };
-
   useEffect(() => {
-    refreshPending();
+    getDeviceId().then((id) => {
+      setDeviceId(id);
+      engineContextRef.current.device_id = id;
+    });
+    computeSeed(profileId, conceptId, 'A').then((seed) => {
+      engineContextRef.current.seed = seed;
+      const order = probeOrder(seed);
+      setProbeOrderSeq(order);
+    });
   }, []);
 
-  // Content from pack — safety fallback if pack fails to load
-  const heroChunk = getHeroChunk();
-  const heroItem = getHeroItem();
-  const packHash = getPackHash();
-  const probeItems = getProbeItems();
-  const confirmItem = getConfirmItem();
-  const kuiGlossary = getKuiGlossary();
+  // Keep engine state network mode synchronized with actual status
+  useEffect(() => {
+    engineStateRef.current.network_mode = forcedOffline ? 'OFFLINE' : networkMode;
+  }, [networkMode, forcedOffline]);
 
-  const question = useMemo(() => {
-    if (heroChunk && heroItem) {
-      return {
-        title: heroChunk.title,
-        chunkId: heroChunk.chunkId,
-        passage: heroChunk.odiaText,
-        prompt: heroItem.stem,
-        options: heroItem.options,
-        answerIndex: heroItem.correct,
-        misconception: heroItem.misconceptionTag,
-      };
+  // When airplane mode is toggled OFF, attempt to sync pending events
+  useEffect(() => {
+    if (!forcedOffline && networkMode === 'ONLINE') {
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+      syncPending({ baseUrl, deviceId }).catch(() => {});
     }
-    // Fallback (should not happen in demo if pack is built)
-    return {
-      title: 'ଗତି',
-      chunkId: 'BSE9-PHYS-MOTION-S02-02',
-      passage: 'ବସ୍ତୁ ସରଳରେଖାରେ ଗତିକଲେ, ବସ୍ତୁର ସେହି ଗତିକୁ ସରଳରୈଖିକ ଗତି କୁହାଯାଏ ।',
-      prompt: 'ଜଣେ ଛାତ୍ର ୩ ମିଟର ପୂର୍ବକୁ ଯାଇ ପୁଣି ୩ ମିଟର ପଶ୍ଚିମକୁ ଫେରିଲା। ବିସ୍ଥାପନ କେତେ?',
-      options: ['୦ ମିଟର', '୩ ମିଟର', '୬ ମିଟର', '୯ ମିଟର'],
-      answerIndex: 0,
-      misconception: 'path_equals_displacement',
-    };
-  }, [heroChunk, heroItem]);
+  }, [forcedOffline, networkMode, deviceId]);
 
-  // FR-23: handle sound check result.
-  const handleSoundCheck = (heard: boolean) => {
-    setSoundOk(heard);
-    if (!heard) {
-      setAudioUnavailable(true);
-    } else {
-      setStep('mcq');
+  // Helper to refresh pending queue & trigger sync if online
+  const refreshPending = useCallback(async () => {
+    try {
+      const pending = await pendingEvents(10);
+      if (pending.length > 0 && !forcedOffline && networkMode === 'ONLINE') {
+        const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+        await syncPending({ baseUrl, deviceId });
+      }
+    } catch (e) {
+      console.warn('refreshPending error', e);
     }
-  };
+  }, [forcedOffline, networkMode, deviceId]);
 
-  // FR-24: handle skip.
-  const handleSkip = () => {
-    skipCountRef.current += 1;
-    if (skipCountRef.current >= MAX_SKIPS_PER_SET) {
-      // Two skips → abort set as INCONSISTENT (no event written, no mastery change).
-      setSetAborted(true);
-      setAnswered(true);
-    }
-    // Single skip: no event, no mastery change. Item simply dismissed.
-  };
+  // 1. MCQ Option Selection -> calls nextAction & persists via insertEvent
+  const handleSelectOption = async (optId: string) => {
+    setSelectedOption(optId);
+    const correct = optId === mockLessonQuestion.correctOptionId;
 
-  const record = async (selectedIndex: number) => {
-    const isCorrect = selectedIndex === question.answerIndex;
-    setLastCorrect(isCorrect);
-
-    // ctx.now: wall-clock time supplied by the UI caller (PRD §4.9 allows callers to inject Date.now()).
-    // ctx.seed: PRD §4.9 deterministic — SHA-256(profile|concept|set)[0..3] big-endian uint32.
-    const now = Date.now();
-    const seed = await computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
-    const ctx = { now, seed, device_id: deviceId };
-
-    // Sync current network mode and concept into engine state before calling.
-    engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
-
-    // Call the real pure engine — nextAction updates mastery, computes input_hash, emits events.
-    const engineResult = await nextAction(
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
       engineStateRef.current,
       {
         type: 'OBSERVE_MCQ',
-        correct: isCorrect,
-        misconception_tag: isCorrect ? null : question.misconception,
-      } as any,
-      ctx
+        correct,
+        misconception_tag: correct ? null : 'path_equals_displacement',
+      },
+      engineContextRef.current
     );
 
-    // Advance engine state for next interaction.
-    engineStateRef.current = engineResult.state;
-
-    // Persist ALL emitted events (OBSERVE, PLAN, TOOL, PROBE, REFLECT, ACT, MASTERY, etc.)
-    for (const event of engineResult.events) {
+    for (const event of result.events) {
       await insertEvent(event as any);
     }
-    setSeq(engineResult.state.seq);
-    setAnswered(true);
+    engineStateRef.current = result.state;
     await refreshPending();
 
-    // Advance UI step based on engine events
-    advanceStep(engineResult);
+    if (correct) {
+      setTimeout(() => setFlowStep('COMPLETION'), 700);
+    } else {
+      setProbeIndex(0);
+      const firstModality = probeOrderSeq[0] || 'T';
+      const nextStep =
+        firstModality === 'P'
+          ? 'PROBE_PICTURE'
+          : firstModality === 'A'
+          ? 'PROBE_AUDIO'
+          : 'PROBE_TEXT';
+      setTimeout(() => setFlowStep(nextStep), 700);
+    }
   };
 
-  // Handle probe item response (P/A/T)
-  const handleProbeResponse = async (modality: 'P' | 'A' | 'T', isCorrect: boolean) => {
-    const now = Date.now();
-    const seed = await computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
-    const ctx = { now, seed, device_id: deviceId };
+  const advanceProbeStep = (nextIdx: number) => {
+    setSelectedProbeChoice(null);
+    setProbeIndex(nextIdx);
+    if (nextIdx >= probeOrderSeq.length) {
+      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+    } else {
+      const mod = probeOrderSeq[nextIdx];
+      const nextStep =
+        mod === 'P'
+          ? 'PROBE_PICTURE'
+          : mod === 'A'
+          ? 'PROBE_AUDIO'
+          : 'PROBE_TEXT';
+      setTimeout(() => setFlowStep(nextStep), 700);
+    }
+  };
 
-    engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
+  // 2. Picture Probe Selection -> calls nextAction (modality P)
+  const handleSelectPictureProbe = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+    const correct = choiceId === mockProbes.PICTURE.correctChoiceId;
 
-    const engineResult = await nextAction(
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
       engineStateRef.current,
       {
         type: 'OBSERVE_PROBE_ITEM',
-        modality,
-        correct: isCorrect,
-        audio_available: modality !== 'A' || !audioUnavailable,
-      } as any,
-      ctx
+        modality: 'P',
+        correct,
+      },
+      engineContextRef.current
     );
 
-    engineStateRef.current = engineResult.state;
-
-    for (const event of engineResult.events) {
+    for (const event of result.events) {
       await insertEvent(event as any);
     }
-    setSeq(engineResult.state.seq);
+    engineStateRef.current = result.state;
     await refreshPending();
-    advanceStep(engineResult);
+
+    advanceProbeStep(probeIndex + 1);
   };
 
-  // Render probe item screen
-  const renderProbe = (modality: 'P' | 'A' | 'T') => {
-    const item = probeItems?.[modality];
-    if (!item) return null;
+  // 3. Audio Probe Selection -> calls nextAction (modality A)
+  const handleSelectAudioProbe = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+    const correct = choiceId === mockProbes.AUDIO.correctChoiceId;
 
-    const modalityLabels = { P: 'चित्र (Picture)', A: 'ऑडियो (Audio)', T: 'पाठ (Text)' };
-
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>PROBE · {modalityLabels[modality]}</Text>
-            <Text style={styles.title}>Question {modality}</Text>
-            <Text style={styles.prompt}>{item.stem}</Text>
-
-            {/* Placeholder for media (images/audio) */}
-            <View style={styles.mediaPlaceholder}>
-              <Text style={styles.placeholderText}>
-                {modality === 'P' ? '📷 Picture options (4 images)' :
-                 modality === 'A' ? '🔊 Audio playing... (4 audio options)' :
-                 '📝 Text options (4 text choices)'}
-              </Text>
-            </View>
-
-            <View style={styles.probeButtons}>
-              <Pressable
-                testID={`probe-${modality.toLowerCase()}-correct`}
-                style={[styles.option, styles.correctBtn]}
-                onPress={() => handleProbeResponse(modality, true)}
-              >
-                <Text style={styles.optionText}>✓ Correct</Text>
-              </Pressable>
-              <Pressable
-                testID={`probe-${modality.toLowerCase()}-wrong`}
-                style={[styles.option, styles.wrongBtn]}
-                onPress={() => handleProbeResponse(modality, false)}
-              >
-                <Text style={styles.optionText}>✗ Wrong</Text>
-              </Pressable>
-            </View>
-
-            {/* FR-24: Skip button */}
-            <Pressable
-              testID={`skip-button-${modality.toLowerCase()}`}
-              style={styles.skipButton}
-              onPress={handleSkip}
-            >
-              <Text style={styles.skipText}>
-                Skip ({MAX_SKIPS_PER_SET - skipCountRef.current} remaining before set aborts)
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_PROBE_ITEM',
+        modality: 'A',
+        correct,
+        audio_available: true,
+      },
+      engineContextRef.current
     );
+
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    advanceProbeStep(probeIndex + 1);
   };
 
-  // Handle confirm item response (W1 - word meaning check)
-  const handleConfirmResponse = async (isCorrect: boolean) => {
-    const now = Date.now();
-    const seed = await computeSeed(PROFILE_ID, CONCEPT_ID, SET_ID);
-    const ctx = { now, seed, device_id: deviceId };
+  // 4. Text Probe Selection -> calls nextAction (modality T)
+  const handleSelectTextProbe = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+    const correct = choiceId === mockProbes.TEXT.correctChoiceId;
 
-    engineStateRef.current = { ...engineStateRef.current, network_mode: mode, concept_id: CONCEPT_ID };
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_PROBE_ITEM',
+        modality: 'T',
+        correct,
+      },
+      engineContextRef.current
+    );
 
-    const engineResult = await nextAction(
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    advanceProbeStep(probeIndex + 1);
+  };
+
+  // 5. Confirmation Selection -> calls nextAction (OBSERVE_CONFIRM_ITEM)
+  const handleSelectConfirmation = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+  };
+
+  const handleContinueConfirmation = async () => {
+    if (!selectedProbeChoice) return;
+    const correct = selectedProbeChoice === 'c1';
+
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
       engineStateRef.current,
       {
         type: 'OBSERVE_CONFIRM_ITEM',
-        correct: isCorrect,
-        term_id: confirmItem?.termId ?? 'T_DISP',
-      } as any,
-      ctx
+        correct,
+        term_id: 'T_DISP',
+      },
+      engineContextRef.current
     );
 
-    engineStateRef.current = engineResult.state;
-
-    for (const event of engineResult.events) {
+    for (const event of result.events) {
       await insertEvent(event as any);
     }
-    setSeq(engineResult.state.seq);
+    engineStateRef.current = result.state;
     await refreshPending();
-    advanceStep(engineResult);
-  };
 
-  // Render confirm item screen (W1 - word meaning check)
-  const renderConfirm = () => {
-    if (!confirmItem) return null;
-
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>CONFIRM · शब्द अर्थ (Word Meaning)</Text>
-            <Text style={styles.title}>Confirm Check</Text>
-            <Text style={styles.prompt}>{confirmItem.stem}</Text>
-
-            {/* Placeholder for media (images) */}
-            <View style={styles.mediaPlaceholder}>
-              <Text style={styles.placeholderText}>
-                📷 Word meaning check (4 image options)
-              </Text>
-            </View>
-
-            <View style={styles.probeButtons}>
-              <Pressable
-                testID="confirm-correct"
-                style={[styles.option, styles.correctBtn]}
-                onPress={() => handleConfirmResponse(true)}
-              >
-                <Text style={styles.optionText}>✓ Correct</Text>
-              </Pressable>
-              <Pressable
-                testID="confirm-wrong"
-                style={[styles.option, styles.wrongBtn]}
-                onPress={() => handleConfirmResponse(false)}
-              >
-                <Text style={styles.optionText}>✗ Wrong</Text>
-              </Pressable>
-            </View>
-
-            {/* FR-24: Skip button */}
-            <Pressable
-              testID="skip-button-confirm"
-              style={styles.skipButton}
-              onPress={handleSkip}
-            >
-              <Text style={styles.skipText}>
-                Skip ({MAX_SKIPS_PER_SET - skipCountRef.current} remaining before set aborts)
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  };
-  
-  // Render remediation screen (TERM_GAP → Kui term + Odia term + visual)
-  const renderRemediation = () => {
-    // Find Kui glossary for T_DISP (displacement)
-    const kuiTerm = kuiGlossary.find((t: any) => t.term_id === 'T_DISP');
-    const odiaTerm = kuiTerm?.odia_from_textbook ?? 'ବିସ୍ଥାପନ';
-
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>REMEDIATION · TERM_GAP</Text>
-            <Text style={styles.title}>शब्द सेतु (Word Bridge)</Text>
-
-            {/* Kui everyday description (text-only fallback) */}
-            <View style={styles.remediationSection}>
-              <Text style={styles.remediationLabel}>कुइ (Kui) — ସହଜ ବ୍ୟାଖ୍ୟା</Text>
-              <Text style={styles.remediationText}>
-                {kuiTerm?.kui?.description || 'ବସ୍ତୁ କେଉଁଠାରୁ ଆରମ୍ଭ କରି ଯେଉଁଠାରେ ପହଞ୍ଚେ, ସେହି ଦୁର୍ବଳ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।'}
-              </Text>
-            </View>
-
-            {/* Odia term from textbook */}
-            <View style={styles.remediationSection}>
-              <Text style={styles.remediationLabel}>ଓଡ଼ିଆ (Odia) — ପାଠ୍ୟ ପଦ</Text>
-              <Text style={styles.remediationTerm}>{odiaTerm}</Text>
-            </View>
-
-            {/* Visual placeholder */}
-            <View style={styles.mediaPlaceholder}>
-              <Text style={styles.placeholderText}>
-                🖼️ Visual: displacement arrow from start → end
-              </Text>
-            </View>
-
-            <Pressable
-              testID="remediation-understood"
-              style={[styles.option, styles.correctBtn]}
-              onPress={() => setStep('done')}
-            >
-              <Text style={styles.optionText}>सम्झिली (Understood) →</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  };
-
-  // Render done screen (mastery summary + next button)
-  const renderDone = () => {
-    const conceptMastery = Math.round(engineStateRef.current.concept_mastery * 100);
-    const termMastery = Math.round((engineStateRef.current.term_masteries['T_DISP'] ?? 0.4) * 100);
-
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>DONE · Episode Complete</Text>
-            <Text style={styles.title}>ଅଭ୍ୟାସ ସମାପ୍ତ</Text>
-
-            <View style={styles.masteryCard}>
-              <Text style={styles.masteryLabel}>Concept Mastery (Distance vs Displacement)</Text>
-              <Text style={styles.masteryValue}>{conceptMastery}%</Text>
-            </View>
-
-            <View style={styles.masteryCard}>
-              <Text style={styles.masteryLabel}>Term Mastery (Displacement / ବିସ୍ଥାପନ)</Text>
-              <Text style={styles.masteryValue}>{termMastery}%</Text>
-            </View>
-
-            <Text style={styles.doneNote}>
-              Events saved locally. Tap Sync when online to send to teacher.
-            </Text>
-
-            <Pressable
-              testID="done-next"
-              style={[styles.option, styles.correctBtn]}
-              onPress={resetForNextRound}
-            >
-              <Text style={styles.optionText}>Next Question →</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  };
-
-  const sync = async () => {
-    // Read token from SecureStore
-    const token = await SecureStore.getItemAsync('device_token');
-    await syncPending({ baseUrl: API_URL, deviceId: deviceId, token: token ?? undefined });
-    await refreshPending();
-  };
-
-  // ── FR-23: Sound check gate ─────────────────────────────────────────────────
-  if (step === 'sound_check') {
-    if (audioUnavailable) {
-      return (
-        <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.top}>
-              <Text style={styles.brand}>PadhAI Pocket</Text>
-            </View>
-            <View style={styles.card}>
-              <Text style={styles.kicker}>AUDIO UNAVAILABLE</Text>
-              <Text style={styles.title}>Let{"'"}s look at pictures first</Text>
-              <Text style={styles.prompt}>
-                Audio items will be skipped this session.{'\n'}
-                We{"'"}ll use pictures and text instead.
-              </Text>
-              <Pressable
-                testID="audio-unavailable-proceed"
-                style={[styles.option, styles.soundYes]}
-                onPress={() => {
-                  setAudioUnavailable(false);
-                  setStep('mcq');
-                }}
-              >
-                <Text style={styles.optionText}>Proceed →</Text>
-              </Pressable>
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      );
+    if (correct) {
+      setFlowStep('COMPLETION');
+    } else {
+      setFlowStep('REMEDIATION');
     }
+  };
 
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.top}>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.kicker}>FR-23 · SOUND CHECK</Text>
-            <Text style={styles.title}>Can you hear us?</Text>
-            <Text style={styles.prompt}>
-              🔔 A chime should be playing now.{'\n'}
-              Tell us what you hear so we can set up your lesson correctly.
-            </Text>
-            <Pressable
-              testID="sound-check-heard"
-              style={[styles.option, styles.soundYes]}
-              onPress={() => handleSoundCheck(true)}
-            >
-              <Text style={styles.optionIndex}>✓</Text>
-              <Text style={styles.optionText}>I heard it</Text>
-            </Pressable>
-            <Pressable
-              testID="sound-check-not-heard"
-              style={[styles.option, styles.soundNo]}
-              onPress={() => handleSoundCheck(false)}
-            >
-              <Text style={styles.optionIndex}>✗</Text>
-              <Text style={styles.optionText}>I didn{"'"}t hear it</Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+  // 6. Remediation Completion -> advance to next item / completion
+  const handleCompleteRemediation = async () => {
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'NEXT_LESSON',
+      },
+      engineContextRef.current
     );
-  }
 
-  // ── Probe screens (P/A/T) ───────────────────────────────────────────────────
-  if (step === 'probe_p' || step === 'probe_a' || step === 'probe_t') {
-    const modality = step.split('_')[1] as 'P' | 'A' | 'T';
-    return renderProbe(modality);
-  }
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
 
-  // ── Confirm screen (W1 - word meaning check) ────────────────────────────────
-  if (step === 'confirm') {
-    return renderConfirm();
-  }
+    setFlowStep('COMPLETION');
+  };
 
-  // ── Remediation screen (TERM_GAP) ───────────────────────────────────────────
-  if (step === 'remediation') {
-    return renderRemediation();
-  }
+  const handleMicPress = () => {
+    if (voiceState === 'Ready') {
+      setVoiceState('Listening');
+      setTimeout(() => {
+        setVoiceState('Thinking');
+        setTimeout(() => {
+          setVoiceState('Ready');
+          handleSelectOption(mockLessonQuestion.correctOptionId);
+        }, 1200);
+      }, 1500);
+    } else if (voiceState === 'Listening') {
+      setVoiceState('Thinking');
+      setTimeout(() => setVoiceState('Ready'), 1000);
+    }
+  };
 
-  // ── Done screen (episode complete) ──────────────────────────────────────────
-  if (step === 'done') {
-    return renderDone();
-  }
+  const getOptionState = (optId: string): OptionState => {
+    if (!selectedOption) return 'default';
+    if (optId === selectedOption) {
+      return optId === mockLessonQuestion.correctOptionId ? 'correct' : 'needs-review';
+    }
+    return 'default';
+  };
 
-  // ── Main MCQ screen ─────────────────────────────────────────────────────────
+  // Derive dashboard active subject labels from student profile choice
+  const activeSubjectTitle =
+    profile.subject === 'mathematics'
+      ? 'Mathematics · Number Systems'
+      : profile.subject === 'science'
+      ? 'Science · Cells & Living World'
+      : 'Physics · Motion';
+
+  const activeSubjectTitleOr =
+    profile.subject === 'mathematics'
+      ? 'ସଂଖ୍ୟା ପ୍ରଣାଳୀ'
+      : profile.subject === 'science'
+      ? 'କୋଷ ଓ ଜୀବ ଜଗତ'
+      : 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ';
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.top}>
+        {/* Header with greeting and status */}
+        <AppHeader
+          greeting={`Good morning, ${profile.name}`}
+          subgreeting="Keep learning, one step at a time."
+          avatar={profile.avatar}
+          gender={profile.gender}
+          networkMode={networkMode}
+          forcedOffline={forcedOffline}
+          onAvatarPress={() => {
+            setCurrentTab('Profile');
+            setFlowStep('DASHBOARD');
+          }}
+        />
+
+        {/* ======================================================== */}
+        {/* TAB 1: HOME DASHBOARD                                    */}
+        {/* ======================================================== */}
+        {currentTab === 'Home' && flowStep === 'DASHBOARD' && (
           <View>
-            <Text style={styles.brand}>PadhAI Pocket</Text>
-            <Text style={styles.subtitle}>Offline learning session</Text>
-          </View>
-          <View
-            style={[
-              styles.badge,
-              mode === 'ONLINE' ? styles.online : styles.offline,
-            ]}
-          >
-            <Text style={styles.badgeText}>{mode}</Text>
-          </View>
-        </View>
+            <ContinueLearningCard
+              subject={activeSubjectTitle}
+              lessonNumber="Lesson 2"
+              lessonTitle="Displacement and Distance"
+              lessonTitleOr={activeSubjectTitleOr}
+              progressPercent={80}
+              onContinue={() => setFlowStep('SOUND_CHECK')}
+            />
 
-        <View style={styles.card}>
-          <Text style={styles.kicker}>LEARN</Text>
+            <StreakGrid
+              streakDays={profile.streakDays}
+              minutesThisWeek={profile.minutesThisWeek}
+              gridData={mockStreakGrid}
+            />
 
-          {/* Chunk ID badge + pack hash */}
-          <View style={styles.chunkBadge}>
-            <Text style={styles.chunkBadgeText}>
-              {question.chunkId}
-            </Text>
-            <Text style={styles.chunkHashText}>
-              pack {packHash.slice(0, 12)}
-            </Text>
-          </View>
+            <GoalCard
+              goalTitle="Complete 1 lesson today"
+              activitiesDone={1}
+              totalActivities={3}
+              onPress={() => setFlowStep('SOUND_CHECK')}
+            />
 
-          <Text style={styles.title}>{question.title}</Text>
-
-          {/* Passage from content pack */}
-          {question.passage ? (
-            <View style={styles.passageCard}>
-              <Text style={styles.passageLabel}>ପାଠ୍ୟ ଅଂଶ</Text>
-              <Text style={styles.passageText}>{question.passage}</Text>
+            {/* Subject Modules */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Your learning subjects</Text>
+              <Text style={styles.sectionSub}>BSE Odisha Class 9</Text>
             </View>
-          ) : null}
 
-          <Text style={styles.prompt}>{question.prompt}</Text>
-
-          {question.options.map((option, index) => (
-            <Pressable
-              key={option}
-              testID={`option-${index}`}
-              disabled={answered}
-              onPress={() => record(index)}
-              style={[
-                styles.option,
-                answered && index === question.answerIndex && styles.correct,
-              ]}
-            >
-              <Text style={styles.optionIndex}>{String.fromCharCode(65 + index)}</Text>
-              <Text style={styles.optionText}>{option}</Text>
-            </Pressable>
-          ))}
-
-          {/* FR-24: Skip button */}
-          {!answered && (
-            <Pressable
-              testID="skip-button"
-              style={styles.skipButton}
-              onPress={handleSkip}
-            >
-              <Text style={styles.skipText}>
-                Skip ({MAX_SKIPS_PER_SET - skipCountRef.current} remaining before set aborts)
-              </Text>
-            </Pressable>
-          )}
-
-          {answered && (
-            <View style={styles.feedback}>
-              {setAborted ? (
-                <>
-                  <Text style={styles.feedbackText}>Set aborted — INCONSISTENT (reason: SKIPPED)</Text>
-                  <Text style={styles.feedbackSub}>
-                    Two skips in one set. No mastery change recorded.
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.feedbackText}>
-                    {lastCorrect
-                      ? 'Very good! You got it right.'
-                      : "Let's look at it together."}
-                  </Text>
-                  <Text style={styles.feedbackSub}>
-                    Your event is saved locally before any sync is attempted.
-                  </Text>
-                </>
-              )}
-            </View>
-          )}
-        </View>
-
-        <View style={styles.controlCard}>
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.controlTitle}>Airplane-mode demo</Text>
-              <Text style={styles.controlSub}>Force the app into OFFLINE mode</Text>
-            </View>
-            <Switch value={forcedOffline} onValueChange={setForcedOffline} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subjectsRow}>
+              {mockSubjects.map((sub) => (
+                <SubjectCard
+                  key={sub.id}
+                  module={sub}
+                  onPress={() => {
+                    setCurrentTab('Learn');
+                    setFlowStep('LESSON_LIST');
+                  }}
+                />
+              ))}
+            </ScrollView>
           </View>
-          <View style={styles.syncRow}>
-            <Text style={styles.pending}>PENDING {pending}</Text>
-            <Pressable style={styles.syncButton} onPress={sync}>
-              <Text style={styles.syncText}>Sync</Text>
-            </Pressable>
-          </View>
-        </View>
+        )}
 
-        <View style={styles.navRow}>
-          <Pressable
-            style={styles.navButton}
-            onPress={() => navigation.navigate('Trace')}
-          >
-            <Text style={styles.navText}>Trace</Text>
-          </Pressable>
-          <Pressable
-            style={styles.navButton}
-            onPress={() => navigation.navigate('RawLog')}
-          >
-            <Text style={styles.navText}>Raw Log</Text>
-          </Pressable>
-        </View>
+        {/* ======================================================== */}
+        {/* TAB 2 / LESSON FLOW: BROWSER & LESSON EXPERIENCE        */}
+        {/* ======================================================== */}
+        {(currentTab === 'Learn' || flowStep !== 'DASHBOARD') && currentTab !== 'Progress' && currentTab !== 'Profile' && (
+          <View>
+            {flowStep === 'DASHBOARD' && (
+              <View>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{activeSubjectTitle}</Text>
+                  <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
+                </View>
+                {mockLessonsList.map((les) => (
+                  <LessonBrowserCard
+                    key={les.id}
+                    lesson={les}
+                    onPress={() => setFlowStep('SOUND_CHECK')}
+                  />
+                ))}
+              </View>
+            )}
+
+            {flowStep === 'LESSON_LIST' && (
+              <View>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{activeSubjectTitle}</Text>
+                  <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
+                </View>
+                {mockLessonsList.map((les) => (
+                  <LessonBrowserCard
+                    key={les.id}
+                    lesson={les}
+                    onPress={() => setFlowStep('SOUND_CHECK')}
+                  />
+                ))}
+              </View>
+            )}
+
+            {flowStep === 'SOUND_CHECK' && (
+              <SoundCheck
+                onHeard={() => setFlowStep('LESSON_INTRO')}
+                onCannotHear={() => setFlowStep('LESSON_INTRO')}
+              />
+            )}
+
+            {flowStep === 'LESSON_INTRO' && (
+              <LessonIntroCard
+                title={activeSubjectTitle}
+                titleOr={activeSubjectTitleOr}
+                estimatedMinutes={5}
+                lessonNumber="Lesson 2 of 3"
+                onStart={() => setFlowStep('QUESTION_INTERACTION')}
+                onBack={() => setFlowStep('DASHBOARD')}
+              />
+            )}
+
+            {flowStep === 'QUESTION_INTERACTION' && (
+              <View>
+                <LessonContentCard
+                  conceptTitle={mockLessonQuestion.title}
+                  conceptTitleOr={mockLessonQuestion.titleOr}
+                  story={mockLessonQuestion.storyContext}
+                  storyOr={mockLessonQuestion.storyContextOr}
+                  prompt={mockLessonQuestion.prompt}
+                  promptOr={mockLessonQuestion.promptOr}
+                />
+
+                <View style={styles.optionsList}>
+                  {mockLessonQuestion.options.map((opt) => (
+                    <MCQOption
+                      key={opt.id}
+                      label={opt.label}
+                      text={opt.text}
+                      subtext={opt.subtext}
+                      state={getOptionState(opt.id)}
+                      onPress={() => handleSelectOption(opt.id)}
+                    />
+                  ))}
+                </View>
+
+                <MicButton
+                  state={voiceState}
+                  onPress={handleMicPress}
+                  onFallbackPress={() => setVoiceState('Tap instead')}
+                />
+
+                {selectedOption && selectedOption !== mockLessonQuestion.correctOptionId && (
+                  <View style={styles.supportNote}>
+                    <Text style={styles.supportNoteText}>
+                      Let's look at this together · ଚାଲନ୍ତୁ ଏହାକୁ ବୁଝିବା
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {flowStep === 'PROBE_PICTURE' && (
+              <PictureProbe
+                prompt={mockProbes.PICTURE.prompt}
+                titleOr={mockProbes.PICTURE.titleOr}
+                choices={mockProbes.PICTURE.choices}
+                selectedChoiceId={selectedProbeChoice}
+                onSelect={handleSelectPictureProbe}
+              />
+            )}
+
+            {flowStep === 'PROBE_AUDIO' && (
+              <AudioProbe
+                prompt={mockProbes.AUDIO.prompt}
+                choices={mockProbes.AUDIO.choices}
+                selectedChoiceId={selectedProbeChoice}
+                onSelect={handleSelectAudioProbe}
+              />
+            )}
+
+            {flowStep === 'PROBE_TEXT' && (
+              <TextProbe
+                prompt={mockProbes.TEXT.prompt}
+                promptOr={mockProbes.TEXT.promptOr}
+                choices={mockProbes.TEXT.choices}
+                selectedChoiceId={selectedProbeChoice}
+                onSelect={handleSelectTextProbe}
+              />
+            )}
+
+            {flowStep === 'CONFIRMATION' && (() => {
+              const confirmItem = getConfirmItem();
+              const questionStem = confirmItem?.stem || "‘ଦୂରତା’ (Distance) — ବସ୍ତୁ ଅତିକ୍ରମ କରିଥିବା ପଥର ମୋଟ ଦୈର୍ଘ୍ୟକୁ ବୁଝାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।";
+              const optionsList = confirmItem?.options && confirmItem.options.length > 0
+                ? confirmItem.options.map((opt: string, idx: number) => ({
+                    id: `c${idx + 1}`,
+                    label: String.fromCharCode(65 + idx),
+                    text: opt,
+                  }))
+                : [
+                    { id: 'c1', label: 'A', text: '0 m (Zero displacement)' },
+                    { id: 'c2', label: 'B', text: '100 m' },
+                    { id: 'c3', label: 'C', text: '200 m' },
+                  ];
+
+              return (
+                <ConfirmationCard
+                  question="W1 Confirmation: Verify understanding of distance vs displacement"
+                  questionOr={questionStem}
+                  options={optionsList}
+                  selectedOptionId={selectedProbeChoice}
+                  onSelect={handleSelectConfirmation}
+                  onContinue={handleContinueConfirmation}
+                />
+              );
+            })()}
+
+            {flowStep === 'REMEDIATION' && (() => {
+              const glossary = getKuiGlossary();
+              const dispTerm = glossary.find((t: any) => t.term_id === 'T_DISP');
+              const kuiDesc = dispTerm?.kui?.description || 'ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।';
+              const odiaTerm = dispTerm?.odia_from_textbook || 'ବିସ୍ଥାପନ';
+
+              return (
+                <RemediationCard
+                  conceptTitle={`Understanding Displacement (${odiaTerm})`}
+                  explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and west 3 meters, you are back at 0 meters!"
+                  explanationOr={kuiDesc}
+                  onListen={() => {}}
+                  onTryAgain={() => {
+                    setSelectedOption(null);
+                    setSelectedProbeChoice(null);
+                    setFlowStep('QUESTION_INTERACTION');
+                  }}
+                  onContinue={handleCompleteRemediation}
+                />
+              );
+            })()}
+
+            {flowStep === 'COMPLETION' && (
+              <CompletionCard
+                lessonTitle="Displacement & Distance"
+                pointsEarned={10}
+                streakDays={profile.streakDays}
+                onContinue={() => {
+                  setSelectedOption(null);
+                  setSelectedProbeChoice(null);
+                  setFlowStep('DASHBOARD');
+                  setCurrentTab('Home');
+                }}
+                onBackToDashboard={() => {
+                  setSelectedOption(null);
+                  setSelectedProbeChoice(null);
+                  setFlowStep('DASHBOARD');
+                  setCurrentTab('Home');
+                }}
+              />
+            )}
+          </View>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB 3: PROGRESS TAB                                      */}
+        {/* ======================================================== */}
+        {currentTab === 'Progress' && (
+          <View>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Your learning progress</Text>
+              <Text style={styles.sectionSub}>Consistent habits create big milestones</Text>
+            </View>
+
+            <StreakGrid
+              streakDays={profile.streakDays}
+              minutesThisWeek={profile.minutesThisWeek}
+              gridData={mockStreakGrid}
+            />
+
+            <View style={styles.progressCard}>
+              <Text style={styles.progressCardTitle}>Topics Explored</Text>
+
+              <View style={styles.topicRow}>
+                <View style={styles.topicMeta}>
+                  <Text style={styles.topicName}>Motion & Mechanics</Text>
+                  <Text style={styles.topicPercent}>80%</Text>
+                </View>
+                <View style={styles.topicTrack}>
+                  <View style={[styles.topicFill, { width: '80%', backgroundColor: colors.primary }]} />
+                </View>
+              </View>
+
+              <View style={styles.topicRow}>
+                <View style={styles.topicMeta}>
+                  <Text style={styles.topicName}>Laws of Motion</Text>
+                  <Text style={styles.topicPercent}>40%</Text>
+                </View>
+                <View style={styles.topicTrack}>
+                  <View style={[styles.topicFill, { width: '40%', backgroundColor: colors.secondary }]} />
+                </View>
+              </View>
+
+              <View style={styles.topicRow}>
+                <View style={styles.topicMeta}>
+                  <Text style={styles.topicName}>Gravitation</Text>
+                  <Text style={styles.topicPercent}>10%</Text>
+                </View>
+                <View style={styles.topicTrack}>
+                  <View style={[styles.topicFill, { width: '10%', backgroundColor: colors.accent }]} />
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB 4: PROFILE TAB                                       */}
+        {/* ======================================================== */}
+        {currentTab === 'Profile' && (
+          <View>
+            <LearnerProfileCard
+              profile={profile}
+              onEdit={() => setSetupModalVisible(true)}
+              onOpenTeacherPin={() => setTeacherModalVisible(true)}
+            />
+
+            {/* Offline learning confidence notice */}
+            <FriendlyState
+              type="OFFLINE_READY"
+              onAction={() => {
+                setCurrentTab('Learn');
+                setFlowStep('LESSON_LIST');
+              }}
+              actionText="Review Saved Lessons"
+            />
+          </View>
+        )}
+
+        {/* ======================================================== */}
+        {/* JUDGE & DEMO CONTROLS (Discreet bottom section)          */}
+        {/* ======================================================== */}
+        {judgeToolsVisible && (
+          <View style={styles.judgeSection}>
+            <View style={styles.judgeTop}>
+              <Text style={styles.judgeTitle}>HACKATHON / JUDGE CONTROLS</Text>
+              <Pressable onPress={() => setJudgeToolsVisible(false)}>
+                <Text style={styles.judgeClose}>✕ Hide</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.demoToggleRow}>
+              <View>
+                <Text style={styles.demoToggleLabel}>Airplane-mode demo</Text>
+                <Text style={styles.demoToggleSub}>Simulate offline behavior on stage</Text>
+              </View>
+              <Switch value={forcedOffline} onValueChange={setForcedOffline} />
+            </View>
+
+            <View style={styles.judgeButtonsRow}>
+              <Pressable
+                style={styles.judgeBtn}
+                onPress={() => navigation.navigate('Trace')}
+              >
+                <Text style={styles.judgeBtnText}>Open Trace</Text>
+              </Pressable>
+              <Pressable
+                style={styles.judgeBtn}
+                onPress={() => navigation.navigate('RawLog')}
+              >
+                <Text style={styles.judgeBtnText}>Open Raw Log</Text>
+              </Pressable>
+              <Pressable
+                style={styles.judgeBtn}
+                onPress={() => setTeacherModalVisible(true)}
+              >
+                <Text style={styles.judgeBtnText}>Teacher Overview</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
       </ScrollView>
+
+      {/* Main Student Navigation: Home, Learn, Progress, Profile */}
+      <BottomNavigation
+        currentTab={currentTab}
+        onSelectTab={(tab) => {
+          setCurrentTab(tab);
+          if (tab === 'Home') setFlowStep('DASHBOARD');
+          if (tab === 'Progress' || tab === 'Profile') setFlowStep('DASHBOARD');
+        }}
+        onOpenJudgeTools={() => setJudgeToolsVisible(!judgeToolsVisible)}
+      />
+
+      {/* Modals */}
+      <StudentSetupModal
+        visible={setupModalVisible}
+        initialProfile={profile}
+        onClose={() => setSetupModalVisible(false)}
+        onFinish={(data) => {
+          setProfile((p) => ({
+            ...p,
+            name: data.name,
+            gender: data.gender,
+            language: data.language,
+            subject: data.subject,
+            avatar: data.gender,
+            onboardingComplete: true,
+          }));
+          setSetupModalVisible(false);
+        }}
+      />
+
+      <TeacherDashboardModal
+        visible={teacherModalVisible}
+        onClose={() => setTeacherModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#07111f' },
-  container: { padding: 20, gap: 16 },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  brand: { fontSize: 26, fontWeight: '800', color: '#fff' },
-  subtitle: { color: '#91a0b5', marginTop: 4 },
-  badge: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 99 },
-  online: { backgroundColor: '#14532d' },
-  offline: { backgroundColor: '#7f1d1d' },
-  badgeText: { color: '#fff', fontWeight: '800', fontSize: 11 },
-  card: { backgroundColor: '#0e1b2d', borderRadius: 20, padding: 20 },
-  kicker: { color: '#6ee7b7', fontWeight: '800', fontSize: 12, letterSpacing: 1.5 },
-  title: { color: '#fff', fontSize: 30, fontWeight: '800', marginTop: 8 },
-  prompt: { color: '#d9e2ef', fontSize: 18, lineHeight: 27, marginVertical: 18 },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#24364f',
-    borderRadius: 14,
-    marginTop: 10,
-  },
-  soundYes: { borderColor: '#22c55e' },
-  soundNo: { borderColor: '#ef4444' },
-  correct: { borderColor: '#22c55e' },
-  optionIndex: { color: '#91a0b5', fontWeight: '800' },
-  optionText: { color: '#fff', fontSize: 16 },
-  // FR-24 skip button
-  skipButton: {
-    marginTop: 14,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3d4f65',
-    borderStyle: 'dashed',
-    alignItems: 'center',
-  },
-  skipText: { color: '#91a0b5', fontSize: 13 },
-  feedback: { marginTop: 16, padding: 14, backgroundColor: '#15243a', borderRadius: 14 },
-  feedbackText: { color: '#fff', fontWeight: '700' },
-  feedbackSub: { color: '#91a0b5', marginTop: 5, lineHeight: 19 },
-  controlCard: { backgroundColor: '#0e1b2d', borderRadius: 18, padding: 16 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  controlTitle: { color: '#fff', fontWeight: '700' },
-  controlSub: { color: '#91a0b5', marginTop: 4 },
-  syncRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 18,
-  },
-  pending: { color: '#fbbf24', fontWeight: '800' },
-  syncButton: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-  },
-  syncText: { color: '#07111f', fontWeight: '800' },
-  navRow: { flexDirection: 'row', gap: 12 },
-  navButton: {
+  safe: {
     flex: 1,
-    padding: 15,
-    borderRadius: 14,
-    backgroundColor: '#16253b',
-    alignItems: 'center',
+    backgroundColor: colors.background,
   },
-  navText: { color: '#fff', fontWeight: '800' },
-  // Probe screen styles
-  mediaPlaceholder: {
-    height: 120,
-    backgroundColor: '#1a2a44',
-    borderRadius: 12,
-    justifyContent: 'center',
+  container: {
+    padding: spacing.md,
+    paddingBottom: spacing.xxl + 20,
+  },
+  sectionHeader: {
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    color: colors.textPrimary,
+  },
+  sectionSub: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  subjectsRow: {
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  optionsList: {
+    marginVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  supportNote: {
+    backgroundColor: '#F5F7FF',
+    padding: spacing.md,
+    borderRadius: radius.card,
+    marginTop: spacing.md,
     alignItems: 'center',
-    marginVertical: 16,
     borderWidth: 1,
-    borderColor: '#3d4f65',
-    borderStyle: 'dashed',
+    borderColor: '#E0E7FF',
   },
-  placeholderText: { color: '#8a9bb8', fontSize: 14, textAlign: 'center', paddingHorizontal: 16 },
-  probeButtons: { flexDirection: 'row', gap: 12, marginTop: 16 },
-  correctBtn: { flex: 1, borderColor: '#22c55e', backgroundColor: '#14532d' },
-  wrongBtn: { flex: 1, borderColor: '#ef4444', backgroundColor: '#7f1d1d' },
-  // Remediation & Done styles
-  remediationSection: { marginVertical: 12, padding: 14, backgroundColor: '#1a2a44', borderRadius: 12 },
-  remediationLabel: { color: '#6ee7b7', fontWeight: '700', fontSize: 12, marginBottom: 6 },
-  remediationText: { color: '#d9e2ef', fontSize: 15, lineHeight: 24 },
-  remediationTerm: { color: '#fff', fontSize: 22, fontWeight: '800', textAlign: 'center', marginTop: 4 },
-  masteryCard: { marginVertical: 12, padding: 16, backgroundColor: '#14532d', borderRadius: 12 },
-  masteryLabel: { color: '#bbf7d0', fontSize: 13, marginBottom: 4 },
-  masteryValue: { color: '#fff', fontSize: 32, fontWeight: '800' },
-  doneNote: { color: '#91a0b5', fontSize: 13, marginTop: 12, textAlign: 'center', lineHeight: 20 },
-  // Content integration styles
-  chunkBadge: {
+  supportNoteText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.subtle,
+  },
+  progressCardTitle: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  topicRow: {
+    marginBottom: spacing.md,
+  },
+  topicMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  topicName: {
+    ...typography.bodySmall,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  topicPercent: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontWeight: '700',
+  },
+  topicTrack: {
+    height: 8,
+    backgroundColor: colors.background,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+  },
+  topicFill: {
+    height: '100%',
+    borderRadius: radius.full,
+  },
+  judgeSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    marginTop: spacing.lg,
+    ...shadows.subtle,
+  },
+  judgeTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 6,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
-  chunkBadgeText: {
-    fontFamily: 'InterBold',
-    fontSize: 11,
-    color: '#0F4C5C',
-    letterSpacing: 0.5,
-  },
-  chunkHashText: {
-    fontFamily: 'monospace',
+  judgeTitle: {
+    ...typography.caption,
     fontSize: 10,
-    color: '#8A8A8A',
+    fontWeight: '800',
+    color: colors.textMuted,
   },
-  passageCard: {
-    backgroundColor: '#F5EBD0',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderLeftWidth: 3,
-    borderLeftColor: '#C1440E',
+  judgeClose: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
   },
-  passageLabel: {
+  demoToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    padding: spacing.sm + 4,
+    borderRadius: radius.sm,
+    marginBottom: spacing.sm,
+  },
+  demoToggleLabel: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  demoToggleSub: {
+    ...typography.caption,
+    fontSize: 10,
+    color: colors.textMuted,
+  },
+  judgeButtonsRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  judgeBtn: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+  },
+  judgeBtnText: {
+    ...typography.caption,
     fontSize: 11,
     fontWeight: '700',
-    color: '#C1440E',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  passageText: {
-    fontSize: 17,
-    lineHeight: 28,
-    color: '#1A1A1A',
+    color: colors.textPrimary,
   },
 });

@@ -26,6 +26,7 @@ export type StepState =
   | 'PROBE_ACTIVE'
   | 'CONFIRM_ACTIVE'
   | 'REMEDIATION_ACTIVE'
+  | 'POST_REMEDIATION_MCQ'
   | 'EPISODE_DONE';
 
 export interface EngineState {
@@ -58,6 +59,7 @@ export interface EngineState {
   chosen_tier: number;
   audio_first: boolean;
   reading_load: number;
+  skip_count?: number;
 }
 
 export interface EngineInput {
@@ -65,6 +67,8 @@ export interface EngineInput {
     | 'OBSERVE_MCQ'
     | 'OBSERVE_PROBE_ITEM'
     | 'OBSERVE_CONFIRM_ITEM'
+    | 'OBSERVE_REMEDIATION_W'
+    | 'OBSERVE_POST_REMEDIATION_MCQ'
     | 'SKIP'
     | 'NEXT_LESSON';
   concept_id?: string;
@@ -495,6 +499,92 @@ export function nextAction(
       events,
       action: 'NEXT_PROBE_SET',
       payload: { next_set: nextSet },
+    };
+  }
+
+  // Case 4: Post-remediation W check
+  if (input.type === 'OBSERVE_REMEDIATION_W') {
+    const currentTerm = input.term_id ?? 'T_DISP';
+    const before = state.term_masteries[currentTerm] ?? 0.1735;
+    const passed = !!input.correct;
+    const newTermMastery = updateTermMastery(before, passed);
+
+    emit(
+      'MASTERY',
+      'TERM_UPDATE',
+      { term_id: currentTerm, before, after: newTermMastery, post_remediation: true },
+      { mastery_before: before, mastery_after: newTermMastery }
+    );
+
+    return {
+      state: {
+        ...state,
+        seq: state.seq + events.length,
+        step: passed ? 'POST_REMEDIATION_MCQ' : 'REMEDIATION_ACTIVE',
+        term_masteries: {
+          ...state.term_masteries,
+          [currentTerm]: newTermMastery,
+        },
+      },
+      events,
+      action: passed ? 'RUN_POST_REMEDIATION_MCQ' : 'RETRY_REMEDIATION',
+      payload: { term_id: currentTerm, term_mastery: newTermMastery },
+    };
+  }
+
+  // Case 5: Post-remediation parallel MCQ
+  if (input.type === 'OBSERVE_POST_REMEDIATION_MCQ') {
+    const before = state.concept_mastery;
+    const passed = !!input.correct;
+    const newConceptMastery = updateConceptMastery(before, passed);
+
+    emit(
+      'MASTERY',
+      'CONCEPT_UPDATE',
+      {
+        before,
+        after: newConceptMastery,
+        reason: 'post_remediation_mcq_result',
+        correct: passed,
+      },
+      { mastery_before: before, mastery_after: newConceptMastery }
+    );
+
+    return {
+      state: {
+        ...state,
+        seq: state.seq + events.length,
+        step: 'EPISODE_DONE',
+        concept_mastery: newConceptMastery,
+      },
+      events,
+      action: 'EPISODE_COMPLETE',
+      payload: { concept_mastery: newConceptMastery },
+    };
+  }
+
+  // Case 6: SKIP handling (FR-24)
+  if (input.type === 'SKIP') {
+    const skips = (state.skip_count ?? 0) + 1;
+    if (skips >= 2) {
+      emit('PROBE', 'SET_ABORTED', { reason: 'SKIPPED' });
+      return {
+        state: {
+          ...state,
+          seq: state.seq + events.length,
+          step: 'PROBE_ACTIVE',
+          skip_count: 0,
+        },
+        events,
+        action: 'SET_ABORTED',
+        payload: { reason: 'SKIPPED' },
+      };
+    }
+    return {
+      state: { ...state, skip_count: skips },
+      events: [],
+      action: 'SKIP_RECORDED',
+      payload: { skip_count: skips },
     };
   }
 
