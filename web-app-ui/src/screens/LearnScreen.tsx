@@ -39,8 +39,6 @@ import {
   mockStreakGrid,
   mockSubjects,
   mockLessonsList,
-  mockLessonQuestion,
-  mockProbes,
 } from '../mock/mockData';
 import { useNetworkStatus } from '../network/network';
 import {
@@ -49,10 +47,16 @@ import {
   type EngineState,
   type EngineContext,
 } from '../engine';
-import { computeSeed } from '../engine/seed';
-import { insertEvent, pendingEvents, subscribeDatabase } from '../db/database';
+import { computeSeed, probeOrder } from '../engine/seed';
+import { insertEvent, listEvents, pendingEvents, subscribeDatabase } from '../db/database';
 import { syncPending } from '../sync/syncClient';
 import { getDeviceId } from '../utils/device';
+import {
+  getTimeOfDayGreeting,
+  computeStreakData,
+  type StreakComputationResult,
+} from '../utils/streakHelper';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   getHeroChunk,
   getHeroItem,
@@ -103,6 +107,63 @@ export default function LearnScreen({ navigation }: Props) {
   // Profile data in local state
   const [profile, setProfile] = useState(mockProfile);
 
+  // Dynamic time-of-day greeting (UI layer only, preserves FR-21 engine purity)
+  const [greeting, setGreeting] = useState<string>(() =>
+    getTimeOfDayGreeting(mockProfile.name)
+  );
+
+  // Dynamic 4-week diagnostic mastery matrix & streak stats
+  const [demoMode, setDemoMode] = useState<boolean>(false);
+  const [streakState, setStreakState] = useState<StreakComputationResult>(() =>
+    computeStreakData([], false)
+  );
+
+  const loadStreakAndStats = useCallback(async () => {
+    try {
+      const allEvents = await listEvents(200);
+      const computed = computeStreakData(allEvents || [], demoMode);
+      setStreakState(computed);
+    } catch (e) {
+      console.warn('Failed to compute streak from database events', e);
+    }
+  }, [demoMode]);
+
+  // Keep greeting synchronized with profile
+  useEffect(() => {
+    setGreeting(getTimeOfDayGreeting(profile.name));
+  }, [profile.name]);
+
+  // Update greeting and streak on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      setGreeting(getTimeOfDayGreeting(profile.name));
+      loadStreakAndStats();
+    }, [profile.name, loadStreakAndStats])
+  );
+
+  // Listen to database mutations and custom event 'padhai-event-updated'
+  useEffect(() => {
+    loadStreakAndStats();
+    const unsub = subscribeDatabase(() => {
+      loadStreakAndStats();
+    });
+
+    const handleCustomEvent = () => {
+      loadStreakAndStats();
+    };
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('padhai-event-updated', handleCustomEvent);
+    }
+
+    return () => {
+      unsub();
+      if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+        window.removeEventListener('padhai-event-updated', handleCustomEvent);
+      }
+    };
+  }, [loadStreakAndStats]);
+
   // Re-render trigger for live telemetry synchronization
   const [, setTelemetryTick] = useState(0);
   const triggerTelemetryUpdate = useCallback(() => setTelemetryTick((t) => t + 1), []);
@@ -114,6 +175,68 @@ export default function LearnScreen({ navigation }: Props) {
   const confirmItem = getConfirmItem();
   const kuiGlossary = getKuiGlossary();
   const packHash = getPackHash();
+
+  // Derived real question object from content pack
+  const question = {
+    titleOr: heroChunk?.title ?? 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନର ସଂଜ୍ଞା',
+    storyOr: heroChunk?.odiaText ?? '',
+    promptOr: heroItem?.stem ?? 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
+    options: (heroItem?.options ?? [
+      'ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ',
+      'ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ',
+      'ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ',
+      'ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି',
+    ]).map((opt: string, i: number) => ({
+      id: `opt_${i}`,
+      label: String.fromCharCode(65 + i),
+      text: opt,
+      subtext: i === 0 ? 'ସଠିକ୍ ସଂଜ୍ଞା' : undefined,
+    })),
+    correctOptionId: `opt_${heroItem?.correct ?? 0}`,
+  };
+
+  // Real probe objects from content pack
+  const pictureProbe = {
+    prompt: probeItems?.P?.stem ?? 'ନିମ୍ନ ଚିତ୍ରରେ ଏକ ବସ୍ତୁର ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁରୁ ଅନ୍ତିମ ବିନ୍ଦୁ ପର୍ଯ୍ୟନ୍ତ ଗତି ଦର୍ଶାଯାଇଛି । ଏଥିରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଭାବରେ ଦର୍ଶାଉଛି?',
+    titleOr: 'ଚିତ୍ର ଯାଞ୍ଚ: ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍?',
+    choices: [
+      { id: 'p_0', icon: '🚩', label: 'At the Flag', desc: 'Zero distance from start' },
+      { id: 'p_1', icon: '➡️', label: '3m East', desc: 'Still along the path' },
+      { id: 'p_2', icon: '⬅️', label: '6m West', desc: 'Far away from origin' },
+    ],
+    correctChoiceId: `p_${probeItems?.P?.correct ?? 0}`,
+  };
+
+  const audioProbe = {
+    prompt: probeItems?.A?.stem ?? 'ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଗୋଟିଏ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A ବିନ୍ଦୁକୁ ଗଲା ଏବଂ ପୁଣି O ବିନ୍ଦୁକୁ ଫେରିଆସିଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେତେ ହେବ?',
+    titleOr: 'ଓଡ଼ିଆ ଉଚ୍ଚାରଣ ଶୁଣନ୍ତୁ',
+    choices: [
+      { id: 'a_0', icon: '📍', label: 'Original Spot (ଆରମ୍ଭ ସ୍ଥାନ)' },
+      { id: 'a_1', icon: '📏', label: 'Straight Path (ଦୂରତା)' },
+      { id: 'a_2', icon: '🔄', label: 'Round Trip (ଚକ୍ର)' },
+    ],
+    correctChoiceId: `a_${probeItems?.A?.correct ?? 0}`,
+  };
+
+  const textProbe = {
+    prompt: probeItems?.T?.stem ?? 'ଦୂରତା (distance) ଏବଂ ବିସ୍ଥାପନ (displacement) ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
+    promptOr: probeItems?.T?.stem ?? 'ଦୂରତା (distance) ଏବଂ ବିସ୍ଥାପନ (displacement) ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
+    choices: (probeItems?.T?.options ?? [
+      'ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ',
+      'ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ',
+      'ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ',
+      'ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି',
+    ]).map((opt: string, i: number) => ({
+      id: `t_${i}`,
+      label: String.fromCharCode(65 + i),
+      text: opt,
+    })),
+    correctChoiceId: `t_${probeItems?.T?.correct ?? 0}`,
+  };
+
+  // Seeded probe sequence state (PRD §4.9)
+  const [probeSequence, setProbeSequence] = useState<Array<'P' | 'A' | 'T'>>(['T', 'A', 'P']);
+  const [probeIndex, setProbeIndex] = useState(0);
 
   // Deterministic Engine Context & State Ref
   const profileId = 'prof_demo_01';
@@ -159,9 +282,25 @@ export default function LearnScreen({ navigation }: Props) {
           engineContextRef.current.seed = computed;
           triggerTelemetryUpdate();
         }
+        const order = probeOrder(computed);
+        setProbeSequence(order);
       })
       .catch(() => {});
   }, [profileId, conceptId, triggerTelemetryUpdate]);
+
+  // Advance to next probe in deterministic sequence or to confirmation
+  const advanceProbe = (currentStepModality: 'P' | 'A' | 'T') => {
+    const nextIdx = probeIndex + 1;
+    setProbeIndex(nextIdx);
+    if (nextIdx >= probeSequence.length) {
+      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+      return;
+    }
+    const nextMod = probeSequence[nextIdx];
+    if (nextMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
+    else if (nextMod === 'A') setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+    else setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
+  };
 
   // Listen to database changes for real-time telemetry updates
   useEffect(() => {
@@ -170,6 +309,30 @@ export default function LearnScreen({ navigation }: Props) {
     });
     return unsub;
   }, [triggerTelemetryUpdate]);
+
+  // Request pedagogical plan from backend LangGraph agent workflow when online
+  useEffect(() => {
+    if (forcedOffline || networkMode !== 'ONLINE') return;
+    const callAgent = async () => {
+      try {
+        const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+        const resp = await fetch(`${baseUrl}/v1/agent/plan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            candidate_concept_ids: ['distance_vs_displacement'],
+            mastery_bucket: 'low',
+            tier_history: [],
+          }),
+        });
+        const plan = await resp.json();
+        console.log('[AGENT PLAN]', plan);
+      } catch (e) {
+        console.warn('[AGENT PLAN FAILED]', e);
+      }
+    };
+    callAgent();
+  }, [forcedOffline, networkMode]);
 
   // When airplane mode is toggled OFF or network becomes ONLINE, attempt to sync pending events
   useEffect(() => {
@@ -191,15 +354,15 @@ export default function LearnScreen({ navigation }: Props) {
     }
   }, [forcedOffline, networkMode, triggerTelemetryUpdate]);
 
-  // Active question & options resolution from pack loader / mock fallback
-  const questionTitle = heroChunk?.title || mockLessonQuestion.title;
-  const questionStory = heroChunk?.odiaText || mockLessonQuestion.storyContext;
-  const questionPrompt = heroItem?.stem || mockLessonQuestion.prompt;
+  // Active question & options resolution from pack loader
+  const questionTitle = heroChunk?.title || 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନର ସଂଜ୍ଞା';
+  const questionStory = heroChunk?.odiaText || '';
+  const questionPrompt = heroItem?.stem || 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?';
 
   // 1. MCQ Option Selection -> calls pure nextAction & persists via insertEvent
   const handleSelectOption = async (optId: string) => {
     setSelectedOption(optId);
-    const isCorrect = optId === 'opt_a' || optId === mockLessonQuestion.correctOptionId;
+    const isCorrect = optId === question.correctOptionId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
@@ -218,18 +381,23 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     if (isCorrect) {
       setTimeout(() => setFlowStep('COMPLETION'), 700);
     } else {
-      setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
+      setProbeIndex(0);
+      const firstMod = probeSequence[0] || 'T';
+      if (firstMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
+      else if (firstMod === 'A') setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+      else setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
     }
   };
 
   // 2. Picture Probe Selection -> calls nextAction (modality P)
   const handleSelectPictureProbe = async (choiceId: string) => {
     setSelectedProbeChoice(choiceId);
-    const correct = choiceId === mockProbes.PICTURE.correctChoiceId;
+    const correct = choiceId === pictureProbe.correctChoiceId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
@@ -248,15 +416,16 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setSelectedProbeChoice(null);
-    setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+    advanceProbe('P');
   };
 
   // 3. Audio Probe Selection -> calls nextAction (modality A)
   const handleSelectAudioProbe = async (choiceId: string) => {
     setSelectedProbeChoice(choiceId);
-    const correct = choiceId === mockProbes.AUDIO.correctChoiceId;
+    const correct = choiceId === audioProbe.correctChoiceId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
@@ -276,15 +445,16 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setSelectedProbeChoice(null);
-    setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
+    advanceProbe('A');
   };
 
   // 4. Text Probe Selection -> calls nextAction (modality T)
   const handleSelectTextProbe = async (choiceId: string) => {
     setSelectedProbeChoice(choiceId);
-    const correct = choiceId === mockProbes.TEXT.correctChoiceId;
+    const correct = choiceId === textProbe.correctChoiceId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
@@ -303,6 +473,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setSelectedProbeChoice(null);
     if (result.state.step === 'CONFIRM_ACTIVE') {
@@ -310,7 +481,7 @@ export default function LearnScreen({ navigation }: Props) {
     } else if (result.state.step === 'EPISODE_DONE') {
       setTimeout(() => setFlowStep('COMPLETION'), 700);
     } else {
-      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+      advanceProbe('T');
     }
   };
 
@@ -340,6 +511,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     if (result.state.step === 'REMEDIATION_ACTIVE' || !correct) {
       setFlowStep('REMEDIATION');
@@ -365,6 +537,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setFlowStep('COMPLETION');
   };
@@ -376,7 +549,7 @@ export default function LearnScreen({ navigation }: Props) {
         setVoiceState('Thinking');
         setTimeout(() => {
           setVoiceState('Ready');
-          handleSelectOption('opt_a');
+          handleSelectOption(question.correctOptionId);
         }, 1200);
       }, 1500);
     }
@@ -385,9 +558,9 @@ export default function LearnScreen({ navigation }: Props) {
   const getOptionState = (optId: string): OptionState => {
     if (!selectedOption) return 'default';
     if (selectedOption === optId) {
-      return optId === 'opt_a' ? 'correct' : 'needs-review';
+      return optId === question.correctOptionId ? 'correct' : 'needs-review';
     }
-    return optId === 'opt_a' ? 'correct' : 'default';
+    return optId === question.correctOptionId ? 'correct' : 'default';
   };
 
   const activeSubjectTitle = profile.subject === 'physics'
@@ -412,7 +585,7 @@ export default function LearnScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safe}>
       {/* Branded Header */}
       <AppHeader
-        greeting={`Good morning, ${profile.name}`}
+        greeting={greeting}
         subgreeting="Keep learning, one step at a time."
         gender={profile.gender}
         networkMode={networkMode}
@@ -439,15 +612,16 @@ export default function LearnScreen({ navigation }: Props) {
             />
 
             <StreakGrid
-              streakDays={profile.streakDays}
-              minutesThisWeek={profile.minutesThisWeek}
-              gridData={mockStreakGrid}
+              streakDays={streakState.streakDays}
+              minutesThisWeek={streakState.minutesThisWeek}
+              gridData={streakState.gridData}
+              defaultSelectedCell={streakState.todayCell}
             />
 
             <GoalCard
               goalTitle="Complete 1 lesson today"
-              activitiesDone={1}
-              totalActivities={3}
+              activitiesDone={streakState.todayActivitiesDone}
+              totalActivities={streakState.totalGoalActivities}
               onPress={() => setFlowStep('SOUND_CHECK')}
             />
 
@@ -531,15 +705,15 @@ export default function LearnScreen({ navigation }: Props) {
               <View>
                 <LessonContentCard
                   conceptTitle={questionTitle}
-                  conceptTitleOr={mockLessonQuestion.titleOr}
+                  conceptTitleOr={question.titleOr}
                   story={questionStory}
-                  storyOr={mockLessonQuestion.storyContextOr}
+                  storyOr={question.storyOr}
                   prompt={questionPrompt}
-                  promptOr={mockLessonQuestion.promptOr}
+                  promptOr={question.promptOr}
                 />
 
                 <View style={styles.optionsList}>
-                  {mockLessonQuestion.options.map((opt) => (
+                  {question.options.map((opt) => (
                     <MCQOption
                       key={opt.id}
                       label={opt.label}
@@ -557,7 +731,7 @@ export default function LearnScreen({ navigation }: Props) {
                   onFallbackPress={() => setVoiceState('Tap instead')}
                 />
 
-                {selectedOption && selectedOption !== 'opt_a' && (
+                {selectedOption && selectedOption !== question.correctOptionId && (
                   <View style={styles.supportNote}>
                     <Text style={styles.supportNoteText}>
                       Let{"'"}s look at this together · ଚାଲନ୍ତୁ ଏହାକୁ ବୁଝିବା
@@ -569,9 +743,9 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'PROBE_PICTURE' && (
               <PictureProbe
-                prompt={mockProbes.PICTURE.prompt}
-                titleOr={mockProbes.PICTURE.titleOr}
-                choices={mockProbes.PICTURE.choices}
+                prompt={pictureProbe.prompt}
+                titleOr={pictureProbe.titleOr}
+                choices={pictureProbe.choices}
                 selectedChoiceId={selectedProbeChoice}
                 onSelect={handleSelectPictureProbe}
               />
@@ -579,8 +753,9 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'PROBE_AUDIO' && (
               <AudioProbe
-                prompt={mockProbes.AUDIO.prompt}
-                choices={mockProbes.AUDIO.choices}
+                prompt={audioProbe.prompt}
+                titleOr={audioProbe.titleOr}
+                choices={audioProbe.choices}
                 selectedChoiceId={selectedProbeChoice}
                 onSelect={handleSelectAudioProbe}
               />
@@ -588,9 +763,9 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'PROBE_TEXT' && (
               <TextProbe
-                prompt={mockProbes.TEXT.prompt}
-                promptOr={mockProbes.TEXT.promptOr}
-                choices={mockProbes.TEXT.choices}
+                prompt={textProbe.prompt}
+                promptOr={textProbe.promptOr}
+                choices={textProbe.choices}
                 selectedChoiceId={selectedProbeChoice}
                 onSelect={handleSelectTextProbe}
               />
@@ -659,9 +834,10 @@ export default function LearnScreen({ navigation }: Props) {
             </View>
 
             <StreakGrid
-              streakDays={profile.streakDays}
-              minutesThisWeek={profile.minutesThisWeek}
-              gridData={mockStreakGrid}
+              streakDays={streakState.streakDays}
+              minutesThisWeek={streakState.minutesThisWeek}
+              gridData={streakState.gridData}
+              defaultSelectedCell={streakState.todayCell}
             />
 
             <View style={styles.progressCard}>
@@ -750,6 +926,14 @@ export default function LearnScreen({ navigation }: Props) {
                 <Text style={styles.demoToggleSub}>Simulate offline behavior on stage</Text>
               </View>
               <Switch value={forcedOffline} onValueChange={setForcedOffline} />
+            </View>
+
+            <View style={styles.demoToggleRow}>
+              <View>
+                <Text style={styles.demoToggleLabel}>Demo Streak Matrix</Text>
+                <Text style={styles.demoToggleSub}>Simulate 4-week diagnostic activity history</Text>
+              </View>
+              <Switch value={demoMode} onValueChange={setDemoMode} />
             </View>
 
             <View style={styles.judgeButtonsRow}>

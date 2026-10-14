@@ -164,6 +164,7 @@ export async function markRejected(ids: string[], reason: string): Promise<void>
       id
     );
   }
+  notifyListeners();
 }
 
 export async function purgeProfile(profileId: string): Promise<void> {
@@ -182,6 +183,11 @@ function notifyListeners() {
     } catch (e) {
       console.warn('Listener error', e);
     }
+  }
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    try {
+      window.dispatchEvent(new Event('padhai-event-updated'));
+    } catch {}
   }
 }
 
