@@ -80,8 +80,14 @@ export function getDeviceCredentials() {
 export function resolveApiBaseUrl(customUrl?: string): string {
   if (customUrl) return customUrl;
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
-  if (typeof window !== 'undefined' && window.location && window.location.origin) {
-    return window.location.origin;
+  // If served via static server (e.g. port 3000, 3001, 3005) or standalone web, backend is on port 8000
+  if (typeof window !== 'undefined' && window.location) {
+    if (window.location.port && window.location.port !== '8000') {
+      return `${window.location.protocol}//${window.location.hostname}:8000`;
+    }
+    if (window.location.origin) {
+      return window.location.origin;
+    }
   }
   return DEFAULT_API_BASE_URL;
 }
