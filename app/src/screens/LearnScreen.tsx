@@ -23,6 +23,7 @@ import { MCQOption, type OptionState } from '../components/MCQOption';
 import { MicButton, type VoiceState } from '../components/MicButton';
 import { SoundCheck } from '../components/SoundCheck';
 import { PictureProbe } from '../components/PictureProbe';
+import MotionSimulation from '../components/MotionSimulation';
 import { AudioProbe } from '../components/AudioProbe';
 import { TextProbe } from '../components/TextProbe';
 import { ConfirmationCard } from '../components/ConfirmationCard';
@@ -759,6 +760,9 @@ export default function LearnScreen({ navigation }: Props) {
                   promptOr={question.promptOr}
                 />
 
+                {/* 2D SVG Motion Simulation: Sunita Home to School */}
+                <MotionSimulation />
+
                 <View style={styles.optionsList}>
                   {question.options.map((opt) => (
                     <MCQOption
@@ -789,14 +793,19 @@ export default function LearnScreen({ navigation }: Props) {
             )}
 
             {flowStep === 'PROBE_PICTURE' && (
-              <PictureProbe
-                prompt={pictureProbe.prompt}
-                titleOr={pictureProbe.titleOr}
-                choices={pictureProbe.choices}
-                selectedChoiceId={selectedProbeChoice}
-                onSelect={handleSelectPictureProbe}
-              />
+              <View>
+                {/* 2D SVG Motion Simulation as visual stimulus for Picture Probe */}
+                <MotionSimulation mode="probe" />
+                <PictureProbe
+                  prompt={pictureProbe.prompt}
+                  titleOr={pictureProbe.titleOr}
+                  choices={pictureProbe.choices}
+                  selectedChoiceId={selectedProbeChoice}
+                  onSelect={handleSelectPictureProbe}
+                />
+              </View>
             )}
+
 
             {flowStep === 'PROBE_AUDIO' && (
               <AudioProbe
