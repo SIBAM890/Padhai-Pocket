@@ -1,0 +1,24 @@
+Board: Board of Secondary Education (BSE), Odisha
+Class: 9 (ନବମ ଶ୍ରେଣୀ)
+Subject: Physical Science (ଭୌତିକ ବିଜ୍ଞାନ)
+Chapter: 7 (ସପ୍ତମ ଅଧ୍ୟାୟ)
+Chapter Title: ମହାକର୍ଷଣ (GRAVITATION)
+QR Code: QSAIQR
+Page Range: 95 - 108
+
+Sections:
+7.1 ମହାକର୍ଷଣ (Gravitation) [p. 95]
+7.1.1 ସାର୍ବଜନୀନ ମହାକର୍ଷଣ ନିୟମ (Universal Law of Gravitation) [p. 96]
+7.1.2 ମହାକର୍ଷଣ ନିୟମର ଗୁରୁତ୍ୱ (Importance of the Universal Law of Gravitation) [p. 98]
+7.2 ମୁକ୍ତ ପତନ (Free Fall) [p. 98]
+7.2.1 ‘g’ ର ମୂଲ୍ୟ ନିରୂପଣ (To Calculate the Value of g) [p. 99]
+7.2.2 ମାଧ୍ୟାକର୍ଷଣ ବଳ ପ୍ରଭାବରେ ବସ୍ତୁର ଗତି (Motion of Objects Under the Influence of Gravitational Force of the Earth) [p. 99]
+7.3 ବସ୍ତୁତ୍ୱ (Mass) [p. 100]
+7.4 ଓଜନ (Weight) [p. 100]
+7.4.1 ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ବସ୍ତୁର ଓଜନ (Weight of an object on the Moon) [p. 101]
+7.5 ସଂଘାତ ଓ ଚାପ (Thrust and Pressure) [p. 102]
+7.5.1 ତରଳ ପଦାର୍ଥରେ ଚାପ (Pressure in Fluids) [p. 103]
+7.5.2 ପ୍ଲବତା (Buoyancy) [p. 103]
+7.5.3 ଜଳରେ ବସ୍ତୁଟିଏ ବୁଡ଼େ ବା ଭାସେ କାହିଁକି ? (Why Objects Float or Sink When Placed on the Surface of Water) [p. 104]
+7.6 ଆର୍କିମିଡ଼ିସ୍ଙ୍କ ସୂତ୍ର (Archimedes' Principle) [p. 105]
+7.7 ଆପେକ୍ଷିକ ସାନ୍ଦ୍ରତା (Relative Density) [p. 106]

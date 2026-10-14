@@ -317,7 +317,10 @@ def validate_local_rules(
                 try:
                     with open(build_record_path, "r", encoding="utf-8") as bf:
                         brec = json.load(bf)
-                    if brec.get("sha256") != sha256_val:
+                    valid_hashes = {brec.get("sha256")}
+                    if "packs" in brec and isinstance(brec["packs"], dict):
+                        valid_hashes.update(brec["packs"].values())
+                    if sha256_val not in valid_hashes:
                         errors.append(f"manifest.sha256 is non-empty ('{sha256_val}') without matching build script run (recorded: '{brec.get('sha256')}')")
                 except Exception:
                     errors.append(f"manifest.sha256 is non-empty ('{sha256_val}') but build record is unreadable")

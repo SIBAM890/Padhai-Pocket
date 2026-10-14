@@ -1,0 +1,130 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "c823dbfdfd076bd5dc4680602d2153bb7e0de057cad55325f90b22e03bd86819",
+    "built_at": "2026-10-14T14:21:37Z"
+  },
+  "chapter": {
+    "subject": "Physical Science",
+    "class": 9,
+    "chapter_no": "7"
+  },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-PHYS-GRAV-S03-01",
+      "title_or": "ବସ୍ତୁତ୍ୱର ସଂଜ୍ଞା ଓ ପ୍ରକୃତି",
+      "odia_text": "କୌଣସି ବସ୍ତୁ ମଧ୍ୟରେ ଥିବା ପଦାର୍ଥର ପରିମାଣକୁ ବସ୍ତୁର ବସ୍ତୁତ୍ୱ କୁହାଯାଏ । ବସ୍ତୁର ବସ୍ତୁତ୍ୱ ତା'ର ଜଡ଼ତାର ପରିମାପକ । ଯେଉଁ ବସ୍ତୁର ବସ୍ତୁତ୍ୱ ଯେତେ ଅଧିକ ତାହାର ଜଡ଼ତା ସେତେ ବେଶୀ । ବସ୍ତୁର ବସ୍ତୁତ୍ୱ ତାହାର ଅବସ୍ଥିତି ଉପରେ ନିର୍ଭର କରେ ନାହିଁ । ଅର୍ଥାତ୍ ଗୋଟିଏ ସ୍ଥାନରୁ ଅନ୍ୟସ୍ଥାନକୁ ସ୍ଥାନାନ୍ତରିତ ହେଲେ ବସ୍ତୁର ବସ୍ତୁତ୍ୱର କୌଣସି ପରିବର୍ତ୍ତନ ହୁଏ ନାହିଁ । ବସ୍ତୁର ବସ୍ତୁତ୍ୱ ସବୁ ସ୍ଥାନରେ ସ୍ଥିର ରହେ ।",
+      "terms": [
+        "T_MASS"
+      ],
+      "source_page": 100,
+      "status": "demo_approved",
+      "reviewed_by": "Pritam"
+    },
+    {
+      "chunk_id": "BSE9-PHYS-GRAV-S03-02",
+      "title_or": "ଓଜନ ଏବଂ ଏହାର ଗାଣିତିକ ରୂପ",
+      "odia_text": "ଏକ ବସ୍ତୁ ଉପରେ କ୍ରିୟାଶୀଳ ହେଉଥିବା ପୃଥିବୀର ମାଧ୍ୟାକର୍ଷଣ ବଳକୁ ସେହି ବସ୍ତୁର ଓଜନ କୁହାଯାଏ । ଏହାକୁ ସାଧାରଣତଃ 'W' ସଙ୍କେତ ଦ୍ୱାରା ସୂଚିତ କରାଯାଏ । W = mg । ଏଠାରେ, m = ବସ୍ତୁର ବସ୍ତୁତ୍ୱ ଏବଂ g = ମାଧ୍ୟାକର୍ଷଣଜନିତ ତ୍ୱରଣ । ଓଜନର ଏକକ ବଳର ଏକକ ସହ ସମାନ । ଓଜନ ଏକ ସଦିଶ ରାଶି । ଏହାର ପରିମାଣ ଓ ଦିଗ ଉଭୟ ଥାଏ । ଏହାର ଦିଗ ସବୁବେଳେ ପୃଥିବୀର କେନ୍ଦ୍ର ଆଡ଼କୁ ନିମ୍ନମୁଖୀ ହୋଇଥାଏ । ଯେହେତୁ ‘g’ର ମୂଲ୍ୟ ସବୁସ୍ଥାନରେ ସମାନ ନୁହେଁ, ବସ୍ତୁର ଓଜନ ମଧ୍ୟ ସବୁସ୍ଥାନରେ ସ୍ଥିର ନୁହେଁ । ଭିନ୍ନ ଭିନ୍ନ ସ୍ଥାନରେ ବସ୍ତୁର ଓଜନ ଭିନ୍ନ ଭିନ୍ନ ହୋଇଥାଏ ।",
+      "terms": [
+        "T_WEIGHT",
+        "T_ACC_GRAV"
+      ],
+      "source_page": 100,
+      "status": "demo_approved",
+      "reviewed_by": "Pritam"
+    },
+    {
+      "chunk_id": "BSE9-PHYS-GRAV-S03-03",
+      "title_or": "ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଓଜନ ଏବଂ ପାର୍ଥକ୍ୟର ଉଦାହରଣ",
+      "odia_text": "ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଚନ୍ଦ୍ର ଯେତିକି ମାଧ୍ୟାକର୍ଷଣ ବଳ ପ୍ରୟୋଗ କରି ଗୋଟିଏ ବସ୍ତୁକୁ ନିଜ ଆଡ଼କୁ ଆକର୍ଷଣ କରେ ତାହାହିଁ ଚନ୍ଦ୍ରପୃଷ୍ଠରେ ଉକ୍ତ ବସ୍ତୁର ଓଜନ ହୋଇଥାଏ । ପୃଥିବୀ ତୁଳନାରେ ଚନ୍ଦ୍ରର ବସ୍ତୁତ୍ୱ କମ୍ ହୋଇଥିବାରୁ ଏହା ବସ୍ତୁ ଉପରେ କମ୍ ମାଧ୍ୟାକର୍ଷଣ ବଳ ପ୍ରୟୋଗ କରେ । ଅତଏବ ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଗୋଟିଏ ବସ୍ତୁର ଓଜନ, ପୃଥିବୀ ପୃଷ୍ଠରେ ସେହି ବସ୍ତୁର ଓଜନର ଏକ ଷଷ୍ଠାଂଶ ଅଟେ (Wm = We / 6) । ଗୋଟିଏ ବସ୍ତୁର ବସ୍ତୁତ୍ୱ 10 କିଗ୍ରା ହେଲେ ପୃଥିବୀ ପୃଷ୍ଠରେ ଏହାର ଓଜନ W = 10 କିଗ୍ରା × 9.8 ମି/ସେ² = 98 ନିଉଟନ୍ । ମାତ୍ର ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଏହାର ବସ୍ତୁତ୍ୱ ସେହି 10 କିଗ୍ରା ରହୁଥିବା ବେଳେ ଓଜନ କମିଯାଇ 16.3 ନିଉଟନ୍ ହୋଇଥାଏ ।",
+      "terms": [
+        "T_MASS",
+        "T_WEIGHT"
+      ],
+      "source_page": 101,
+      "status": "demo_approved",
+      "reviewed_by": "Pritam"
+    }
+  ],
+  "terms": [
+    {
+      "term_id": "T_GRAV",
+      "en": "gravitation",
+      "odia_from_textbook": "ମହାକର୍ଷଣ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_GRAV_FORCE",
+      "en": "force of gravity",
+      "odia_from_textbook": "ମାଧ୍ୟାକର୍ଷଣ ବଳ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_FREEFALL",
+      "en": "free fall",
+      "odia_from_textbook": "ମୁକ୍ତ ପତନ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_ACC_GRAV",
+      "en": "acceleration due to gravity",
+      "odia_from_textbook": "ମାଧ୍ୟାକର୍ଷଣଜନିତ ତ୍ୱରଣ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_MASS",
+      "en": "mass",
+      "odia_from_textbook": "ବସ୍ତୁତ୍ୱ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_WEIGHT",
+      "en": "weight",
+      "odia_from_textbook": "ଓଜନ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    }
+  ],
+  "items": []
+}

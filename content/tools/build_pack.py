@@ -100,6 +100,20 @@ def build_pack(pack_path: str, repo_root: str) -> Tuple[str, str]:
 
     # 1. Write content/.build_manifest.json
     build_manifest_path = os.path.join(repo_root, "content", ".build_manifest.json")
+    existing_packs = {}
+    if os.path.exists(build_manifest_path):
+        try:
+            with open(build_manifest_path, "r", encoding="utf-8") as f:
+                prev_record = json.load(f)
+                existing_packs = prev_record.get("packs", {})
+                if prev_record.get("pack_file") and prev_record.get("sha256"):
+                    existing_packs[prev_record["pack_file"]] = prev_record["sha256"]
+        except Exception:
+            pass
+    rel_pack = os.path.relpath(pack_path, repo_root).replace("\\", "/")
+    existing_packs[rel_pack] = sha256_hash
+    build_record["packs"] = existing_packs
+
     with open(build_manifest_path, "w", encoding="utf-8") as f:
         json.dump(build_record, f, indent=2, ensure_ascii=False)
         f.write("\n")

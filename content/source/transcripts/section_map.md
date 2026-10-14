@@ -27,3 +27,9 @@ The BSE Odisha textbook progression exactly aligns with PRD §9.1:
 4. Velocity (`5.2.1`)
 5. Acceleration (`5.3`)
 6. Motion Graphs (`5.4`)
+
+## Section S03 Part Headings (Pages 100–101) — Gravitation: Mass vs Weight
+The hero concept section on pages 100–101 contains three sequential pedagogical units corresponding to hero chunks:
+1. `BSE9-PHYS-GRAV-S03-01`: **ବସ୍ତୁତ୍ୱର ସଂଜ୍ଞା ଓ ପ୍ରକୃତି** (Definition and nature of mass)
+2. `BSE9-PHYS-GRAV-S03-02`: **ଓଜନ ଏବଂ ଏହାର ଗାଣିତିକ ରୂପ** (Weight and its mathematical representation)
+3. `BSE9-PHYS-GRAV-S03-03`: **ଚନ୍ଦ୍ର ପୃଷ୍ଠରେ ଓଜନ ଏବଂ ପାର୍ଥକ୍ୟର ଉଦାହରଣ** (Weight on the Moon and difference examples)
