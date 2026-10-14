@@ -69,6 +69,7 @@ import {
   getPackHash,
 } from '../content/loader';
 import { playOdiaVoice, stopOdiaAudio } from '../audio/odiaAudio';
+import { playCorrectChime, playRetryChime, playCompleteChime } from '../audio/chimes';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
@@ -564,8 +565,13 @@ export default function LearnScreen({ navigation, route }: Props) {
       loadStreakAndStats();
 
       if (isCorrect) {
-        setTimeout(() => setFlowStep('COMPLETION'), 700);
+        playCorrectChime();
+        setTimeout(() => {
+          playCompleteChime();
+          setFlowStep('COMPLETION');
+        }, 700);
       } else {
+        playRetryChime();
         setProbeIndex(0);
         const firstMod = probeSequence[0] || 'T';
         if (firstMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
