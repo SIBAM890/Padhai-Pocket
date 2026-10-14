@@ -32,34 +32,34 @@ Padhai Pocket separates **online generative planning/reflection** from **offline
 flowchart TB
     subgraph Client["Device Layer — React Native + Expo Web (/app/)"]
         direction TB
-        UI["Child & Teacher UI Screens<br/>(LearnScreen, TracePanel, TeacherView, Onboarding)"]
-        NetProbe["Network Mode Probe<br/>(ONLINE ≤1.5s | WEAK 1.5–5s | OFFLINE / Captive Portal)"]
+        UI["Child and Teacher UI Screens<br/>(LearnScreen, TracePanel, TeacherView, Onboarding)"]
+        NetProbe["Network Mode Probe<br/>(ONLINE under 1.5s, WEAK 1.5-5s, OFFLINE / Captive Portal)"]
         
         subgraph Engine["Pure TypeScript Diagnostic Engine (/app/src/engine/ — FROZEN)"]
             FSM["nextAction(state, input, ctx)<br/>Pure Deterministic State Machine (index.ts)"]
-            Seed["Mulberry32 Seeded PRNG<br/>SHA-256(profile|concept|set) → uint32 (seed.ts)"]
-            Table["3-Way Probe Decision Table<br/>P/A/T Bit Pattern → Candidate (table.ts)"]
-            Confirm["Confirmation & Agreement Rule<br/>Provisional (Demo=1) vs Confirmed (Prod=2) (finalLabel.ts)"]
-            Branch["Offline Branch Policy & Loop Bounds<br/>Tier-1 Fallback, Revision Queue, Teacher Flag (branch.ts)"]
-            BKT["Selective BKT Mastery Engine<br/>Full-Precision Concept & Term Chains"]
+            Seed["Mulberry32 Seeded PRNG<br/>SHA-256(profile, concept, set) to uint32 (seed.ts)"]
+            Table["3-Way Probe Decision Table<br/>P, A, T Bit Pattern to Candidate (table.ts)"]
+            Confirm["Confirmation and Agreement Rule<br/>Provisional (Demo=1) vs Confirmed (Prod=2) (finalLabel.ts)"]
+            Branch["Offline Branch Policy and Loop Bounds<br/>Tier-1 Fallback, Revision Queue, Teacher Flag (branch.ts)"]
+            BKT["Selective BKT Mastery Engine<br/>Full-Precision Concept and Term Chains"]
             EvtBuilder["RFC 4122 UUID v4 Event Builder<br/>Canonical Input Hash + Pack Hash (eventBuilder.ts)"]
         end
 
-        subgraph LocalStore["Local Persistence & Sealed Pack"]
-            Storage["Immutable Event Log & Sync Queue<br/>(SQLite / Web-Safe localStorage + Purge Guard)"]
+        subgraph LocalStore["Local Persistence and Sealed Pack"]
+            Storage["Immutable Event Log and Sync Queue<br/>(SQLite / Web-Safe localStorage + Purge Guard)"]
             Pack["Sealed Content Pack (/content/)<br/>motion_pack.json + glossary.json + SHA-256 Manifest"]
         end
     end
 
     subgraph Backend["Backend Layer — FastAPI + LangGraph (/backend/)"]
         direction TB
-        API["FastAPI REST Surface (main.py)<br/>/healthz | /v1/devices/register | /v1/sync/events<br/>/v1/summary | /v1/profiles/{id} | /v1/agent/plan"]
-        Chaos["Chaos Testing Middleware (failure_hooks.py)<br/>X-Failure-Mode: timeout (ENV=demo only)"]
+        API["FastAPI REST Surface (main.py)<br/>/healthz, /v1/devices/register, /v1/sync/events<br/>/v1/summary, /v1/profiles/id, /v1/agent/plan"]
+        Chaos["Chaos Testing Middleware (failure_hooks.py)<br/>X-Failure-Mode timeout (ENV=demo only)"]
         
-        subgraph AgentGraph["LangGraph Orchestrator (graph/graph.py & prompts.py)"]
-            PlanNode["PLAN Node<br/>Schema-Validated Concept & Tier Selection"]
-            ReflectNode["REFLECT Node (4 Separate Checks)<br/>chunk_exists | glossary_terms | readability | model_source_check"]
-            ActNode["ACT Node<br/>Draft Explanation & Fallback Routing"]
+        subgraph AgentGraph["LangGraph Orchestrator (graph/graph.py and prompts.py)"]
+            PlanNode["PLAN Node<br/>Schema-Validated Concept and Tier Selection"]
+            ReflectNode["REFLECT Node (4 Separate Checks)<br/>chunk_exists, glossary_terms, readability, model_source_check"]
+            ActNode["ACT Node<br/>Draft Explanation and Fallback Routing"]
         end
 
         DB[("Postgres / Supabase (schema.sql)<br/>events, devices, registration_codes, purge_log<br/>Row-Level Security (RLS) Enabled")]
@@ -70,17 +70,24 @@ flowchart TB
         Bhashini["Bhashini ASR / TTS Pipeline<br/>(Closed-Set Intent Enum / Build-Time Odia Audio)"]
     end
 
-    UI <-->|"User Actions & State"| FSM
-    FSM --> Seed & Table & Confirm & Branch & BKT & EvtBuilder
+    UI <-->|"User Actions and State"| FSM
+    FSM --> Seed
+    FSM --> Table
+    FSM --> Confirm
+    FSM --> Branch
+    FSM --> BKT
+    FSM --> EvtBuilder
     Pack -->|"Verified Chunks, Probes, Kui Glossary"| FSM
-    EvtBuilder -->|"Append-Only Insert (seq++)"| Storage
-    Storage -->|"Live Row Subscription & Replay Verification"| UI
+    EvtBuilder -->|"Append-Only Insert"| Storage
+    Storage -->|"Live Row Subscription and Replay"| UI
     NetProbe -->|"network_mode"| FSM
     NetProbe -->|"GET /healthz"| API
     Storage <-->|"POST /v1/sync/events (Bearer Token, Idempotent)"| API
-    UI <-->|"POST /v1/agent/plan & GET /v1/summary"| API
-    API --> Chaos --> AgentGraph
-    PlanNode --> ReflectNode --> ActNode
+    UI <-->|"POST /v1/agent/plan and GET /v1/summary"| API
+    API --> Chaos
+    Chaos --> AgentGraph
+    PlanNode --> ReflectNode
+    ReflectNode --> ActNode
     API <-->|"Service-Role Only"| DB
     AgentGraph <-->|"Data-Minimized Prompts"| Gemini
     UI -.->|"Closed-Set Speech Intent (Online)"| Bhashini
@@ -93,7 +100,7 @@ flowchart TB
 | **Frontend & Shell** | React Native + Expo (TypeScript), Web Export (`dist-FINAL/`) | `/app/` | Child-safe Odia UI (no "wrong", "gap", or English stack traces), live event-log Trace Panel, Episode Replay verifier, PIN-protected Teacher View, and Airplane Mode toggle. |
 | **Diagnostic Engine** | Pure TypeScript FSM (Zero I/O, Zero Clock, Zero Math.random) | `/app/src/engine/` *(Frozen)* | Executes `nextAction(state, input, ctx)` with injected `now` and `seed`. Runs trigger rules, Mulberry32 probe ordering, candidate mapping, confirmation checks, agreement rules, and selective BKT updates. |
 | **Content & Validator** | JSON Pack + Dual Python Validator + SHA-256 Sealer | `/content/` *(Frozen)* | Stores verbatim BSE Class 9 *Motion* chunks (`BSE9-PHYS-MOTION-S02`), 12 parallel probe/confirmation items, 6 Kui-bridged glossary terms, and verified textbook photos. |
-| **Shared Contracts** | JSON Schema v1.1 + Golden Vectors | `/shared/` *(Frozen)* | Defines `event.schema.json`, `probe_vectors.json`, and `bkt_vectors.json` so TypeScript and Python implementations match to $5 	imes 10^{-5}$. |
+| **Shared Contracts** | JSON Schema v1.1 + Golden Vectors | `/shared/` *(Frozen)* | Defines `event.schema.json`, `probe_vectors.json`, and `bkt_vectors.json` so TypeScript and Python implementations match within $5 \times 10^{-5}$. |
 | **Backend & Agent** | FastAPI + LangGraph + PostgreSQL (RLS) | `/backend/` | Provides device registration, idempotent event batch sync, teacher summary aggregation, profile erasure with tombstone logging, chaos failure hooks, and the `PLAN → REFLECT → ACT` LangGraph workflow. |
 | **Monte Carlo Simulator** | Python Synthetic Learner Simulator | `/eval/sim/` | Evaluates 20,000 synthetic learners per persona under assumed slip ($s=0.10$) and guess ($g=0.25$) noise to quantify correct-label vs. abstention rates. |
 
@@ -106,45 +113,45 @@ Every learning interaction follows a strict, bounded state machine (`PLAN → TO
 ```mermaid
 stateDiagram-v2
     [*] --> IDLE
-    IDLE --> PLAN_LESSON : Start Session / Select Avatar
-    PLAN_LESSON --> TOOL_CURRICULUM : Online (Gemini Schema-Valid) or Offline (Local Rule Planner)
-    TOOL_CURRICULUM --> REFLECT_CHECKS : Load BSE9-PHYS-MOTION-S02 (status=demo_approved)
-    REFLECT_CHECKS --> PRESENT_LESSON : chunk_exists=PASS, glossary_terms=PASS, readability=PASS
+    IDLE --> PLAN_LESSON : Start Session and Select Avatar
+    PLAN_LESSON --> TOOL_CURRICULUM : Online Gemini Plan or Offline Local Rule Planner
+    TOOL_CURRICULUM --> REFLECT_CHECKS : Load Chunk BSE9-PHYS-MOTION-S02
+    REFLECT_CHECKS --> PRESENT_LESSON : All 4 Separate REFLECT Checks Pass
     PRESENT_LESSON --> OBSERVE_MCQ : Student Answers Initial Concept MCQ
 
-    OBSERVE_MCQ --> ADVANCE_TIER : MCQ Correct (Concept BKT Up)
-    OBSERVE_MCQ --> CHECK_TRIGGER : MCQ Wrong (Evaluate Pre-Update Mastery, Then Concept BKT Down)
+    OBSERVE_MCQ --> ADVANCE_TIER : MCQ Correct updates Concept BKT Up
+    OBSERVE_MCQ --> CHECK_TRIGGER : MCQ Wrong checks Pre-Update Mastery then BKT Down
 
-    CHECK_TRIGGER --> RETEACH_SIMPLE : Trigger False (1st Wrong & Pre-Update Mastery >= 0.50)
-    CHECK_TRIGGER --> SOUND_CHECK : Trigger True (Rule A: 2nd Wrong OR Rule B: Pre-Update Mastery < 0.50)
+    CHECK_TRIGGER --> RETEACH_SIMPLE : Trigger False on 1st Wrong with Mastery at least 0.50
+    CHECK_TRIGGER --> SOUND_CHECK : Trigger True via Rule A 2nd Wrong or Rule B Mastery below 0.50
 
-    SOUND_CHECK --> ABSTAIN_AUDIO_UNAVAILABLE : Sound Check Failed / Muted Phone (A = null)
+    SOUND_CHECK --> ABSTAIN_AUDIO_UNAVAILABLE : Sound Check Failed sets Audio Null
     SOUND_CHECK --> PROBE_SET_EXEC : Sound Check Passed
 
     state PROBE_SET_EXEC {
-        [*] --> SEED_ORDER : Compute SHA-256(profile|concept|set) -> Mulberry32 Shuffle [P, A, T]
-        SEED_ORDER --> RUN_ITEMS : Administer 3 Modality Items (4 Options Each, g=0.25)
-        RUN_ITEMS --> EVAL_PATTERN : Record P, A, T Bits (2 Skips -> Abort Set as SKIPPED)
+        [*] --> SEED_ORDER : SHA-256 Seed to Mulberry32 Shuffle of P, A, T
+        SEED_ORDER --> RUN_ITEMS : Administer 3 Modality Items with 4 Options Each
+        RUN_ITEMS --> EVAL_PATTERN : Record P, A, T Bits or Abort Set on 2 Skips
     }
 
     PROBE_SET_EXEC --> MAP_CANDIDATE : Pattern Complete
-    MAP_CANDIDATE --> AGREEMENT_CHECK : Candidate = RESOLVED (1,1,1) or INCONSISTENT (Any Other)
-    MAP_CANDIDATE --> TARGETED_CONFIRM : Candidate = READING_GAP (1,1,0) | LANGUAGE_OR_TERM_GAP (1,0,0) | CONCEPT_GAP (0,0,0)
+    MAP_CANDIDATE --> AGREEMENT_CHECK : Candidate is RESOLVED or INCONSISTENT
+    MAP_CANDIDATE --> TARGETED_CONFIRM : Candidate is READING_GAP, LANGUAGE_OR_TERM_GAP, or CONCEPT_GAP
 
     state TARGETED_CONFIRM {
-        [*] --> CHECK_W : 1,0,0 -> Word-Meaning Check (W)
-        [*] --> CHECK_TX : 1,1,0 -> Extra Text Item (TX)
-        [*] --> CHECK_PX : 0,0,0 -> Extra Picture Item (PX)
+        [*] --> CHECK_W : Pattern 1,0,0 runs Word-Meaning Check W
+        [*] --> CHECK_TX : Pattern 1,1,0 runs Extra Text Item TX
+        [*] --> CHECK_PX : Pattern 0,0,0 runs Extra Picture Item PX
     }
 
-    TARGETED_CONFIRM --> AGREEMENT_CHECK : Resolve SetLabel (Fail Confirm -> Gap Confirmed; Pass W -> LISTENING_OR_COMPREHENSION; Pass TX/PX -> INCONSISTENT)
+    TARGETED_CONFIRM --> AGREEMENT_CHECK : Resolve SetLabel from Confirmation Check
 
-    AGREEMENT_CHECK --> PROBE_SET_EXEC : Threshold Not Met & Sets Run < 3 (Next Set B / C)
-    AGREEMENT_CHECK --> ACT_REMEDIATION : Verdict Done (Demo Threshold=1 Provisional | Prod Threshold=2 Confirmed | 3 Sets Abstained)
+    AGREEMENT_CHECK --> PROBE_SET_EXEC : Threshold Not Met and Sets Run under 3
+    AGREEMENT_CHECK --> ACT_REMEDIATION : Verdict Done as Provisional, Confirmed, or Abstained
 
-    ACT_REMEDIATION --> POST_REMEDIATION : Deliver Targeted Bridge (Kui Glossary / Audio-First / Local Example / Safe Default)
-    POST_REMEDIATION --> SYNC_QUEUE : Post-Check (W + Parallel MCQ PM1) -> Update BKT Mastery -> Log Events
-    ABSTAIN_AUDIO_UNAVAILABLE --> ACT_REMEDIATION : SetLabel = INCONSISTENT (reason=AUDIO_UNAVAILABLE)
+    ACT_REMEDIATION --> POST_REMEDIATION : Deliver Kui Glossary, Audio-First, or Local Example Bridge
+    POST_REMEDIATION --> SYNC_QUEUE : Post-Check W and Parallel MCQ PM1 Update BKT Mastery
+    ABSTAIN_AUDIO_UNAVAILABLE --> ACT_REMEDIATION : Abstain with Safe Default and Teacher Flag
     RETEACH_SIMPLE --> SYNC_QUEUE
     ADVANCE_TIER --> SYNC_QUEUE
     SYNC_QUEUE --> IDLE
@@ -156,44 +163,48 @@ A 3-item pattern (`P`, `A`, `T`) **never** assigns a diagnostic gap label direct
 
 ```mermaid
 flowchart TD
-    Start(["Wrong Initial MCQ + Trigger Rule Fires<br/>(Rule B: Pre-Update Mastery 0.42 < 0.50)"]) --> Sound{"Session Sound Check<br/>Passed?"}
+    Start(["Wrong Initial MCQ + Trigger Rule Fires<br/>(Rule B: Pre-Update Mastery 0.42 below 0.50)"]) --> Sound{"Session Sound Check<br/>Passed?"}
     
-    Sound -->|"No (Muted / Speaker Broken)"| NullAudio["A = null<br/>Candidate: INCONSISTENT<br/>(reason = AUDIO_UNAVAILABLE)"]
+    Sound -->|"No (Muted or Broken Speaker)"| NullAudio["A = null<br/>Candidate: INCONSISTENT<br/>(reason = AUDIO_UNAVAILABLE)"]
     Sound -->|"Yes"| RunPAT["Administer P (Picture), A (Audio), T (Text)<br/>in Deterministic Mulberry32 Order"]
 
-    RunPAT --> SkipCheck{"≥ 2 Items<br/>Skipped?"}
+    RunPAT --> SkipCheck{"2 or More Items<br/>Skipped?"}
     SkipCheck -->|"Yes"| SkipAbstain["SetLabel: INCONSISTENT<br/>(reason = SKIPPED)<br/>No BKT Penalty"]
     
-    SkipCheck -->|"No"| PatSwitch{"Evaluate [P, A, T]<br/>Pass/Fail Pattern"}
+    SkipCheck -->|"No"| PatSwitch{"Evaluate P, A, T<br/>Pass/Fail Pattern"}
 
     PatSwitch -->|"P=1, A=1, T=1"| CandResolved["Candidate: RESOLVED<br/>(No Confirmation Needed)"]
     PatSwitch -->|"P=1, A=1, T=0<br/>(Concept + Audio Pass, Text Fail)"| CandRead["Candidate: READING_GAP_CANDIDATE<br/>Run Targeted Confirm: Extra Text Item (TX)"]
     PatSwitch -->|"P=1, A=0, T=0<br/>(Picture Pass, Audio + Text Fail)"| CandTerm["Candidate: LANGUAGE_OR_TERM_GAP_CANDIDATE<br/>Run Targeted Confirm: Word-Meaning Check (W)"]
     PatSwitch -->|"P=0, A=0, T=0<br/>(All Modalities Fail)"| CandConcept["Candidate: CONCEPT_GAP_CANDIDATE<br/>Run Targeted Confirm: Extra Picture Item (PX)"]
-    PatSwitch -->|"1,0,1 | 0,1,1 | 0,1,0 | 0,0,1"| CandIncon["Candidate: INCONSISTENT<br/>(Conflicting Signal / Audio Noise)"]
+    PatSwitch -->|"1,0,1 or 0,1,1 or 0,1,0 or 0,0,1"| CandIncon["Candidate: INCONSISTENT<br/>(Conflicting Signal or Audio Noise)"]
 
-    CandResolved --> LblResolved["SetLabel: RESOLVED<br/>ACT: Harder Transfer Question & Advance"]
+    CandResolved --> LblResolved["SetLabel: RESOLVED<br/>ACT: Harder Transfer Question and Advance"]
 
     CandRead --> ConfirmTX{"TX Passed?"}
-    ConfirmTX -->|"Fail (0)"| LblRead["SetLabel: READING_GAP<br/>reading_load += 1<br/>ACT: Enable Audio-First Mode + Parallel MCQ"]
+    ConfirmTX -->|"Fail (0)"| LblRead["SetLabel: READING_GAP<br/>Increment reading_load by 1<br/>ACT: Enable Audio-First Mode + Parallel MCQ"]
     ConfirmTX -->|"Pass (1)"| LblInconTX["SetLabel: INCONSISTENT<br/>(Initial T=0 Was Slip)"]
 
     CandTerm --> ConfirmW{"Word Check (W)<br/>Passed?"}
-    ConfirmW -->|"Fail (0)"| LblTerm["SetLabel: TERM_GAP<br/>Term BKT Down (0.4000 → 0.1735)<br/>ACT: Kui Description + Odia Term + Visual + Post-W"]
-    ConfirmW -->|"Pass (1)"| LblListen["SetLabel: LISTENING_OR_COMPREHENSION<br/>(Knows Word; Struggled With Spoken Stem)<br/>ACT: Picture-First + 0.75x Slower Audio"]
+    ConfirmW -->|"Fail (0)"| LblTerm["SetLabel: TERM_GAP<br/>Term BKT Down (0.4000 to 0.1735)<br/>ACT: Kui Description + Odia Term + Visual + Post-W"]
+    ConfirmW -->|"Pass (1)"| LblListen["SetLabel: LISTENING_OR_COMPREHENSION<br/>(Knows Word, Struggled With Spoken Stem)<br/>ACT: Picture-First + 0.75x Slower Audio"]
 
     CandConcept --> ConfirmPX{"PX Passed?"}
     ConfirmPX -->|"Fail (0)"| LblConcept["SetLabel: CONCEPT_GAP<br/>ACT: Local Village-Well Example + Tier-1 Simpler Odia + Parallel MCQ"]
     ConfirmPX -->|"Pass (1)"| LblInconPX["SetLabel: INCONSISTENT<br/>(Initial P=0 Was Slip)"]
 
-    NullAudio & CandIncon & LblInconTX & LblInconPX & SkipAbstain --> SafeDefault["Abstain / Safe Default<br/>ACT: Audio-First + Tier-1 Simpler Odia + Teacher Flag"]
+    NullAudio --> SafeDefault["Abstain / Safe Default<br/>ACT: Audio-First + Tier-1 Simpler Odia + Teacher Flag"]
+    CandIncon --> SafeDefault
+    LblInconTX --> SafeDefault
+    LblInconPX --> SafeDefault
+    SkipAbstain --> SafeDefault
 ```
 
 ### 3.3 Selective Bayesian Knowledge Tracing (BKT) & Hero Storyline Chain
 
 Padhai Pocket tracks **Concept Mastery** and **Term Mastery** independently using full-precision floating-point math (rounding to 4 decimal places for display and vector assertions only). Crucially, **each probe item updates only the latent state it was designed to isolate** (§5.3 Update Policy):
 
-$$	ext{Wrong: } P' = rac{P \cdot s}{P \cdot s + (1 - P)(1 - g)} \qquad 	ext{Correct: } P' = rac{P(1 - s)}{P(1 - s) + (1 - P) \cdot g} \qquad 	ext{Learn: } P_{	ext{next}} = P' + (1 - P') \cdot t$$
+$$\text{Wrong: } P' = \frac{P \cdot s}{P \cdot s + (1 - P)(1 - g)} \qquad \text{Correct: } P' = \frac{P(1 - s)}{P(1 - s) + (1 - P) \cdot g} \qquad \text{Learn: } P_{\text{next}} = P' + (1 - P') \cdot t$$
 
 * **Concept BKT Parameters:** $P_0 = 0.42$, slip $s = 0.10$, guess $g = 0.25$ (4-option item), transit/learn $t = 0.15$.
 * **Term BKT Parameters (`T_DISP`):** $P_0 = 0.40$, slip $s = 0.10$, guess $g = 0.25$, transit/learn $t = 0.10$.
@@ -203,11 +214,11 @@ flowchart LR
     subgraph ConceptChain["Concept Mastery Chain (distance_vs_displacement) — Full Precision"]
         C0["Start<br/>P = 0.4200"] -->|"1. Initial MCQ Wrong<br/>(Observing Concept Failure)"| C1["After MCQ Wrong<br/>P = 0.2248"]
         C1 -->|"2. Picture Probe (P=1) Pass<br/>(Isolates Non-Verbal Concept)"| C2["After P=1 Pass<br/>P = 0.5842"]
-        C2 -.->|"Audio (A=0) & Text (T=0) Fail<br/>(No Concept Update — Lexical Confound)"| C2
+        C2 -.->|"Audio (A=0) and Text (T=0) Fail<br/>(No Concept Update — Lexical Confound)"| C2
         C2 -->|"3. Post-Remediation Parallel MCQ (PM1) Correct"| C3["Final Concept Mastery<br/>P = 0.8597"]
     end
 
-    subgraph TermChain["Term Mastery Chain (T_DISP: ବିସ୍ଥାପନ) — Full Precision"]
+    subgraph TermChain["Term Mastery Chain (T_DISP: Bisthapana) — Full Precision"]
         T0["Start<br/>P = 0.4000"] -.->|"P=1, A=0, T=0<br/>(Candidate Only — No Update Yet)"| T0
         T0 -->|"1. Word-Meaning Check (W) Fail<br/>(Confirms Term Gap)"| T1["After W Fail<br/>P = 0.1735"]
         T1 -->|"2. Kui Bridge + Post-Remediation W Pass"| T2["Final Term Mastery<br/>P = 0.4873"]
@@ -229,52 +240,52 @@ flowchart LR
 
 ### 3.4 Offline Continuity, Event Sync & Replay Verification Sequence
 
-Padhai Pocket treats the local append-only `events` log as the single source of truth. `mastery` is a materialized view rebuildable to 4 decimals by replaying `events` (`FR-30`), and `sync_queue` manages delivery state (`PENDING` → `ACKED` | `REJECTED`) with exponential backoff and strict idempotency.
+Padhai Pocket treats the local append-only `events` log as the single source of truth. `mastery` is a materialized view rebuildable to 4 decimals by replaying `events` (`FR-30`), and `sync_queue` manages delivery state (`PENDING` → `ACKED` or `REJECTED`) with exponential backoff and strict idempotency.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Sunita as Sunita / Operator
-    participant UI as LearnScreen & TracePanel
-    participant Engine as Pure TS Engine (FSM)
-    participant Store as Local EventLog & SyncQueue
-    participant API as FastAPI Backend (/v1/*)
-    participant DB as Postgres (RLS Enabled)
+    actor Sunita as Sunita or Operator
+    participant UI as LearnScreen and TracePanel
+    participant Engine as Pure TS Engine FSM
+    participant Store as Local EventLog and SyncQueue
+    participant API as FastAPI Backend
+    participant DB as Postgres with RLS
 
-    Note over Sunita,DB: Phase 1 — Online Lesson & Diagnostic Episode
-    Sunita->>UI: Tap "Continue Lesson" (prof_demo_01)
-    UI->>API: GET /healthz (≤ 1.5s timeout)
-    API-->>UI: 200 OK {"ok": true} (network_mode = ONLINE)
+    Note over Sunita,DB: Phase 1 — Online Lesson and Diagnostic Episode
+    Sunita->>UI: Tap Continue Lesson (prof_demo_01)
+    UI->>API: GET /healthz (under 1.5s timeout)
+    API-->>UI: 200 OK (network_mode is ONLINE)
     UI->>API: POST /v1/agent/plan (concept candidates, mastery bucket)
     API-->>UI: Schema-Validated Plan + 4 Separate REFLECT Checks
-    Sunita->>UI: Submit Wrong MCQ -> Complete P=1, A=0, T=0 -> W=0 -> Kui Bridge -> W=1 -> PM1=1
-    UI->>Engine: nextAction(state, input, {now, seed})
-    Engine-->>Store: Append Immutable Event Rows (seq 1..N, pack_hash, input_hash)
+    Sunita->>UI: Submit Wrong MCQ, then P=1 A=0 T=0, then W=0, then Kui Bridge, then W=1 and PM1=1
+    UI->>Engine: nextAction(state, input, ctx with now and seed)
+    Engine-->>Store: Append Immutable Event Rows (seq 1 to N, pack_hash, input_hash)
     Store-->>UI: Live Subscription Renders Trace Rows (PENDING)
 
     Note over Sunita,DB: Phase 2 — Airplane Mode ON (Offline Agency Proof)
     Sunita->>UI: Toggle Airplane Mode ON
-    UI->>API: GET /healthz (Fails / Times Out)
-    UI->>Engine: Set network_mode = OFFLINE
+    UI->>API: GET /healthz (Fails or Times Out)
+    UI->>Engine: Set network_mode to OFFLINE
     Sunita->>UI: Trigger Wrong Answer While Offline
-    UI->>Engine: nextAction(state, wrong_mcq, {network_mode: OFFLINE})
-    Engine-->>Store: 3 Visible Local State Changes:<br/>1. Select Tier-1 Simpler Cached Variant<br/>2. Queue Revision Item<br/>3. Update BKT Mastery Locally
-    Store-->>UI: Trace Shows NETWORK: OFFLINE & Local ACT Decision (Persists Across Reload)
+    UI->>Engine: nextAction(state, wrong_mcq, network_mode is OFFLINE)
+    Engine-->>Store: 3 Visible Local State Changes (Tier-1 Variant, Queue Revision, Update BKT)
+    Store-->>UI: Trace Shows NETWORK OFFLINE and Local ACT Decision (Persists Across Reload)
 
-    Note over Sunita,DB: Phase 3 — Reconnect & Idempotent Batch Sync
-    Sunita->>UI: Toggle Airplane Mode OFF & Tap Sync
-    Store->>API: POST /v1/sync/events (Bearer Token, Batch ≤ 200 Events)
-    API->>DB: INSERT ... ON CONFLICT (event_id) DO NOTHING
+    Note over Sunita,DB: Phase 3 — Reconnect and Idempotent Batch Sync
+    Sunita->>UI: Toggle Airplane Mode OFF and Tap Sync
+    Store->>API: POST /v1/sync/events (Bearer Token, Batch up to 200 Events)
+    API->>DB: INSERT ON CONFLICT (event_id) DO NOTHING
     DB-->>API: Return Inserted vs Conflict Rows
-    API-->>Store: 200 OK {acked: [...], duplicates: [...], rejected: [...]}
-    Store->>Store: Mark acked ∪ duplicates as ACKED; Mark rejected as REJECTED (Stop Retry)
-    Store-->>UI: Trace Status Updates PENDING → SYNCED (Or Stop on 401 rejected_auth)
+    API-->>Store: 200 OK (acked IDs, duplicate IDs, rejected items)
+    Store->>Store: Mark acked and duplicates as ACKED, mark rejected as REJECTED (Stop Retry)
+    Store-->>UI: Trace Status Updates PENDING to SYNCED (Or Stop on 401 rejected_auth)
 
-    Note over Sunita,DB: Phase 4 — Replay Verification ("Verify Episode" — FR-22)
-    Sunita->>UI: Tap "Verify Episode" in Trace Panel
+    Note over Sunita,DB: Phase 4 — Replay Verification (Verify Episode FR-22)
+    Sunita->>UI: Tap Verify Episode in Trace Panel
     UI->>Store: Fetch Logged OBSERVE Inputs for episode_id
-    UI->>Engine: Re-Run Pure nextAction() Over Logged Inputs & Seeds
-    Engine-->>UI: Compare Recomputed Outputs vs Logged Outputs → Print MATCH / MISMATCH
+    UI->>Engine: Re-Run Pure nextAction() Over Logged Inputs and Seeds
+    Engine-->>UI: Compare Recomputed Outputs vs Logged Outputs and Print MATCH or MISMATCH
 ```
 
 ### 3.5 Content Pack Governance & Build-Time Sealing Pipeline
@@ -283,11 +294,11 @@ To guarantee that no unreviewed LLM hallucination ever reaches a child, Padhai P
 
 ```mermaid
 flowchart LR
-    Photos["Verified BSE Class 9<br/>Textbook Photos<br/>(/content/source/photos/)"] --> PackJSON["motion_pack.json &<br/>glossary.json<br/>(3 Chunks, 12 Items, 6 Terms)"]
+    Photos["Verified BSE Class 9<br/>Textbook Photos<br/>(/content/source/photos/)"] --> PackJSON["motion_pack.json and<br/>glossary.json<br/>(3 Chunks, 12 Items, 6 Terms)"]
     PackJSON --> Validator["validate_pack.py<br/>Dual Validator:<br/>1. Local Domain Rules<br/>2. /shared/pack.schema.json"]
-    Validator -->|"17/17 Fixtures Pass"| Sealer["build_pack.py<br/>Compute Canonical SHA-256<br/>& Seal Manifest"]
-    Sealer --> RuntimeGate["App Content Loader (/app/src/content/loader.ts)<br/>1. Verify pack_hash == manifest.sha256 (FR-34)<br/>2. Filter status ∈ {approved, demo_approved} (FR-27)"]
-    RuntimeGate --> ChildUI["Child UI & Trace<br/>(Records 12-char pack_hash<br/>in Every Event Row)"]
+    Validator -->|"17/17 Fixtures Pass"| Sealer["build_pack.py<br/>Compute Canonical SHA-256<br/>and Seal Manifest"]
+    Sealer --> RuntimeGate["App Content Loader (/app/src/content/loader.ts)<br/>1. Verify pack_hash matches manifest.sha256 (FR-34)<br/>2. Filter status in approved or demo_approved (FR-27)"]
+    RuntimeGate --> ChildUI["Child UI and Trace<br/>(Records 12-char pack_hash<br/>in Every Event Row)"]
 ```
 
 ## 4. Bounded Agent Autonomy: The Decision Register (`D1–D7`)
@@ -297,12 +308,12 @@ Why does a deterministic rule-based diagnostic engine count as a true **Agentic 
 | ID | Autonomous Decision | Observed Inputs | Action Space / Alternatives | Safety & Determinism Bound |
 | :--- | :--- | :--- | :--- | :--- |
 | **D1** | Which concept and difficulty tier to teach next | Profile BKT mastery, tier history, network state | 6 Motion chunks × 3 difficulty tiers | JSON schema-validated online (`planner=gemini`); falls back to `cached` or deterministic `rule` planner. |
-| **D2** | Whether to fire a diagnostic probe episode | Pre-update concept mastery, session error count | `CONTINUE` \| `RETEACH` \| `PROBE_START` | Fires on **Rule A** (2nd wrong in session) or **Rule B** (1st wrong when pre-update mastery `< 0.50`); max 1 active episode at a time. |
+| **D2** | Whether to fire a diagnostic probe episode | Pre-update concept mastery, session error count | `CONTINUE`, `RETEACH`, or `PROBE_START` | Fires on **Rule A** (2nd wrong in session) or **Rule B** (1st wrong when pre-update mastery `< 0.50`); max 1 active episode at a time. |
 | **D3** | Which probe set and modality presentation order to administer | `(profile_id, concept_id, set_id)` | 6 permutations of `[P, A, T]` × 3 parallel sets (`A, B, C`) | Deterministic SHA-256 big-endian `uint32` seed → Mulberry32 Fisher-Yates shuffle. |
 | **D4** | How to map `[P, A, T]` observations to a candidate or abstain | 3-bit modality vector + `sound_check` state | 4 candidates (`RESOLVED`, `READING_GAP`, `LANGUAGE_OR_TERM_GAP`, `CONCEPT_GAP`) or `INCONSISTENT` | Null audio (`A=null`) or mixed patterns (`1,0,1`, `0,1,1`, `0,1,0`, `0,0,1`) immediately abstain rather than guess. |
-| **D5** | Which targeted remediation workflow to execute | Confirmed `SetLabel` / `FinalLabel` | Kui lexical bridge \| Audio-first mode \| Local example + Tier-1 Odia \| Slow audio \| Safe default | Capped at `≤ 2` remediation cycles per concept per session. |
-| **D6** | Which planning & explanation source to trust | `/healthz` latency, Gemini timeout, REFLECT checks | `gemini` \| `cached_plan` \| `rule` | On timeout or failed REFLECT check, logs `FALLBACK: cached_plan` and serves pre-reviewed content. |
-| **D7** | When to stop and escalate to the teacher | Abstention conflict, `AUDIO_UNAVAILABLE`, `SKIPPED`, `LOOP_BOUND`, `LISTENING_REPEAT` | `TEACHER_FLAG(reason)` \| `CONTINUE` | Always logged and surfaced in the PIN-protected Teacher View. |
+| **D5** | Which targeted remediation workflow to execute | Confirmed `SetLabel` / `FinalLabel` | Kui lexical bridge, Audio-first mode, Local example + Tier-1 Odia, Slow audio, or Safe default | Capped at `≤ 2` remediation cycles per concept per session. |
+| **D6** | Which planning & explanation source to trust | `/healthz` latency, Gemini timeout, REFLECT checks | `gemini`, `cached_plan`, or `rule` | On timeout or failed REFLECT check, logs `FALLBACK: cached_plan` and serves pre-reviewed content. |
+| **D7** | When to stop and escalate to the teacher | Abstention conflict, `AUDIO_UNAVAILABLE`, `SKIPPED`, `LOOP_BOUND`, `LISTENING_REPEAT` | `TEACHER_FLAG(reason)` or `CONTINUE` | Always logged and surfaced in the PIN-protected Teacher View. |
 
 ## 5. Deterministic Seed & Golden Vector Verification
 
@@ -375,7 +386,7 @@ Padhai-Pocket/
 | `POST /v1/sync/events` | Device Bearer Token | `{"device_id": "d1", "events": [...]}` (`≤ 256 KB`, `≤ 200` events) | Validates against `event.schema.json`; inserts idempotently (`ON CONFLICT (event_id) DO NOTHING`); returns `{"acked": [...], "duplicates": [...], "rejected": [...]}`. |
 | `GET /v1/summary` | Device Bearer Token | Query params (optional device/profile scope) | Returns aggregated concept mastery, term mastery, diagnostic label counts, abstentions, and teacher flags for the Teacher View. |
 | `DELETE /v1/profiles/{id}` | Device Bearer Token | Path param `id` (`profile_id`) | Purges server-side profile events and records an audited tombstone in `purge_log` (`profile_hash`, `purged_at`, `event_count`). |
-| `POST /v1/agent/plan` | Device Bearer Token / Demo | `{"candidate_concepts": [...], "mastery_bucket": "low\|mid\|high", "tier_history": [...]}` | Runs LangGraph `PLAN → REFLECT → ACT`. Honours `X-Failure-Mode: timeout` when `ENV=demo` to demonstrate deterministic fallback (`FALLBACK: cached_plan`). |
+| `POST /v1/agent/plan` | Device Bearer Token / Demo | `{"candidate_concepts": [...], "mastery_bucket": "low/mid/high", "tier_history": [...]}` | Runs LangGraph `PLAN → REFLECT → ACT`. Honours `X-Failure-Mode: timeout` when `ENV=demo` to demonstrate deterministic fallback (`FALLBACK: cached_plan`). |
 
 ## 8. Quickstart & 10-Step Live Demo Runbook
 
