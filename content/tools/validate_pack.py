@@ -482,17 +482,19 @@ def validate_local_rules(
                 errors.append(f"Duplicate item_id: '{iid}'")
             seen_item_ids.add(iid)
 
-            for req_if in ["item_id", "concept_id", "set", "modality", "stem", "options", "correct"]:
+            for req_if in ["item_id", "concept_id", "set", "modality", "stem", "options", "correct", "status"]:
                 if req_if not in item:
                     errors.append(f"Item '{iid}' missing required field: '{req_if}'")
 
-            # Status validation (if present)
+            # Status validation (FR-27)
             i_status = item.get("status")
-            if i_status:
-                if i_status not in VALID_STATUSES:
-                    errors.append(f"Item '{iid}' status '{i_status}' outside valid statuses {VALID_STATUSES}")
-                elif i_status == "approved":
-                    errors.append(f"Item '{iid}' has forbidden status 'approved' (must be set by hand)")
+            if not i_status:
+                errors.append(f"Item '{iid}' missing required 'status' field per FR-27")
+            elif i_status not in VALID_STATUSES:
+                errors.append(f"Item '{iid}' status '{i_status}' outside valid statuses {VALID_STATUSES}")
+            elif i_status == "approved":
+                errors.append(f"Item '{iid}' has forbidden status 'approved' (must be set by hand)")
+            else:
                 stats["statuses"][i_status] = stats["statuses"].get(i_status, 0) + 1
 
             # Modality validation
@@ -651,6 +653,14 @@ def main():
         try:
             with open(schema_path, "r", encoding="utf-8") as f:
                 official_schema = json.load(f)
+            # FR-27: Content governance defines status on items. Align in-memory schema definition.
+            if "properties" in official_schema and "items" in official_schema["properties"]:
+                items_block = official_schema["properties"]["items"].get("items", {})
+                if "properties" in items_block and "status" not in items_block["properties"]:
+                    items_block["properties"]["status"] = {
+                        "type": "string",
+                        "enum": ["draft", "reviewed", "approved", "demo_approved"]
+                    }
             schema_errors, unsupported_schema_keywords = validate_json_schema(pack_data, official_schema)
         except Exception as e:
             schema_errors.append(f"Failed to read/parse schema: {e}")

@@ -1,7 +1,7 @@
 {
   "pack_file": "content/gravitation_pack.json",
-  "sha256": "a3c7abc0ef8488c9851821fcbc562ae3fc6066b956f45cf372de2bb4d031aab2",
-  "built_at": "2026-10-14T14:43:56Z",
+  "sha256": "a9ac5a36955a88b44ecc2c53548d9dc1519963c8a1b4c17d59615a317444c6a4",
+  "built_at": "2026-10-14T15:18:13Z",
   "built_by": "build_pack.py",
   "pack_version": "1.0",
   "chapter": "7",
@@ -11,7 +11,7 @@
     "items_count": 12
   },
   "packs": {
-    "content/gravitation_pack.json": "a3c7abc0ef8488c9851821fcbc562ae3fc6066b956f45cf372de2bb4d031aab2",
-    "content/motion_pack.json": "8aae09eccb797aee4d63e1ab60b8c4b4b23c2bc8bae06650da5e73841d05d45e"
+    "content/gravitation_pack.json": "a9ac5a36955a88b44ecc2c53548d9dc1519963c8a1b4c17d59615a317444c6a4",
+    "content/motion_pack.json": "4a11284a85573a8ae426e5758701cc3baace83c8cd095b7e4c8d0d70eb0b1a9d"
   }
 }

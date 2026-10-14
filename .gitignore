@@ -46,6 +46,7 @@ integration_result.json
 *.pdf
 
 # Agent skills (Pritam's tooling)
+.agent/
 .agents/
 skills-lock.json
 
