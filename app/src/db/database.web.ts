@@ -30,6 +30,11 @@ function notifyListeners() {
       console.warn('Listener error', e);
     }
   }
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    try {
+      window.dispatchEvent(new Event('padhai-event-updated'));
+    } catch {}
+  }
 }
 
 function isLocalStorageAvailable(): boolean {
