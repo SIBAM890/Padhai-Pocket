@@ -32,7 +32,9 @@ def anyio_backend():
 
 
 @pytest.fixture(autouse=True)
-def reset_storage():
+def reset_storage(monkeypatch):
+    monkeypatch.setattr("storage_dual.get_client", lambda: None)
+    monkeypatch.setattr("supabase_client.get_client", lambda: None)
     demo_storage.reset()
     seed_registration_code("REG-CODE-123")
     os.environ["ENV"] = "demo"
