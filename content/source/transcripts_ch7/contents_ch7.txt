@@ -1,0 +1,24 @@
+Board: Board of Secondary Education (BSE), Odisha
+Class: 9 (ନବମ ଶ୍ରେଣୀ)
+Subject: Physical Science (ଭୌତିକ ବିଜ୍ଞାନ)
+Chapter: 7 (ସପ୍ତମ ଅଧ୍ୟାୟ)
+Chapter Title: ମାଧ୍ୟାକର୍ଷଣ (GRAVITATION)
+Source File: 9th_Physical_Science107.pdf (Pages 95 - 108)
+
+Sections:
+7.1 ମାଧ୍ୟାକର୍ଷଣ (Gravitation) [p. 95]
+7.1.1 ମାଧ୍ୟାକର୍ଷଣର ସାର୍ବଜନୀନ ନିୟମ (Universal Law of Gravitation) [p. 97]
+7.1.2 ସାର୍ବଜନୀନ ମାଧ୍ୟାକର୍ଷଣ ନିୟମର ଗୁରୁତ୍ୱ (Importance of the Universal Law of Gravitation) [p. 98]
+7.2 ମୁକ୍ତ ପତନ (Free Fall) [p. 98]
+7.2.1 ‘g’ ର ମାନ ଗଣନା (Calculation of the Value of 'g') [p. 99]
+7.2.2 ପୃଥିବୀର ମାଧ୍ୟାକର୍ଷଣ ବଳର ପ୍ରଭାବରେ ବସ୍ତୁର ଗତି (Motion of Objects Under the Influence of Gravitational Force of the Earth) [p. 99]
+7.3 ବସ୍ତୁତ୍ୱ (Mass) [p. 100]
+7.4 ଓଜନ (Weight) [p. 100]
+7.4.1 ଚନ୍ଦ୍ରପୃଷ୍ଠରେ ବସ୍ତୁର ଓଜନ (Weight of an Object on the Moon) [p. 101]
+7.5 ପ୍ରଣୋଦ ଓ ଚାପ (Thrust and Pressure) [p. 102]
+7.5.1 ତରଳ ପଦାର୍ଥରେ ଚାପ (Pressure in Fluids) [p. 103]
+7.5.2 ପ୍ଳବନତା (Buoyancy) [p. 103]
+7.5.3 କେଉଁ ବସ୍ତୁ ପାଣିରେ ଭାସେ ଓ କେଉଁଟି ବୁଡ଼େ (Why Objects Float or Sink when Placed on the Surface of Water) [p. 104]
+7.6 ଆର୍କିମିଡିସ୍‌ଙ୍କ ନୀତି (Archimedes' Principle) [p. 105]
+7.7 ଆପେକ୍ଷିକ ସାନ୍ଦ୍ରତା (Relative Density) [p. 106]
+7.8 ଆମେ କ’ଣ ଶିଖିଲେ ଓ ଅଭ୍ୟାସ ପ୍ରଶ୍ନାବଳୀ (Summary & Exercises 1-22) [p. 107-108]
