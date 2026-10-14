@@ -114,6 +114,9 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
             <View style={styles.fieldSection}>
               <Text style={styles.fieldLabel}>What's your name?</Text>
               <TextInput
+                nativeID="student-name-input"
+                id="student-name-input"
+                accessibilityLabel="Student name"
                 style={styles.input}
                 value={name}
                 onChangeText={setName}

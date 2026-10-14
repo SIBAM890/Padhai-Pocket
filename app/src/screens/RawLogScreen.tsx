@@ -12,15 +12,11 @@ export default function RawLogScreen({ navigation }: any) {
   const load = useCallback(async () => {
     try {
       setIsError(false);
-      const rows = await listEvents(100);
-      if (rows && rows.length > 0) {
-        setJsonText(JSON.stringify(rows, null, 2));
-      } else {
-        setJsonText('[]');
-      }
-    } catch (err: any) {
+      const rows = await listEvents(200);
+      setJsonText(JSON.stringify(rows ?? [], null, 2));
+    } catch {
       setIsError(true);
-      setJsonText(`Failed to load SQLite log entries: ${err?.message ?? 'Unknown error'}`);
+      setJsonText('[]');
     }
   }, []);
 

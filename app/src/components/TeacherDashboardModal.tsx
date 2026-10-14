@@ -58,6 +58,9 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           </Text>
 
           <TextInput
+            nativeID="teacher-pin-input"
+            id="teacher-pin-input"
+            accessibilityLabel="Teacher PIN"
             style={[styles.pinInput, errorMessage ? styles.pinInputError : null]}
             value={pin}
             onChangeText={(val) => {

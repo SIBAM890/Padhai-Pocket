@@ -176,6 +176,17 @@ export async function markError(ids: string[]): Promise<void> {
   notifyListeners();
 }
 
+export async function markRejected(ids: string[], reason: string): Promise<void> {
+  for (const id of ids) {
+    const event = eventsMap.get(id);
+    if (event) {
+      event.sync_status = 'REJECTED';
+      (event as any).reject_reason = reason;
+      eventsMap.set(id, event);
+    }
+  }
+}
+
 export async function purgeProfile(profileId: string): Promise<void> {
   eventsMap = loadFromStorage();
   let deleted = false;

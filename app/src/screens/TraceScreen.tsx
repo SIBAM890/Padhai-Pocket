@@ -58,16 +58,7 @@ export default function TraceScreen({ navigation }: any) {
           </Text>
         </View>
 
-        {/* Explicit Demo Mode Toggle */}
-        <View style={styles.demoRow}>
-          <View>
-            <Text style={styles.demoLabel}>Demo Trace Data</Text>
-            <Text style={styles.demoSub}>Show mock events for stage demonstration</Text>
-          </View>
-          <Switch value={demoMode} onValueChange={setDemoMode} />
-        </View>
-
-        {!demoMode && events.length === 0 ? (
+        {events.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📋</Text>
             <Text style={styles.emptyTitle}>No events yet</Text>

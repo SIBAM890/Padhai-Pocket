@@ -1,5 +1,5 @@
 export type NetworkMode = 'ONLINE' | 'WEAK' | 'OFFLINE';
-export type SyncStatus = 'PENDING' | 'ACKED' | 'ERROR';
+export type SyncStatus = 'PENDING' | 'ACKED' | 'ERROR' | 'REJECTED';
 
 export type EventNode =
   | 'PLAN'
