@@ -166,7 +166,7 @@ describe('Task 2 / Gate G1: Padhai Pocket Engine Tests', () => {
   describe('index.ts — pure nextAction state machine test', () => {
     test('Purity check: nextAction strictly uses ctx for now and seed', () => {
       const state = createInitialState('prof_demo_01', 'sess_01', 'distance_vs_displacement', 0.42, 1, 'OFFLINE');
-      const ctx: EngineContext = { now: 1792059821234, seed: 1806635391 };
+      const ctx: EngineContext = { now: 1792059821234, seed: 1806635391, device_id: 'dev-test-uuid' };
 
       const out = nextAction(state, { type: 'OBSERVE_MCQ', correct: false, misconception_tag: 'path_equals_displacement' }, ctx);
 

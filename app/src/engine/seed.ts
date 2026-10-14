@@ -10,23 +10,26 @@
  *            swap(a[i], a[j])
  */
 
-import * as crypto from 'crypto';
-
 /**
  * PRD §4.9: compute deterministic probe seed.
  * seed = uint32 (big-endian first 4 bytes) of SHA-256("<profileId>|<conceptId>|<setId>").
  * Same learner, same concept, same set → same probe order every session.
+ * Uses Web Crypto API (available in React Native / Expo / browsers).
  *
  * Reference test: computeSeed('prof_demo_01','distance_vs_displacement','A') === 1806635391
  */
-export function computeSeed(
+export async function computeSeed(
   profileId: string,
   conceptId: string,
   setId: string
-): number {
+): Promise<number> {
   const key = `${profileId}|${conceptId}|${setId}`;
-  const hash = crypto.createHash('sha256').update(key, 'utf8').digest();
-  return hash.readUInt32BE(0);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hash = new Uint8Array(hashBuffer);
+  // big-endian uint32 from first 4 bytes
+  return ((hash[0] << 24) | (hash[1] << 16) | (hash[2] << 8) | hash[3]) >>> 0;
 }
 
 /**

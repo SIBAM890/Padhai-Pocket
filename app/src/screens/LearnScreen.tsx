@@ -45,6 +45,7 @@ import { nextAction, createInitialState, type EngineState, type EngineContext } 
 import { computeSeed } from '../engine/seed';
 import { insertEvent, pendingEvents } from '../db/database';
 import { syncPending } from '../sync/syncClient';
+import { getDeviceId } from '../utils/device';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
@@ -90,7 +91,8 @@ export default function LearnScreen({ navigation }: Props) {
   const conceptId = 'distance_vs_displacement';
   const engineContextRef = useRef<EngineContext>({
     now: Date.now(),
-    seed: computeSeed(profileId, conceptId, 'A'),
+    seed: 1806635391, // Golden seed for (prof_demo_01, distance_vs_displacement, A)
+    device_id: 'dev_tab_01',
   });
 
   const engineStateRef = useRef<EngineState>(
@@ -108,6 +110,25 @@ export default function LearnScreen({ navigation }: Props) {
   useEffect(() => {
     engineStateRef.current.network_mode = forcedOffline ? 'OFFLINE' : networkMode;
   }, [networkMode, forcedOffline]);
+
+  // Load stable device ID and compute seed on mount
+  useEffect(() => {
+    getDeviceId()
+      .then((id) => {
+        if (engineContextRef.current) {
+          engineContextRef.current.device_id = id;
+        }
+      })
+      .catch(() => {});
+
+    computeSeed(profileId, conceptId, 'A')
+      .then((computed) => {
+        if (engineContextRef.current) {
+          engineContextRef.current.seed = computed;
+        }
+      })
+      .catch(() => {});
+  }, [profileId, conceptId]);
 
   // When airplane mode is toggled OFF, attempt to sync pending events
   useEffect(() => {

@@ -1,15 +1,53 @@
+# Environment
 .env
 .env.*
 !.env.example
+
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Python
 __pycache__/
+**/__pycache__/
 *.pyc
-*.apk
-*.keystore
+*.pyo
+
+# Build outputs
 dist/
+dist*/
+dist-*/
+app/dist*/
+app/dist-*/
+app/dist2/
+app/dist3/
+app/dist4/
+app/dist5/
+
+# Native build
+android/
+app/android/
+*.apk
+*.aab
+*.keystore
+
+# Expo
 .expo/
+.expo-shared/
+
+# Test artifacts
 jest.json
 integration_result.json
+
+# PDF source (large file)
 9th_Physical_Science105.pdf
+
+# Agent skills (Pritam's tooling)
 .agents/
 skills-lock.json
+
+# OS & IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

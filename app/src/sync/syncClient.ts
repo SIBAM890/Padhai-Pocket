@@ -1,9 +1,12 @@
 import { detectNetworkMode } from '../network/network';
 import { markAcked, markError, pendingEvents, purgeProfile } from '../db/database';
 import type { PadhaiEvent } from '../types/events';
+import * as SecureStore from 'expo-secure-store';
 
 export const DEFAULT_API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+
+export const REGISTRATION_CODE = 'PADHAI-DEMO-2026';
 
 export interface SyncConfig {
   baseUrl?: string;
@@ -60,18 +63,49 @@ export function getDeviceCredentials() {
 }
 
 /**
- * POST /v1/devices/register
+ * Gets the stored device token, or registers if missing.
+ * For demo, uses a dev token the backend accepts without registration.
+ */
+export async function getDeviceToken(baseUrl: string = DEFAULT_API_BASE_URL, deviceId: string = storedDeviceId): Promise<string> {
+  try {
+    const stored = await SecureStore.getItemAsync('device_token');
+    if (stored) return stored;
+  } catch {
+    // SecureStore might not be available on web
+  }
+
+  if (storedDeviceToken) return storedDeviceToken;
+  return 'dev-token-' + deviceId;
+}
+
+/**
+ * Registers the device with the backend and stores the returned token.
+ * Supports both signatures:
+ *  - registerDevice(baseUrl, deviceId, code)
+ *  - registerDevice(code, deviceId, baseUrl)
  */
 export async function registerDevice(
-  code: string,
+  firstParam: string = REGISTRATION_CODE,
   deviceId: string = storedDeviceId,
-  baseUrl: string = DEFAULT_API_BASE_URL
+  thirdParam?: string
 ): Promise<RegisterResult> {
+  let baseUrl = DEFAULT_API_BASE_URL;
+  let code = REGISTRATION_CODE;
+  let devId = deviceId;
+
+  if (firstParam.startsWith('http://') || firstParam.startsWith('https://')) {
+    baseUrl = firstParam;
+    code = thirdParam || REGISTRATION_CODE;
+  } else {
+    code = firstParam;
+    if (thirdParam) baseUrl = thirdParam;
+  }
+
   try {
     const response = await fetch(`${baseUrl}/v1/devices/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, device_id: deviceId }),
+      body: JSON.stringify({ code, device_id: devId }),
     });
 
     if (!response.ok) {
@@ -82,9 +116,17 @@ export async function registerDevice(
       };
     }
 
-    const data = (await response.json()) as { device_id: string; token: string };
-    setDeviceCredentials(data.device_id, data.token);
-    return { ok: true, deviceId: data.device_id, token: data.token };
+    const data = (await response.json()) as { device_id?: string; token: string };
+    const returnedDeviceId = data.device_id || devId;
+    setDeviceCredentials(returnedDeviceId, data.token);
+
+    try {
+      await SecureStore.setItemAsync('device_token', data.token);
+    } catch {
+      // SecureStore may fail on web
+    }
+
+    return { ok: true, deviceId: returnedDeviceId, token: data.token };
   } catch (err: any) {
     return { ok: false, error: err?.message || 'NETWORK_ERROR' };
   }
@@ -96,7 +138,6 @@ export async function registerDevice(
 export async function syncPending(config?: SyncConfig): Promise<SyncResult> {
   const baseUrl = config?.baseUrl || DEFAULT_API_BASE_URL;
   const deviceId = config?.deviceId || storedDeviceId;
-  const token = config?.token || storedDeviceToken;
 
   const mode = await detectNetworkMode(`${baseUrl}/healthz`);
   if (mode !== 'ONLINE') {
@@ -110,6 +151,7 @@ export async function syncPending(config?: SyncConfig): Promise<SyncResult> {
 
   const ids = events.map((e) => e.event_id);
   try {
+    const token = config?.token ?? (await getDeviceToken(baseUrl, deviceId));
     const response = await fetch(`${baseUrl}/v1/sync/events`, {
       method: 'POST',
       headers: {
