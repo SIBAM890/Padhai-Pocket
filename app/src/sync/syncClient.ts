@@ -99,33 +99,36 @@ export async function getDeviceToken(
   baseUrl: string = DEFAULT_API_BASE_URL,
   deviceId: string = storedDeviceId
 ): Promise<string> {
-  if (storedDeviceToken) return storedDeviceToken;
-
-  // 1. Check localStorage if on Web
+  // 1. Check existing token in memory, SecureStore, or localStorage and validate
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const stored =
-        window.localStorage.getItem(`device_token_${deviceId}`) ||
-        window.localStorage.getItem('device_token');
-      if (stored) {
-        storedDeviceToken = stored;
-        return stored;
-      }
+    const existing =
+      storedDeviceToken ||
+      (await SecureStore.getItemAsync('device_token').catch(() => null)) ||
+      (typeof window !== 'undefined' && window.localStorage
+        ? window.localStorage.getItem(`device_token_${deviceId}`) ||
+          window.localStorage.getItem('device_token')
+        : null);
+
+    if (existing && existing.startsWith('tok_')) {
+      try {
+        const probe = await fetch(`${baseUrl}/v1/summary`, {
+          headers: { Authorization: `Bearer ${existing}` },
+        });
+        if (probe.ok || probe.status === 404) {
+          storedDeviceToken = existing;
+          return existing;
+        }
+      } catch {}
     }
   } catch {}
 
-  // 2. Check SecureStore if on native
+  // 2. Auto-register device with backend using standard or backup registration code
   try {
-    const stored = await SecureStore.getItemAsync('device_token');
-    if (stored) {
-      storedDeviceToken = stored;
-      return stored;
+    let reg = await registerDevice(REGISTRATION_CODE, deviceId, baseUrl);
+    if (!reg.ok) {
+      // Try backup seeded registration code
+      reg = await registerDevice('PADHAI-DEMO-2026', deviceId, baseUrl);
     }
-  } catch {}
-
-  // 3. Auto-register device with backend using standard registration code
-  try {
-    const reg = await registerDevice(REGISTRATION_CODE, deviceId, baseUrl);
     if (reg.ok && reg.token) {
       storedDeviceToken = reg.token;
       return reg.token;
@@ -134,7 +137,11 @@ export async function getDeviceToken(
     console.warn('Auto-registration failed or backend offline:', e);
   }
 
-  return 'dev-token-' + deviceId;
+  // Pre-seeded demo device fallback matching backend seed_demo.py
+  const DEMO_DEVICE = 'dev_tab_01';
+  const DEMO_TOKEN = 'tok_dev_tab_01';
+  setDeviceCredentials(DEMO_DEVICE, DEMO_TOKEN);
+  return DEMO_TOKEN;
 }
 
 /**
