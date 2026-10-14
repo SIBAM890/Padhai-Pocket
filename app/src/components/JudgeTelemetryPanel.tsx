@@ -209,6 +209,80 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
           </View>
         </View>
 
+        {/* Decision 5: Resource Match Ranker (PRD §2.5 / §4.7) */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardTitle}>D5: Resource Match Ranker (PRD §2.5 / §4.7)</Text>
+            {engineState.last_resource_match && (
+              <View style={styles.matchScoreBadge}>
+                <Text style={styles.matchScoreText}>
+                  {engineState.last_resource_match.selected.score}/100 pts
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {engineState.last_resource_match ? (
+            <View style={styles.resourceMatchContainer}>
+              <View style={styles.selectedResourceBox}>
+                <View style={styles.resourceHeaderRow}>
+                  <Text style={styles.selectedResourceTag}>RANK #1 SELECTED</Text>
+                  <Text style={styles.resourceModalityPill}>
+                    {engineState.last_resource_match.selected.modality.toUpperCase().replace('_', ' ')}
+                  </Text>
+                </View>
+                <Text style={styles.resourceTitleEn}>
+                  {engineState.last_resource_match.selected.title_en}
+                </Text>
+                <Text style={styles.resourceTitleOr}>
+                  {engineState.last_resource_match.selected.title_or}
+                </Text>
+                <Text style={styles.resourceIdLine}>
+                  ID: {engineState.last_resource_match.selected.resource_id} • Chunk: {engineState.last_resource_match.selected.chunk_id} • Tier {engineState.last_resource_match.selected.tier}
+                </Text>
+
+                <View style={styles.reasonsList}>
+                  <Text style={styles.reasonsHeader}>Scoring Reasons & Utility Fit:</Text>
+                  <View style={styles.reasonsBadgeWrap}>
+                    {engineState.last_resource_match.selected.reasons.map((r, i) => (
+                      <View key={i} style={styles.reasonBadge}>
+                        <Text style={styles.reasonBadgeText}>{r}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {engineState.last_resource_match.runner_up && (
+                  <View style={styles.runnerUpBox}>
+                    <Text style={styles.runnerUpText}>
+                      Runner-up: {engineState.last_resource_match.runner_up.resource_id} ({engineState.last_resource_match.runner_up.score} pts) — {engineState.last_resource_match.runner_up.title_en}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {engineState.last_resource_match.disqualified.length > 0 && (
+                <View style={styles.disqualifiedBox}>
+                  <Text style={styles.disqualifiedHeader}>Hard Eligibility Gates (Disqualified Alternatives):</Text>
+                  {engineState.last_resource_match.disqualified.map((d, i) => (
+                    <View key={i} style={styles.disqualifiedRow}>
+                      <Text style={styles.disqualifiedId}>{d.resource_id}</Text>
+                      <View style={styles.disqualifiedReasonBadge}>
+                        <Text style={styles.disqualifiedReasonText}>{d.reason}</Text>
+                      </View>
+                      <Text style={styles.disqualifiedTitle} numberOfLines={1}>{d.title_en}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : (
+            <Text style={styles.waitingNotice}>
+              Awaiting confirmation probe completion to evaluate D5 utility ranker.
+            </Text>
+          )}
+        </View>
+
         {/* 3. Real-time BKT Mastery */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Bayesian Knowledge Tracing (BKT)</Text>
@@ -823,5 +897,151 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
     borderRadius: radius.sm,
     padding: spacing.sm,
+  },
+  matchScoreBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.xs,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  matchScoreText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#3730A3',
+  },
+  resourceMatchContainer: {
+    gap: spacing.sm,
+  },
+  selectedResourceBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  resourceHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  selectedResourceTag: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#059669',
+    letterSpacing: 0.5,
+  },
+  resourceModalityPill: {
+    fontSize: 9,
+    fontWeight: '700',
+    backgroundColor: '#E0E7FF',
+    color: '#3730A3',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  resourceTitleEn: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  resourceTitleOr: {
+    fontSize: 12,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  resourceIdLine: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
+  reasonsList: {
+    marginTop: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    paddingTop: 4,
+  },
+  reasonsHeader: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+    marginBottom: 4,
+  },
+  reasonsBadgeWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  reasonBadge: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  reasonBadgeText: {
+    fontSize: 9,
+    color: '#334155',
+    fontWeight: '600',
+  },
+  runnerUpBox: {
+    marginTop: 6,
+    padding: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 4,
+  },
+  runnerUpText: {
+    fontSize: 10,
+    color: '#475569',
+  },
+  disqualifiedBox: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  disqualifiedHeader: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#92400E',
+    marginBottom: 4,
+  },
+  disqualifiedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  disqualifiedId: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#78350F',
+    width: 120,
+  },
+  disqualifiedReasonBadge: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  disqualifiedReasonText: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#991B1B',
+  },
+  disqualifiedTitle: {
+    fontSize: 10,
+    color: '#78350F',
+    flex: 1,
+  },
+  waitingNotice: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    color: colors.textMuted,
   },
 });

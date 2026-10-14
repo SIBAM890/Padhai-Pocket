@@ -786,19 +786,27 @@ export default function LearnScreen({ navigation }: Props) {
               />
             )}
 
-            {flowStep === 'REMEDIATION' && (
-              <RemediationCard
-                explanation={remediationKuiText}
-                explanationOr={`ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
-                onListen={() => {}}
-                onTryAgain={() => {
-                  setSelectedOption(null);
-                  setSelectedProbeChoice(null);
-                  setFlowStep('QUESTION_INTERACTION');
-                }}
-                onContinue={handleCompleteRemediation}
-              />
-            )}
+            {flowStep === 'REMEDIATION' && (() => {
+              const matched = engineStateRef.current?.last_resource_match?.selected;
+              return (
+                <RemediationCard
+                  conceptTitle={matched?.title_en ? `${matched.title_en}` : 'Understanding Displacement (ବିସ୍ଥାପନ)'}
+                  explanation={remediationKuiText}
+                  explanationOr={matched?.title_or ? `${matched.title_or} — ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।` : `ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
+                  resourceId={matched?.resource_id}
+                  resourceModality={matched?.modality}
+                  resourceReasons={matched?.reasons}
+                  matchScore={matched?.score}
+                  onListen={() => {}}
+                  onTryAgain={() => {
+                    setSelectedOption(null);
+                    setSelectedProbeChoice(null);
+                    setFlowStep('QUESTION_INTERACTION');
+                  }}
+                  onContinue={handleCompleteRemediation}
+                />
+              );
+            })()}
 
             {flowStep === 'COMPLETION' && (
               <CompletionCard
