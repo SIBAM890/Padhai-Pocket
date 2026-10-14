@@ -204,5 +204,59 @@ describe('Task 2 / Gate G1: Padhai Pocket Engine Tests', () => {
       expect(Math.abs(p3 - 0.8597)).toBeLessThan(5e-5);
     });
   });
+
+  describe('resourceMatch.ts — Deterministic Resource Match & Disqualification Gates', () => {
+    const { matchResources } = require('../src/engine/resourceMatch');
+
+    test('TERM_GAP with P=1 selects RES-KUI-DISP-01 (100/100) and filters out draft RES-CLOUD-GEN-01', () => {
+      const res = matchResources({
+        final_label: 'TERM_GAP',
+        pattern: [1, 0, 0],
+        concept_id: 'distance_vs_displacement',
+        term_id: 'T_DISP',
+        concept_mastery: 0.5842,
+        reading_load: 0,
+        audio_available: true,
+        network_mode: 'OFFLINE',
+      });
+
+      expect(res.selected.resource_id).toBe('RES-KUI-DISP-01');
+      expect(res.selected.score).toBe(100);
+      expect(res.runner_up?.resource_id).toBe('RES-VIS-WELL-01');
+      expect(res.disqualified.some((d: any) => d.resource_id === 'RES-CLOUD-GEN-01' && d.reason === 'NOT_APPROVED')).toBe(true);
+    });
+
+    test('READING_GAP when audio_available=false disqualifies RES-AUD-STORY-01 and falls back to visual', () => {
+      const res = matchResources({
+        final_label: 'READING_GAP',
+        pattern: [1, null, 0],
+        concept_id: 'distance_vs_displacement',
+        concept_mastery: 0.42,
+        reading_load: 1,
+        audio_available: false,
+        network_mode: 'OFFLINE',
+      });
+
+      expect(res.disqualified.some((d: any) => d.resource_id === 'RES-AUD-STORY-01' && d.reason === 'AUDIO_UNAVAILABLE')).toBe(true);
+      expect(res.selected.resource_id).toBe('RES-SLOW-PIC-01');
+    });
+
+    test('Cycle 2 anti-repetition skips already-used Rank #1 resource and selects Rank #2', () => {
+      const res = matchResources({
+        final_label: 'TERM_GAP',
+        pattern: [1, 0, 0],
+        concept_id: 'distance_vs_displacement',
+        term_id: 'T_DISP',
+        concept_mastery: 0.5842,
+        reading_load: 0,
+        audio_available: true,
+        network_mode: 'OFFLINE',
+        used_resource_ids: ['RES-KUI-DISP-01'],
+      });
+
+      expect(res.selected.resource_id).toBe('RES-VIS-WELL-01');
+      expect(res.disqualified.some((d: any) => d.resource_id === 'RES-KUI-DISP-01' && d.reason === 'ALREADY_TRIED_IN_EPISODE')).toBe(true);
+    });
+  });
 });
 
