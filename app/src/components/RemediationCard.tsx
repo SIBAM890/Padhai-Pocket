@@ -7,6 +7,10 @@ interface RemediationCardProps {
   explanation: string;
   explanationOr?: string;
   visualSummary?: string;
+  resourceId?: string;
+  resourceModality?: string;
+  resourceReasons?: string[];
+  matchScore?: number;
   onListen: () => void;
   onTryAgain: () => void;
   onContinue: () => void;
@@ -17,17 +21,43 @@ export const RemediationCard: React.FC<RemediationCardProps> = ({
   explanation = 'Displacement is the straight-line distance between where you started and where you ended. If you walk 3 meters forward and 3 meters backward, you end up right at the starting line: 0 meters!',
   explanationOr = 'ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।',
   visualSummary = '🚶‍♂️ 3m East  ➔  🚩 Turn  ➔  🚶‍♂️ 3m West  =  0m Difference from start!',
+  resourceId,
+  resourceModality,
+  resourceReasons,
+  matchScore,
   onListen,
   onTryAgain,
   onContinue,
 }) => {
   return (
     <View style={styles.card}>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>LET'S LEARN THIS TOGETHER</Text>
+      <View style={styles.badgeRow}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>LET'S LEARN THIS TOGETHER</Text>
+        </View>
+        {resourceId && (
+          <View style={styles.matchBadge}>
+            <Text style={styles.matchBadgeText}>
+              🎯 {resourceModality ? resourceModality.toUpperCase().replace('_', ' ') : 'MATCH'} • {resourceId} ({matchScore ?? 100} pts)
+            </Text>
+          </View>
+        )}
       </View>
 
       <Text style={styles.title}>{conceptTitle}</Text>
+
+      {resourceReasons && resourceReasons.length > 0 && (
+        <View style={styles.reasonsContainer}>
+          <Text style={styles.reasonsLabel}>Why this lesson was selected:</Text>
+          <View style={styles.reasonsRow}>
+            {resourceReasons.map((r, idx) => (
+              <View key={idx} style={styles.reasonPill}>
+                <Text style={styles.reasonText}>{r}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Visual illustration box */}
       <View style={styles.visualBox}>
@@ -66,6 +96,61 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: spacing.md,
     ...shadows.card,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  matchBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.xs,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  matchBadgeText: {
+    ...typography.caption,
+    color: '#3730A3',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  reasonsContainer: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    padding: spacing.sm,
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.xs,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  reasonsLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  reasonsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  reasonPill: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  reasonText: {
+    fontSize: 10,
+    color: '#334155',
+    fontWeight: '600',
   },
   badge: {
     alignSelf: 'flex-start',

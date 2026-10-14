@@ -126,6 +126,8 @@ export function createInitialState(
     chosen_tier: 1,
     audio_first: false,
     reading_load: 0,
+    used_resource_ids: [],
+    last_resource_match: null,
   };
 }
 
@@ -494,6 +496,8 @@ export function nextAction(
           set_labels: nextSetLabels,
           verdict: v,
           step: 'REMEDIATION_ACTIVE',
+          last_resource_match: resourceMatch,
+          used_resource_ids: [...(state.used_resource_ids ?? []), resourceMatch.selected.resource_id],
         },
         events,
         action: `ACT_${v.label}`,
