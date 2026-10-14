@@ -36,9 +36,23 @@ function baseMode(state: NetInfoState): NetworkMode {
  */
 async function checkHealthz(healthUrl: string): Promise<NetworkMode> {
   try {
+    let targetUrl = healthUrl;
+    if (typeof window !== 'undefined' && window.location) {
+      if (targetUrl.startsWith('/')) {
+        targetUrl = `${window.location.protocol}//${window.location.hostname}:8000${targetUrl}`;
+      } else {
+        try {
+          const parsed = new URL(targetUrl);
+          if (parsed.port && parsed.port !== '8000') {
+            parsed.port = '8000';
+            targetUrl = parsed.toString();
+          }
+        } catch {}
+      }
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2500);
-    const response = await fetch(healthUrl, { signal: controller.signal });
+    const response = await fetch(targetUrl, { signal: controller.signal });
     clearTimeout(timer);
     return response.ok ? 'ONLINE' : 'WEAK';
   } catch {
