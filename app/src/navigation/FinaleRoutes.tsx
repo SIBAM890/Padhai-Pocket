@@ -31,7 +31,7 @@ export const FINALE_ROUTES = {
 export type FinaleRouteName = (typeof FINALE_ROUTES)[keyof typeof FINALE_ROUTES];
 
 export type FinaleStackParamList = {
-  SubjectPicker: undefined;
+  SubjectPicker: { initialSubjectId?: string } | undefined;
   Learn: { profileId?: string; subject?: string; chunkId?: string; subjectId?: string; topicId?: string } | undefined;
   Progress: { profileId?: string } | undefined;
   TeacherView: { profileId?: string } | undefined;

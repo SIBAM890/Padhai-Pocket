@@ -48,6 +48,7 @@ export const mockStreakGrid: StreakDay[] = [
 
 export interface SubjectModule {
   id: string;
+  subjectId?: string;
   title: string;
   titleOr: string;
   icon: string;
@@ -59,34 +60,48 @@ export interface SubjectModule {
 
 export const mockSubjects: SubjectModule[] = [
   {
-    id: 'sub_motion',
-    title: 'Motion & Mechanics',
-    titleOr: 'ଗତି ଏବଂ ବଳ',
+    id: 'sub_physics',
+    subjectId: 'physics',
+    title: 'Physical Science (Physics)',
+    titleOr: 'ଭୌତିକ ବିଜ୍ଞାନ',
     icon: '⚡',
     progressPercent: 80,
-    completedLessons: 4,
-    totalLessons: 5,
+    completedLessons: 2,
+    totalLessons: 4,
     color: '#304FFE',
   },
   {
-    id: 'sub_force',
-    title: 'Laws of Motion',
-    titleOr: 'ଗତିର ନିୟମ',
-    icon: '🚀',
-    progressPercent: 40,
-    completedLessons: 2,
-    totalLessons: 5,
+    id: 'sub_chemistry',
+    subjectId: 'chemistry',
+    title: 'Physical Science (Chemistry)',
+    titleOr: 'ରସାୟନ ବିଜ୍ଞାନ',
+    icon: '🧪',
+    progressPercent: 50,
+    completedLessons: 1,
+    totalLessons: 4,
     color: '#0F9D8A',
   },
   {
-    id: 'sub_gravitation',
-    title: 'Gravitation',
-    titleOr: 'ମାଧ୍ୟାକର୍ଷଣ',
-    icon: '🌍',
-    progressPercent: 10,
+    id: 'sub_biology',
+    subjectId: 'biology',
+    title: 'Life Science (Biology)',
+    titleOr: 'ଜୀବ ବିଜ୍ଞାନ',
+    icon: '🌱',
+    progressPercent: 35,
     completedLessons: 1,
-    totalLessons: 4,
-    color: '#FF6B5F',
+    totalLessons: 3,
+    color: '#22C55E',
+  },
+  {
+    id: 'sub_maths',
+    subjectId: 'maths',
+    title: 'Mathematics',
+    titleOr: 'ଗଣିତ',
+    icon: '📐',
+    progressPercent: 30,
+    completedLessons: 1,
+    totalLessons: 3,
+    color: '#F59E0B',
   },
 ];
 
@@ -129,6 +144,104 @@ export const mockLessonsList: LessonItem[] = [
     summary: 'Exploring rate of motion and time intervals.',
   },
 ];
+
+export const getLessonsForSubject = (subjectId?: string): LessonItem[] => {
+  const s = subjectId?.toLowerCase() || 'physics';
+  if (s === 'chemistry') {
+    return [
+      {
+        id: 'chem_01',
+        number: '01',
+        title: 'Carbon & Covalent Bonds',
+        titleOr: 'କାର୍ବନ ଏବଂ ସହସଂଯୋଜକ ବନ୍ଧ',
+        durationMin: 5,
+        status: 'COMPLETED',
+        summary: 'Electron sharing and tetravalency of carbon.',
+      },
+      {
+        id: 'chem_02',
+        number: '02',
+        title: 'Substitution Reaction & Halogenation',
+        titleOr: 'ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା',
+        durationMin: 6,
+        status: 'IN_PROGRESS',
+        summary: 'Chlorine displacing hydrogen in methane under sunlight.',
+      },
+      {
+        id: 'chem_03',
+        number: '03',
+        title: 'Combustion and Oxidation',
+        titleOr: 'ଦହନ ଏବଂ ଜାରଣ ପ୍ରତିକ୍ରିୟା',
+        durationMin: 7,
+        status: 'LOCKED',
+        summary: 'Reactions of hydrocarbons with oxygen.',
+      },
+    ];
+  }
+  if (s === 'biology') {
+    return [
+      {
+        id: 'bio_01',
+        number: '01',
+        title: 'Discovery of the Cell & Cell Theory',
+        titleOr: 'କୋଷ ଆବିଷ୍କାର ଓ ତତ୍ତ୍ୱ',
+        durationMin: 5,
+        status: 'COMPLETED',
+        summary: 'Robert Hooke and the fundamental structural unit of life.',
+      },
+      {
+        id: 'bio_02',
+        number: '02',
+        title: 'Cell Membrane & Mitochondria',
+        titleOr: 'କୋଷଝିଲ୍ଲୀ ଏବଂ ମାଇଟୋକଣ୍ଡ୍ରିଆ',
+        durationMin: 6,
+        status: 'IN_PROGRESS',
+        summary: 'Cell membrane functions and ATP generation in mitochondria.',
+      },
+      {
+        id: 'bio_03',
+        number: '03',
+        title: 'Plant vs Animal Cell Structures',
+        titleOr: 'ଉଦ୍ଭିଦ ଓ ପ୍ରାଣୀ କୋଷ',
+        durationMin: 7,
+        status: 'LOCKED',
+        summary: 'Cell wall, chloroplasts, and large central vacuoles.',
+      },
+    ];
+  }
+  if (s === 'maths' || s === 'mathematics') {
+    return [
+      {
+        id: 'math_01',
+        number: '01',
+        title: 'Introduction to Number Systems',
+        titleOr: 'ସଂଖ୍ୟା ପଦ୍ଧତି ପରିଚୟ',
+        durationMin: 5,
+        status: 'COMPLETED',
+        summary: 'Natural numbers, whole numbers, and integers.',
+      },
+      {
+        id: 'math_02',
+        number: '02',
+        title: 'Rational and Irrational Numbers',
+        titleOr: 'ପରିମେୟ ଏବଂ ଅପରିମେୟ ସଂଖ୍ୟା',
+        durationMin: 6,
+        status: 'IN_PROGRESS',
+        summary: 'Representation of numbers as p/q (q != 0) and the real number line.',
+      },
+      {
+        id: 'math_03',
+        number: '03',
+        title: 'Decimal Expansions of Real Numbers',
+        titleOr: 'ବାସ୍ତବ ସଂଖ୍ୟାର ଦଶମିକ ପ୍ରସାରଣ',
+        durationMin: 7,
+        status: 'LOCKED',
+        summary: 'Terminating, non-terminating recurring and non-recurring decimals.',
+      },
+    ];
+  }
+  return mockLessonsList;
+};
 
 export interface QuestionData {
   title: string;

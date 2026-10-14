@@ -16,7 +16,7 @@ import { StatusBar } from 'react-native';
 import { colors } from './src/theme/theme';
 
 export type RootStackParamList = {
-  SubjectPicker: undefined;
+  SubjectPicker: { initialSubjectId?: string } | undefined;
   Learn: { profileId?: string; subject?: string; chunkId?: string; subjectId?: string; topicId?: string } | undefined;
   Trace: undefined;
   RawLog: undefined;
