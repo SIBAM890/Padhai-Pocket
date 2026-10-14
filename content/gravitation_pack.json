@@ -330,6 +330,60 @@
       "audio": "MW-EXIT-PM2.opus",
       "misconception_tag": "divides_mass_by_six_on_moon",
       "status": "demo_approved"
+    },
+    {
+      "item_id": "GRAV-A-T",
+      "chunk_id": "BSE9-PHYS-GRAV-S03-02",
+      "concept_id": "universal_gravitation",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଏକ ବସ୍ତୁ ଉପରେ କ୍ରିୟାଶୀଳ ହେଉଥିବା ପୃଥିବୀର ମାଧ୍ୟାକର୍ଷଣ ବଳକୁ ସେହି ବସ୍ତୁର କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ଓଜନ (Weight, W = mg)",
+        "ବସ୍ତୁତ୍ୱ (Mass)",
+        "ଜଡ଼ତା (Inertia)",
+        "ଘନତ୍ୱ (Density)"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null,
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "GRAV-A-P",
+      "chunk_id": "BSE9-PHYS-GRAV-S03-02",
+      "concept_id": "universal_gravitation",
+      "set": "A",
+      "modality": "P",
+      "stem": "ପୃଥିବୀ ପୃଷ୍ଠରେ ମାଧ୍ୟାକର୍ଷଣଜନିତ ତ୍ୱରଣ 'g' ର ହାରାହାରି ମୂଲ୍ୟ କେତେ?",
+      "options": [
+        "9.8 m/s²",
+        "98 m/s²",
+        "1.6 m/s²",
+        "0 m/s²"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null,
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "GRAV-A-A",
+      "chunk_id": "BSE9-PHYS-GRAV-S03-02",
+      "concept_id": "universal_gravitation",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଓଜନ ଏକ ସଦିଶ ରାଶି ନା ଅଦିଶ ରାଶି?",
+      "options": [
+        "ସଦିଶ ରାଶି (Vector quantity)",
+        "ଅଦିଶ ରାଶି (Scalar quantity)",
+        "ମାତ୍ରାହୀନ ରାଶି",
+        "ସ୍ଥିର ରାଶି"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null,
+      "status": "demo_approved"
     }
   ]
 }

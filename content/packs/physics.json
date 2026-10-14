@@ -330,6 +330,60 @@
       "audio": "DVD-EXIT-PM2.opus",
       "misconception_tag": "confuses_distance_with_displacement",
       "status": "demo_approved"
+    },
+    {
+      "item_id": "SVA-A-T",
+      "chunk_id": "BSE9-PHYS-MOTION-S02-01",
+      "concept_id": "speed_velocity_acceleration",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଗୋଟିଏ ବସ୍ତୁ ସରଳରେଖାରେ O ବିନ୍ଦୁରୁ 60 km ଯାଇ ପୁଣି 35 km ଫେରିଆସିଲା । ବସ୍ତୁଟି ଅତିକ୍ରମ କରିଥିବା ମୋଟ ଦୂରତା (Total distance) କେତେ?",
+      "options": [
+        "95 km",
+        "25 km",
+        "60 km",
+        "35 km"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null,
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "SVA-A-P",
+      "chunk_id": "BSE9-PHYS-MOTION-S02-01",
+      "concept_id": "speed_velocity_acceleration",
+      "set": "A",
+      "modality": "P",
+      "stem": "ସରଳରୈଖିକ ଗତିରେ ବସ୍ତୁ ଅତିକ୍ରାନ୍ତ ପଥର ମୋଟ ଦୈର୍ଘ୍ୟକୁ କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ଦୂରତା (Distance)",
+        "ବେଗ (Velocity)",
+        "ତ୍ୱରଣ (Acceleration)",
+        "ବଳ (Force)"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null,
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "SVA-A-A",
+      "chunk_id": "BSE9-PHYS-MOTION-S02-01",
+      "concept_id": "speed_velocity_acceleration",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଦୂରତା ଏକ ଅଦିଶ ରାଶି କି ସଦିଶ ରାଶି?",
+      "options": [
+        "ଅଦିଶ ରାଶି (Scalar quantity)",
+        "ସଦିଶ ରାଶି (Vector quantity)",
+        "କୌଣସିଟି ନୁହେଁ",
+        "ଉଭୟ ଅଦିଶ ଓ ସଦିଶ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null,
+      "status": "demo_approved"
     }
   ]
 }

@@ -9,6 +9,8 @@ interface LessonContentCardProps {
   storyOr?: string;
   prompt: string;
   promptOr?: string;
+  subject?: string;
+  chunkId?: string;
 }
 
 export const LessonContentCard: React.FC<LessonContentCardProps> = ({
@@ -18,11 +20,27 @@ export const LessonContentCard: React.FC<LessonContentCardProps> = ({
   storyOr,
   prompt,
   promptOr,
+  subject,
+  chunkId,
 }) => {
+  const s = subject?.toLowerCase() || 'physics';
+  const kickerText =
+    s === 'chemistry'
+      ? 'CHEMICAL SCIENCE · QUESTION'
+      : s === 'biology'
+      ? 'LIFE SCIENCE · QUESTION'
+      : s === 'maths' || s === 'mathematics'
+      ? 'MATHEMATICS · QUESTION'
+      : 'PHYSICAL SCIENCE · QUESTION';
+
+  const showMotionDiagram =
+    (!subject || s === 'physics') &&
+    (!chunkId || chunkId.toLowerCase().includes('motion') || chunkId === 'distance_vs_displacement');
+
   return (
     <View style={styles.card}>
       <View style={styles.badgeRow}>
-        <Text style={styles.kicker}>PHYSICAL SCIENCE · QUESTION</Text>
+        <Text style={styles.kicker}>{kickerText}</Text>
         <Text style={styles.badgeNumber}>2 of 3</Text>
       </View>
 
@@ -36,30 +54,32 @@ export const LessonContentCard: React.FC<LessonContentCardProps> = ({
         </View>
       )}
 
-      {/* Visual East/West movement track */}
-      <View style={styles.diagramContainer}>
-        <Text style={styles.diagramTitle}>Visual Concept Guide</Text>
-        <View style={styles.track}>
-          <View style={styles.nodeItem}>
-            <Text style={styles.nodeIcon}>🚩</Text>
-            <Text style={styles.nodeText}>Start Flag</Text>
-          </View>
+      {/* Visual East/West movement track (Physics Motion only) */}
+      {showMotionDiagram && (
+        <View style={styles.diagramContainer}>
+          <Text style={styles.diagramTitle}>Visual Concept Guide</Text>
+          <View style={styles.track}>
+            <View style={styles.nodeItem}>
+              <Text style={styles.nodeIcon}>🚩</Text>
+              <Text style={styles.nodeText}>Start Flag</Text>
+            </View>
 
-          <View style={styles.vectorCenter}>
-            <Text style={styles.eastArrow}>3m East ➔➔</Text>
-            <View style={styles.dividerLine} />
-            <Text style={styles.westArrow}>⮌⮌ 3m West</Text>
-          </View>
+            <View style={styles.vectorCenter}>
+              <Text style={styles.eastArrow}>3m East ➔➔</Text>
+              <View style={styles.dividerLine} />
+              <Text style={styles.westArrow}>⮌⮌ 3m West</Text>
+            </View>
 
-          <View style={styles.nodeItem}>
-            <Text style={styles.nodeIcon}>📍</Text>
-            <Text style={styles.nodeText}>Turnaround</Text>
+            <View style={styles.nodeItem}>
+              <Text style={styles.nodeIcon}>📍</Text>
+              <Text style={styles.nodeText}>Turnaround</Text>
+            </View>
           </View>
+          <Text style={styles.captionText}>
+            The student walks 3m forward, turns right around, and walks 3m back.
+          </Text>
         </View>
-        <Text style={styles.captionText}>
-          The student walks 3m forward, turns right around, and walks 3m back.
-        </Text>
-      </View>
+      )}
 
       {/* Question prompts */}
       <Text style={styles.prompt}>{prompt}</Text>

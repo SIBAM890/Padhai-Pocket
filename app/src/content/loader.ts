@@ -36,16 +36,16 @@ export function getPackForSubject(subject?: string, chunkId?: string): any {
   const s = subject?.toLowerCase();
   const c = chunkId?.toLowerCase();
 
-  if (s === 'chemistry' || c?.includes('chem') || c?.includes('carbon')) {
+  if (s === 'chemistry' || c?.includes('chem') || c?.includes('carbon') || c?.includes('matter') || c?.includes('atom') || c?.includes('evap') || c?.includes('state')) {
     return chemistryPack || motionPack;
   }
-  if (s === 'biology' || c?.includes('bio') || c?.includes('cell')) {
+  if (s === 'biology' || c?.includes('bio') || c?.includes('cell') || c?.includes('tissue') || c?.includes('mitosis')) {
     return biologyPack || motionPack;
   }
-  if (s === 'maths' || s === 'mathematics' || c?.includes('math') || c?.includes('rational') || c?.includes('real')) {
+  if (s === 'maths' || s === 'mathematics' || c?.includes('math') || c?.includes('rational') || c?.includes('real') || c?.includes('poly')) {
     return mathsPack || motionPack;
   }
-  if (c?.includes('grav') || c === 'mass_and_weight' || c === 'mass_vs_weight') {
+  if (c?.includes('grav') || c === 'mass_and_weight' || c === 'mass_vs_weight' || c?.includes('universal')) {
     return gravitationPack || motionPack;
   }
   return physicsPack || motionPack;
@@ -56,7 +56,10 @@ export function getHeroChunk(subject?: string, chunkId?: string): HeroChunk | nu
     const pack = getPackForSubject(subject, chunkId);
     const chunks = pack?.chunks ?? motionPack.chunks;
 
-    let chunk = chunkId ? chunks?.find((c: any) => c.chunk_id === chunkId) : null;
+    let chunk = chunkId ? chunks?.find((c: any) => c.chunk_id === chunkId || c.concept_id === chunkId) : null;
+    if (!chunk && chunkId) {
+      chunk = chunks?.find((c: any) => c.chunk_id?.toLowerCase()?.includes(chunkId.toLowerCase()) || c.concept_id?.toLowerCase()?.includes(chunkId.toLowerCase()));
+    }
     if (!chunk) {
       chunk = chunks?.find((c: any) => c.chunk_id === 'BSE9-PHYS-MOTION-S02-02') ?? chunks?.[0] ?? motionPack.chunks[0];
     }
@@ -83,8 +86,16 @@ export function getHeroItem(subject?: string, chunkId?: string): HeroItem | null
     const pack = getPackForSubject(subject, chunkId);
     const items = pack?.items ?? motionPack.items;
 
-    // DVD-A-T is the Text-modality MCQ — the primary hero question
-    let item = items?.find((i: any) => i.item_id === 'DVD-A-T' || i.modality === 'T');
+    // First try to find text-modality MCQ matching chunkId or conceptId
+    let item = chunkId
+      ? items?.find((i: any) => (i.chunk_id === chunkId || i.concept_id === chunkId) && i.modality === 'T')
+      : null;
+    if (!item && chunkId) {
+      item = items?.find((i: any) => i.chunk_id === chunkId || i.concept_id === chunkId);
+    }
+    if (!item) {
+      item = items?.find((i: any) => i.item_id === 'DVD-A-T' || i.modality === 'T');
+    }
     if (!item) {
       item = items?.[0] ?? motionPack.items.find((i: any) => i.item_id === 'DVD-A-T') ?? motionPack.items[0];
     }
@@ -109,7 +120,7 @@ export function getHeroItem(subject?: string, chunkId?: string): HeroItem | null
       stem: fallback.stem,
       options: fallback.options,
       correct: fallback.correct,
-      misconceptionTag: fallback.misconception_tag,
+      misconceptionTag: fallback.misconception_tag || '',
     };
   }
 }
@@ -119,9 +130,20 @@ export function getProbeItems(subject?: string, chunkId?: string): ProbeItems | 
     const pack = getPackForSubject(subject, chunkId);
     const items = pack?.items ?? motionPack.items;
 
-    const P = items.find((i: any) => i.modality === 'P') ?? motionPack.items.find((i: any) => i.modality === 'P');
-    const A = items.find((i: any) => i.modality === 'A') ?? motionPack.items.find((i: any) => i.modality === 'A');
-    const T = items.find((i: any) => i.modality === 'T') ?? motionPack.items.find((i: any) => i.modality === 'T');
+    // Find probes for this specific chunk/concept if available
+    const chunkItems = chunkId
+      ? items.filter((i: any) => i.chunk_id === chunkId || i.concept_id === chunkId)
+      : [];
+
+    const P = (chunkItems.length > 0 ? chunkItems.find((i: any) => i.modality === 'P') : null) ??
+      items.find((i: any) => i.modality === 'P') ??
+      motionPack.items.find((i: any) => i.modality === 'P');
+    const A = (chunkItems.length > 0 ? chunkItems.find((i: any) => i.modality === 'A') : null) ??
+      items.find((i: any) => i.modality === 'A') ??
+      motionPack.items.find((i: any) => i.modality === 'A');
+    const T = (chunkItems.length > 0 ? chunkItems.find((i: any) => i.modality === 'T') : null) ??
+      items.find((i: any) => i.modality === 'T') ??
+      motionPack.items.find((i: any) => i.modality === 'T');
 
     if (!P || !A || !T) {
       const fallbackItems = motionPack.items.filter((i: any) => i.set === 'A');

@@ -95,35 +95,63 @@ export default function LearnScreen({ navigation, route }: Props) {
   const chunkId = route?.params?.chunkId ?? (route?.params as any)?.topicId ?? 'motion_01';
 
   const conceptId =
-    chunkId === 'mass_vs_weight' || chunkId === 'BSE9-PHYS-GRAV-S03-01' || chunkId === 'mass_and_weight'
+    route?.params?.conceptId ??
+    (chunkId === 'mass_vs_weight' || chunkId === 'BSE9-PHYS-GRAV-S03-01' || chunkId === 'mass_and_weight'
       ? 'mass_vs_weight'
-      : subject === 'chemistry' || chunkId === 'BSE9-CHEM-CARBON-S04' || chunkId === 'substitution_reaction'
+      : chunkId === 'universal_law_gravitation' || chunkId === 'BSE9-PHYS-GRAV-S03-02'
+      ? 'universal_gravitation'
+      : chunkId === 'velocity_and_acceleration' || chunkId === 'BSE9-PHYS-MOTION-S02-01'
+      ? 'speed_velocity_acceleration'
+      : chunkId === 'BSE9-CHEM-CARBON-S04' || chunkId === 'substitution_reaction'
       ? 'substitution_reaction'
-      : subject === 'biology' || chunkId === 'BSE9-BIO-CELL-S01' || chunkId === 'cell_structure'
+      : chunkId === 'BSE9-CHEM-MATTER-S01' || chunkId === 'states_of_matter'
+      ? 'states_of_matter'
+      : chunkId === 'BSE9-CHEM-MATTER-S02' || chunkId === 'evaporation'
+      ? 'evaporation_cooling'
+      : chunkId === 'BSE9-CHEM-ATOM-S01' || chunkId === 'chemical_combination'
+      ? 'chemical_combination'
+      : chunkId === 'BSE9-BIO-CELL-S01' || chunkId === 'cell_structure'
       ? 'cell_structure'
-      : subject === 'maths' || subject === 'mathematics' || chunkId === 'BSE9-MATH-REAL-S01' || chunkId === 'rational_irrational'
+      : chunkId === 'BSE9-BIO-CELL-S02' || chunkId === 'cell_division'
+      ? 'cell_division'
+      : chunkId === 'BSE9-BIO-TISSUE-S01' || chunkId === 'plant_tissues'
+      ? 'plant_tissues'
+      : chunkId === 'BSE9-MATH-REAL-S01' || chunkId === 'rational_irrational'
       ? 'rational_irrational'
-      : 'distance_vs_displacement';
+      : chunkId === 'BSE9-MATH-REAL-S02' || chunkId === 'real_numbers'
+      ? 'real_numbers'
+      : chunkId === 'BSE9-MATH-POLY-S01' || chunkId === 'zeroes_of_polynomial'
+      ? 'zeroes_of_polynomial'
+      : subject === 'chemistry'
+      ? 'substitution_reaction'
+      : subject === 'biology'
+      ? 'cell_structure'
+      : subject === 'maths' || subject === 'mathematics'
+      ? 'rational_irrational'
+      : 'distance_vs_displacement');
 
   const backendBaseUrl = resolveApiBaseUrl();
   const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus(`${backendBaseUrl}/healthz`);
 
   // Navigation tab state (Home, Learn, Progress, Profile)
-  const [currentTab, setCurrentTab] = useState<MainNavTab>('Home');
+  const [currentTab, setCurrentTab] = useState<MainNavTab>(() =>
+    route?.params?.chunkId || route?.params?.topicId ? 'Learn' : 'Home'
+  );
 
   // Progressive student lesson flow
   const [flowStep, setFlowStep] = useState<LessonFlowStep>(() =>
     route?.params?.chunkId || route?.params?.topicId ? 'QUESTION_INTERACTION' : 'DASHBOARD'
   );
 
-  // When a specific chunk or topic is navigated to, launch the question interaction
+  // When a specific chunk or topic is navigated to, launch the question interaction & switch to Learn tab
   useEffect(() => {
     if (route?.params?.chunkId || route?.params?.topicId) {
       setFlowStep('QUESTION_INTERACTION');
+      setCurrentTab('Learn');
       setSelectedOption(null);
       setSelectedProbeChoice(null);
     }
-  }, [route?.params?.chunkId, route?.params?.topicId]);
+  }, [route?.params?.chunkId, route?.params?.topicId, route?.params?.conceptId, (route?.params as any)?.navTimestamp]);
 
   // Interactive Question & Probe states
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -209,12 +237,18 @@ export default function LearnScreen({ navigation, route }: Props) {
     setGreeting(getTimeOfDayGreeting(profile.name));
   }, [profile.name]);
 
-  // Update greeting and streak on screen focus
+  // Update greeting, streak, and activate lesson interaction on screen focus
   useFocusEffect(
     useCallback(() => {
       setGreeting(getTimeOfDayGreeting(profile.name));
       loadStreakAndStats();
-    }, [profile.name, loadStreakAndStats])
+      if (route?.params?.chunkId || route?.params?.topicId) {
+        setFlowStep('QUESTION_INTERACTION');
+        setCurrentTab('Learn');
+        setSelectedOption(null);
+        setSelectedProbeChoice(null);
+      }
+    }, [profile.name, loadStreakAndStats, route?.params?.chunkId, route?.params?.topicId, (route?.params as any)?.navTimestamp])
   );
 
   // Listen to database mutations and custom event 'padhai-event-updated'
@@ -712,21 +746,8 @@ export default function LearnScreen({ navigation, route }: Props) {
     ? 'ଗଣିତ'
     : 'ବିଜ୍ଞାନ';
 
-  const activeLessonTitle = currentSubject === 'chemistry'
-    ? 'Substitution Reaction & Covalent Bond (ପ୍ରତିସ୍ଥାପନ)'
-    : currentSubject === 'biology'
-    ? 'Cell Structure & Organelles (କୋଷ ଗଠନ)'
-    : currentSubject === 'mathematics' || currentSubject === 'maths'
-    ? 'Rational & Irrational Numbers (ପରିମେୟ ସଂଖ୍ୟା)'
-    : 'Displacement vs Distance (ବିସ୍ଥାପନ)';
-
-  const activeLessonTitleOr = currentSubject === 'chemistry'
-    ? 'ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା'
-    : currentSubject === 'biology'
-    ? 'କୋଷ ଗଠନ ଏବଂ ମାଇଟୋକଣ୍ଡ୍ରିଆ'
-    : currentSubject === 'mathematics' || currentSubject === 'maths'
-    ? 'ପରିମେୟ ଏବଂ ଅପରିମେୟ ସଂଖ୍ୟା'
-    : 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ';
+  const activeLessonTitle = heroChunk?.title || question.titleOr || 'Displacement vs Distance (ବିସ୍ଥାପନ)';
+  const activeLessonTitleOr = heroChunk?.title || question.titleOr || 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ';
 
   const activeChapterSubtitle = currentSubject === 'chemistry'
     ? 'Chapter 4: Carbon and its Compounds'
@@ -866,6 +887,21 @@ export default function LearnScreen({ navigation, route }: Props) {
 
             {flowStep === 'QUESTION_INTERACTION' && (
               <View>
+                {/* Top Quick-Navigation: Return to Subject / Topic Picker */}
+                <View style={styles.lessonTopNavRow}>
+                  <Pressable
+                    style={styles.backToTopicsBtn}
+                    onPress={() => {
+                      navigation.navigate('SubjectPicker', { initialSubjectId: subject });
+                    }}
+                  >
+                    <Text style={styles.backToTopicsBtnText}>← ବିଷୟ ବଦଳାନ୍ତୁ (Change Topic)</Text>
+                  </Pressable>
+                  <View style={styles.subjectPillBadge}>
+                    <Text style={styles.subjectPillBadgeText}>{activeSubjectTitleOr}</Text>
+                  </View>
+                </View>
+
                 <LessonContentCard
                   conceptTitle={questionTitle}
                   conceptTitleOr={question.titleOr}
@@ -873,6 +909,8 @@ export default function LearnScreen({ navigation, route }: Props) {
                   storyOr={question.storyOr}
                   prompt={questionPrompt}
                   promptOr={question.promptOr}
+                  subject={subject}
+                  chunkId={chunkId}
                 />
 
                 {/* Interactive 2D SVG Subject Visualizer (Physics / Chemistry / Biology / Maths) */}
@@ -1375,5 +1413,39 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  lessonTopNavRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+    paddingHorizontal: 2,
+  },
+  backToTopicsBtn: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: spacing.xs + 3,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.card,
+  },
+  backToTopicsBtnText: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  subjectPillBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.sm + 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  subjectPillBadgeText: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.primary,
   },
 });
