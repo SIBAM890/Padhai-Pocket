@@ -1,8 +1,8 @@
 {
   "pack_version": "1.0",
   "manifest": {
-    "sha256": "8aae09eccb797aee4d63e1ab60b8c4b4b23c2bc8bae06650da5e73841d05d45e",
-    "built_at": "2026-10-14T14:43:50Z"
+    "sha256": "4a11284a85573a8ae426e5758701cc3baace83c8cd095b7e4c8d0d70eb0b1a9d",
+    "built_at": "2026-10-14T15:18:13Z"
   },
   "chapter": {
     "subject": "Physical Science",
@@ -141,7 +141,8 @@
       ],
       "correct": 0,
       "audio": "DVD-A-P.opus",
-      "misconception_tag": "path_equals_displacement"
+      "misconception_tag": "path_equals_displacement",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-A-A",
@@ -157,7 +158,8 @@
       ],
       "correct": 0,
       "audio": "DVD-A-A.opus",
-      "misconception_tag": "term_confusion_disp_dist"
+      "misconception_tag": "term_confusion_disp_dist",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-A-T",
@@ -173,7 +175,8 @@
       ],
       "correct": 0,
       "audio": "DVD-A-T.opus",
-      "misconception_tag": "adds_return_path_for_displacement"
+      "misconception_tag": "adds_return_path_for_displacement",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-B-P",
@@ -189,7 +192,8 @@
       ],
       "correct": 0,
       "audio": "DVD-B-P.opus",
-      "misconception_tag": "path_equals_displacement"
+      "misconception_tag": "path_equals_displacement",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-B-A",
@@ -205,7 +209,8 @@
       ],
       "correct": 0,
       "audio": "DVD-B-A.opus",
-      "misconception_tag": "term_confusion_disp_dist"
+      "misconception_tag": "term_confusion_disp_dist",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-B-T",
@@ -221,7 +226,8 @@
       ],
       "correct": 0,
       "audio": "DVD-B-T.opus",
-      "misconception_tag": "round_trip_nonzero_displacement"
+      "misconception_tag": "round_trip_nonzero_displacement",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-CONF-W1",
@@ -237,7 +243,8 @@
       ],
       "correct": 0,
       "audio": "DVD-CONF-W1.opus",
-      "misconception_tag": "term_misidentification"
+      "misconception_tag": "term_misidentification",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-CONF-W2",
@@ -253,7 +260,8 @@
       ],
       "correct": 0,
       "audio": "DVD-CONF-W2.opus",
-      "misconception_tag": "term_misidentification"
+      "misconception_tag": "term_misidentification",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-CONF-TX",
@@ -269,7 +277,8 @@
       ],
       "correct": 0,
       "audio": "DVD-CONF-TX.opus",
-      "misconception_tag": "reading_comprehension_confusion"
+      "misconception_tag": "reading_comprehension_confusion",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-CONF-PX",
@@ -285,7 +294,8 @@
       ],
       "correct": 0,
       "audio": "DVD-CONF-PX.opus",
-      "misconception_tag": "concept_confusion_origin_loop"
+      "misconception_tag": "concept_confusion_origin_loop",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-EXIT-PM1",
@@ -301,7 +311,8 @@
       ],
       "correct": 0,
       "audio": "DVD-EXIT-PM1.opus",
-      "misconception_tag": "displacement_scalar_assumption"
+      "misconception_tag": "displacement_scalar_assumption",
+      "status": "demo_approved"
     },
     {
       "item_id": "DVD-EXIT-PM2",
@@ -317,7 +328,8 @@
       ],
       "correct": 0,
       "audio": "DVD-EXIT-PM2.opus",
-      "misconception_tag": "confuses_distance_with_displacement"
+      "misconception_tag": "confuses_distance_with_displacement",
+      "status": "demo_approved"
     }
   ]
 }

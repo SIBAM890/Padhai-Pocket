@@ -1,0 +1,17 @@
+key,english_intent,odia_current,icon_paired(y/n/unknown),audio_paired(y/n/unknown),contains_banned_word(y/n),contains_english_chars(y/n),native_check,notes
+loading,Lesson loading indicator for child,"ପାଠ ପ୍ରସ୍ତୁତ ହେଉଛି, ଟିକେ ଅପେକ୍ଷା କରନ୍ତୁ...",y,n,n,n,,Draft for Satya UI; cheerful loader animation
+asr_failed,Speech recognition could not clearly catch voice,ଆଉ ଥରେ ସ୍ପଷ୍ଟ ଭାବେ କୁହନ୍ତୁ ।,y,y,n,n,,Encouraging voice re-attempt without saying error
+mic_denied,Microphone permission is blocked on device,ମାଇକ୍ରୋଫୋନ ଅନୁମତି ଦିଅନ୍ତୁ ।,y,n,n,n,,Gentle OS permission guidance banner
+offline,No network connectivity detected; continuing offline,"ଇଣ୍ଟରନେଟ୍ ନାହିଁ, କିନ୍ତୁ ଆପଣ ପାଠ ପଢ଼ା ଜାରି ରଖିପାରିବେ ।",y,n,n,n,,Reassures student that offline mode works fully
+sync_pending,Records saved locally; will sync when back online,"ତଥ୍ୟ ସୁରକ୍ଷିତ ଅଛି, ନେଟୱର୍କ ଆସିଲେ ଜମା ହେବ ।",y,n,n,n,,Sync pill status in header/telemetry
+answer_incorrect,Encouraging feedback when MCQ selection is not correct,ଆସନ୍ତୁ ଏହାକୁ ଆଉଥରେ ବୁଝିବା ଏବଂ ଚେଷ୍ଟା କରିବା !,y,y,n,n,,FR-13 child safety: zero occurrences of wrong/ଭୁଲ/ତ୍ରୁଟି
+sound_check,Pre-probe test to verify phone volume is audible,ଶବ୍ଦ ଶୁଣାଯାଉଛି କି? ଘଣ୍ଟି ବାଜିଲେ ଠିକ୍ ଚିହ୍ନ ଛୁଅନ୍ତୁ ।,y,y,n,n,,PRD §4.2 sound check precondition
+sound_failed,Sound was not heard or device is muted,ଫୋନର ଶବ୍ଦ ବଢ଼ାନ୍ତୁ କିମ୍ବା ଇୟରଫୋନ ଲଗାନ୍ତୁ ।,y,n,n,n,,Volume unmuting prompt
+probe_inconsistent,Diagnostic probe pattern is noisy; provide supportive review,ଆସନ୍ତୁ ଏହି ବିଷୟଟିକୁ ମିଳିମିଶି ଆରମ୍ଭରୁ ଦେଖିବା ।,y,y,n,n,,Abstention fallback copy without diagnostic labels
+all_probes_correct,Congratulatory message when all probe items answered correctly,ଖୁବ୍ ବଢ଼ିଆ ! ଆପଣ ସବୁ ପ୍ରଶ୍ନର ଉତ୍ତର ସଠିକ୍ ଦେଇଛନ୍ତି ।,y,y,n,n,,Celebratory mastery update feedback
+audio_failed,Audio clip playback encountered an issue,"ଶବ୍ଦ ବାଜିପାରିଲା ନାହିଁ, ଲେଖା ପଢ଼ି ଆଗକୁ ବଢ଼ନ୍ତୁ ।",y,n,n,n,,Graceful text-only fallback
+content_missing,Requested lesson pack file not found locally,ଏହି ଅଧ୍ୟାୟଟି ଏପର୍ଯ୍ୟନ୍ତ ଡାଉନଲୋଡ୍ ହୋଇନାହିଁ ।,y,n,n,n,,Lesson pack missing message
+content_not_approved,Content has not completed native approval per FR-27,"ଏହି ବିଷୟଟି ସମୀକ୍ଷା ଚାଲିଛି, ଖୁବ୍ ଶୀଘ୍ର ଉପଲବ୍ଧ ହେବ ।",y,n,n,n,,Governance safety gate screen
+crash_recovered,App recovered from unexpected restart; progress restored,ଆପଣଙ୍କ ପାଠ ପଢ଼ା ସେହିଠାରୁ ଆରମ୍ଭ ହେଉଛି ।,y,n,n,n,,State restoration banner
+storage_error,Phone storage is nearly full,"ଫୋନରେ ସ୍ଥାନ କମ୍ ଅଛି, କିଛି ଫାଇଲ୍ ସଫା କରନ୍ତୁ ।",y,n,n,n,,Storage capacity notification
+skipped,Question was skipped by student,"ଏହି ପ୍ରଶ୍ନଟି ଛଡ଼ାଗଲା, ପରବର୍ତ୍ତୀ ପ୍ରଶ୍ନକୁ ଯିବା ।",y,n,n,n,,Skip semantics per PRD §4.7

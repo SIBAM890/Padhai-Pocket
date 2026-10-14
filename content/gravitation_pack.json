@@ -1,8 +1,8 @@
 {
   "pack_version": "1.0",
   "manifest": {
-    "sha256": "a3c7abc0ef8488c9851821fcbc562ae3fc6066b956f45cf372de2bb4d031aab2",
-    "built_at": "2026-10-14T14:43:56Z"
+    "sha256": "a9ac5a36955a88b44ecc2c53548d9dc1519963c8a1b4c17d59615a317444c6a4",
+    "built_at": "2026-10-14T15:18:13Z"
   },
   "chapter": {
     "subject": "Physical Science",
@@ -141,7 +141,8 @@
       ],
       "correct": 0,
       "audio": "MW-A-P.opus",
-      "misconception_tag": "mass_changes_with_gravity"
+      "misconception_tag": "mass_changes_with_gravity",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-A-A",
@@ -157,7 +158,8 @@
       ],
       "correct": 0,
       "audio": "MW-A-A.opus",
-      "misconception_tag": "confuses_mass_unit_with_weight_unit"
+      "misconception_tag": "confuses_mass_unit_with_weight_unit",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-A-T",
@@ -173,7 +175,8 @@
       ],
       "correct": 0,
       "audio": "MW-A-T.opus",
-      "misconception_tag": "weight_equals_mass_without_g"
+      "misconception_tag": "weight_equals_mass_without_g",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-B-P",
@@ -189,7 +192,8 @@
       ],
       "correct": 0,
       "audio": "MW-B-P.opus",
-      "misconception_tag": "spring_balance_measures_mass"
+      "misconception_tag": "spring_balance_measures_mass",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-B-A",
@@ -205,7 +209,8 @@
       ],
       "correct": 0,
       "audio": "MW-B-A.opus",
-      "misconception_tag": "weight_same_on_moon"
+      "misconception_tag": "weight_same_on_moon",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-B-T",
@@ -221,7 +226,8 @@
       ],
       "correct": 0,
       "audio": "MW-B-T.opus",
-      "misconception_tag": "weight_invariant_across_space"
+      "misconception_tag": "weight_invariant_across_space",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-CONF-W1",
@@ -237,7 +243,8 @@
       ],
       "correct": 0,
       "audio": "MW-CONF-W1.opus",
-      "misconception_tag": "term_misidentification_mass"
+      "misconception_tag": "term_misidentification_mass",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-CONF-W2",
@@ -253,7 +260,8 @@
       ],
       "correct": 0,
       "audio": "MW-CONF-W2.opus",
-      "misconception_tag": "term_misidentification_weight"
+      "misconception_tag": "term_misidentification_weight",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-CONF-TX",
@@ -269,7 +277,8 @@
       ],
       "correct": 0,
       "audio": "MW-CONF-TX.opus",
-      "misconception_tag": "reading_comprehension_mass_weight"
+      "misconception_tag": "reading_comprehension_mass_weight",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-CONF-PX",
@@ -285,7 +294,8 @@
       ],
       "correct": 0,
       "audio": "MW-CONF-PX.opus",
-      "misconception_tag": "concept_confusion_gravity_free_weight"
+      "misconception_tag": "concept_confusion_gravity_free_weight",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-EXIT-PM1",
@@ -301,7 +311,8 @@
       ],
       "correct": 0,
       "audio": "MW-EXIT-PM1.opus",
-      "misconception_tag": "mass_varies_with_location"
+      "misconception_tag": "mass_varies_with_location",
+      "status": "demo_approved"
     },
     {
       "item_id": "MW-EXIT-PM2",
@@ -317,7 +328,8 @@
       ],
       "correct": 0,
       "audio": "MW-EXIT-PM2.opus",
-      "misconception_tag": "divides_mass_by_six_on_moon"
+      "misconception_tag": "divides_mass_by_six_on_moon",
+      "status": "demo_approved"
     }
   ]
 }

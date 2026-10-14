@@ -1,7 +1,43 @@
-item_or_clip_id,reviewer,role,date,outcome,notes
-BSE9-PHYS-MOTION-S02-01,Pritam,content-pipeline,2026-10-13,approved,Text verified from physical textbook photo p58_distance_displacement.jpg Section 5.1.1
-BSE9-PHYS-MOTION-S02-02,Pritam,content-pipeline,2026-10-13,approved,Text verified from physical textbook photo p58_distance_displacement.jpg Section 5.1.1
-BSE9-PHYS-MOTION-S02-03,Pritam,content-pipeline,2026-10-13,approved,Text verified from physical textbook photo p58_distance_displacement.jpg Section 5.1.1
-BSE9-PHYS-GRAV-S03-01,Pritam,content-pipeline,2026-10-14,approved,Text verified from physical textbook photo p100_mass_weight_definitions.jpg Section 7.3
-BSE9-PHYS-GRAV-S03-02,Pritam,content-pipeline,2026-10-14,approved,Text verified from physical textbook photo p100_mass_weight_definitions.jpg Section 7.4
-BSE9-PHYS-GRAV-S03-03,Pritam,content-pipeline,2026-10-14,approved,Text verified from physical textbook photo p101_moon_weight.jpg Section 7.4.1
+item_or_clip_id,pack,target_type(chunk|item|audio|kui_term|ui_string),reviewer,role,date,outcome(demo_approved|reviewed|pending),notes
+BSE9-PHYS-MOTION-S02-01,motion,chunk,Pritam,content-pipeline,2026-10-13,demo_approved,Text verified from physical textbook photo p58_distance_displacement.jpg Section 5.1.1
+BSE9-PHYS-MOTION-S02-02,motion,chunk,Pritam,content-pipeline,2026-10-13,demo_approved,Text verified from physical textbook photo p58_distance_displacement.jpg Section 5.1.1
+BSE9-PHYS-MOTION-S02-03,motion,chunk,Pritam,content-pipeline,2026-10-13,demo_approved,Text verified from physical textbook photo p58_distance_displacement.jpg Section 5.1.1
+BSE9-PHYS-GRAV-S03-01,gravitation,chunk,Pritam,content-pipeline,2026-10-14,demo_approved,Text verified from physical textbook photo p100_mass_weight_definitions.jpg Section 7.3
+BSE9-PHYS-GRAV-S03-02,gravitation,chunk,Pritam,content-pipeline,2026-10-14,demo_approved,Text verified from physical textbook photo p100_mass_weight_definitions.jpg Section 7.4
+BSE9-PHYS-GRAV-S03-03,gravitation,chunk,Pritam,content-pipeline,2026-10-14,demo_approved,Text verified from physical textbook photo p101_moon_weight.jpg Section 7.4.1
+DVD-A-P,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+DVD-A-A,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native audio review
+DVD-A-T,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+DVD-B-P,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+DVD-B-A,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native audio review
+DVD-B-T,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+DVD-CONF-W1,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 word-check item seeded; pending native review
+DVD-CONF-W2,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 word-check item seeded; pending native review
+DVD-CONF-TX,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 reading confirmation item seeded; pending native review
+DVD-CONF-PX,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 concept confirmation item seeded; pending native review
+DVD-EXIT-PM1,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 exit ticket 1 seeded; pending native review
+DVD-EXIT-PM2,motion,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 exit ticket 2 seeded; pending native review
+MW-A-P,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+MW-A-A,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native audio review
+MW-A-T,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+MW-B-P,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+MW-B-A,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native audio review
+MW-B-T,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 probe item seeded; pending native review
+MW-CONF-W1,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 word-check item seeded; pending native review
+MW-CONF-W2,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 word-check item seeded; pending native review
+MW-CONF-TX,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 reading confirmation item seeded; pending native review
+MW-CONF-PX,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 concept confirmation item seeded; pending native review
+MW-EXIT-PM1,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 exit ticket 1 seeded; pending native review
+MW-EXIT-PM2,gravitation,item,Pritam,content-pipeline,2026-10-14,pending,Phase 2 exit ticket 2 seeded; pending native review
+T_DIST,motion,kui_term,Pritam,content-pipeline,2026-10-14,pending,Distance term seeded from textbook; awaiting native Kui speaker validation
+T_DISP,motion,kui_term,Pritam,content-pipeline,2026-10-14,pending,Displacement term seeded from textbook; awaiting native Kui speaker validation
+T_SPEED,motion,kui_term,Pritam,content-pipeline,2026-10-14,pending,Speed term seeded from textbook; awaiting native Kui speaker validation
+T_VEL,motion,kui_term,Pritam,content-pipeline,2026-10-14,pending,Velocity term seeded from textbook; awaiting native Kui speaker validation
+T_ACC,motion,kui_term,Pritam,content-pipeline,2026-10-14,pending,Acceleration term seeded from textbook; awaiting native Kui speaker validation
+T_REST,motion,kui_term,Pritam,content-pipeline,2026-10-14,pending,Rest term seeded from textbook; awaiting native Kui speaker validation
+T_GRAV,gravitation,kui_term,Pritam,content-pipeline,2026-10-14,pending,Gravitation term seeded from textbook; awaiting native Kui speaker validation
+T_GRAV_FORCE,gravitation,kui_term,Pritam,content-pipeline,2026-10-14,pending,Force of gravity term seeded from textbook; awaiting native Kui speaker validation
+T_FREEFALL,gravitation,kui_term,Pritam,content-pipeline,2026-10-14,pending,Free fall term seeded from textbook; awaiting native Kui speaker validation
+T_ACC_GRAV,gravitation,kui_term,Pritam,content-pipeline,2026-10-14,pending,Acceleration due to gravity term seeded from textbook; awaiting native Kui speaker validation
+T_MASS,gravitation,kui_term,Pritam,content-pipeline,2026-10-14,pending,Mass term seeded from textbook; awaiting native Kui speaker validation
+T_WEIGHT,gravitation,kui_term,Pritam,content-pipeline,2026-10-14,pending,Weight term seeded from textbook; awaiting native Kui speaker validation

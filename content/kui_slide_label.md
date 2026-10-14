@@ -1,27 +1,30 @@
-# Kui Glossary UI Slide Labels & Display Specifications
-
-## 1. Validated-Count Status Label
-When one or more Kui audio clips have been validated by an attested native speaker and approved in `content/review_log.csv`:
-
-```text
-Kui Audio Glossary: {validated_count}/{total_count} terms verified by native speakers
-```
-
-*Example for Motion Chapter*:
-> `Kui Audio Glossary: 0/6 terms verified by native speakers`
+# Pitch Deck Slide Labels for Kui Glossary
+*PRD §9.3 & §9.4 Claims Discipline & Stage Presentation Guidelines*
 
 ---
 
-## 2. Fallback Label (Unvalidated / Draft State)
-When zero Kui audio clips have been validated by native speakers (current state):
+### Option A (If Native Speaker Validates Before Day 1 Hour 10)
+> **Copy-paste ready for pitch deck slide:**
 
 ```text
-Kui starter glossary — text-only in Odia script; native audio pending validation
+Kui starter glossary: 12 terms validated by native speaker (Koraput dialect); everyday Kui explanation + Odia textbook term.
 ```
+
+*Conditions for using Option A:*
+- Signed speaker consent form on file (`docs/kui_speaker_consent.md`).
+- Real audio recordings present in manifest and validated by a native speaker.
+- `content/review_log.csv` entries updated from `pending` to `demo_approved`.
 
 ---
 
-## 3. Implementation Rules
-1. **No Artificial Audio Presentation**: Never present unverified or machine-synthesized speech as verified Kui audio.
-2. **Visual Fallback Indication**: If `kui.audio` is null or `status` is `"pending"`, the audio speaker icon must be disabled/greyed out with an indicator that native recording validation is pending.
-3. **Child Safety & Trust**: The child UI must transparently reflect dialect and verification state so learners and teachers know which explanations are native-attested.
+### Option B (Default / Ethical Fallback — No Native Speaker by Day 1 Hour 10 [U6])
+> **Copy-paste ready for pitch deck slide:**
+
+```text
+Kui starter glossary — text-only in Odia script; native audio pending validation.
+```
+
+*Conditions for using Option B:*
+- Default posture adhering to PRD §9.4 Claims Discipline.
+- Prevents claiming native audio when only textbook Odia and phonetic scripts are bundled.
+- Demonstrates ethical AI rigor to judges and technical evaluators.
