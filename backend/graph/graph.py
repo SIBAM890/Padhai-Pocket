@@ -18,7 +18,7 @@ Requirements:
 import json
 from typing import Dict, Any, List, Optional
 try:
-    from graph.prompts import (
+    from .prompts import (
         PINNED_MODEL_ID,
         PLAN_PROMPT_HASH,
         build_plan_input,
