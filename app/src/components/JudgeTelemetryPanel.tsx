@@ -47,7 +47,8 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   episodeId: propEpisodeId,
   events: propEvents,
 }) => {
-  const [events, setEvents] = useState<StoredEvent[]>([]);
+  const [localEvents, setLocalEvents] = useState<StoredEvent[]>([]);
+  const events = propEvents ?? localEvents;
   const [pendingCount, setPendingCount] = useState(0);
   const [activeTab, setActiveTab] = useState<'TRACE' | 'JSON' | 'SUMMARY'>('TRACE');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -58,7 +59,7 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   const loadData = useCallback(async () => {
     try {
       const all = await listEvents(100);
-      setEvents(all);
+      setLocalEvents(all);
       const pending = await pendingEvents(200);
       setPendingCount(pending.length);
     } catch (e) {
@@ -132,20 +133,18 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
   const pat = engineState.current_probe_pattern || [null, null, null];
   const formatBit = (b: number | null) => (b === 1 ? '✓ (1)' : b === 0 ? '✗ (0)' : '—');
 
-  // Derive events, profileId & currentEpisodeId safely for deterministic episode replay
-  const resolvedEvents = propEvents ?? events ?? [];
-
+  // Derive profileId, events, and currentEpisodeId safely from component props or local scope
   const profileId =
     propProfileId ??
     engineState?.profile_id ??
-    resolvedEvents[0]?.profile_id ??
+    events[0]?.profile_id ??
     'prof_demo_01';
 
   const currentEpisodeId =
     propCurrentEpisodeId ??
     propEpisodeId ??
     engineState?.episode_id ??
-    [...resolvedEvents].reverse().find((e) => Boolean(e.episode_id))?.episode_id ??
+    [...events].reverse().find((e) => Boolean(e.episode_id))?.episode_id ??
     null;
 
   return (
@@ -460,7 +459,7 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
                   <ReplayVerifyButton
                     profileId={profileId}
                     episodeId={currentEpisodeId}
-                    events={resolvedEvents}
+                    events={events}
                   />
                 </View>
               )}
