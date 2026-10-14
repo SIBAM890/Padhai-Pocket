@@ -20,18 +20,14 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Graceful startup: init database, show modern splash screen
-    const timer = setTimeout(() => {
-      initDatabase().finally(() => setReady(true));
-    }, 1200);
-
-    return () => clearTimeout(timer);
+    // Init database in background
+    initDatabase();
   }, []);
 
   if (!ready) {
     return (
       <GlobalErrorBoundary>
-        <SplashScreen />
+        <SplashScreen onComplete={() => setReady(true)} />
       </GlobalErrorBoundary>
     );
   }
