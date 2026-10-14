@@ -146,7 +146,7 @@ except (ImportError, ModuleNotFoundError):
 async def startup_event():
     connected = is_connected()
     if connected:
-        print(f"[SUPABASE] Connected to {SUPABASE_URL} ✓")
+        print(f"[SUPABASE] Connected to {SUPABASE_URL} [OK]")
     else:
         print("[SUPABASE] Not reachable, running in edge_mirror mode")
 
