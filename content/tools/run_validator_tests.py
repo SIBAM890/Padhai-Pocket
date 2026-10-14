@@ -12,6 +12,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 VALIDATOR = os.path.join(SCRIPT_DIR, "validate_pack.py")
 TESTS_DIR = os.path.join(SCRIPT_DIR, "tests")
 TEST_AUDIO_MANIFEST = os.path.join(TESTS_DIR, "test_audio_manifest.csv")
+REAL_AUDIO_MANIFEST = os.path.join(SCRIPT_DIR, "audio_manifest.csv")
+REAL_MOTION_PACK = os.path.join(SCRIPT_DIR, "..", "motion_pack.json")
 
 TEST_CASES = [
     {
@@ -19,6 +21,14 @@ TEST_CASES = [
         "file": "valid_fixture.json",
         "expected_exit": 0,
         "desc": "Valid pack structure conforming to schema and local rules"
+    },
+    {
+        "name": "sealed_motion_pack",
+        "file": None,
+        "path": REAL_MOTION_PACK,
+        "manifest": REAL_AUDIO_MANIFEST,
+        "expected_exit": 0,
+        "desc": "Official sealed BSE Class 9 Motion content pack"
     },
     {
         "name": "err01_invalid_json",
@@ -128,12 +138,13 @@ def run_all_tests():
     failed_count = 0
 
     for tc in TEST_CASES:
-        fixture_path = os.path.join(TESTS_DIR, tc["file"])
+        fixture_path = tc.get("path") or os.path.join(TESTS_DIR, tc["file"])
+        manifest_path = tc.get("manifest") or TEST_AUDIO_MANIFEST
         cmd = [
             sys.executable,
             VALIDATOR,
             "--pack", fixture_path,
-            "--audio-manifest", TEST_AUDIO_MANIFEST,
+            "--audio-manifest", manifest_path,
             "--strict"
         ]
 

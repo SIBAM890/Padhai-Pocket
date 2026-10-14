@@ -52,7 +52,8 @@
       ],
       "correct": 0,
       "audio": "P-A.opus",
-      "misconception_tag": null
+      "misconception_tag": null,
+      "status": "demo_approved"
     },
     {
       "item_id": "A-A",
@@ -68,7 +69,8 @@
       ],
       "correct": 1,
       "audio": "A-A.opus",
-      "misconception_tag": null
+      "misconception_tag": null,
+      "status": "demo_approved"
     }
   ]
 }
