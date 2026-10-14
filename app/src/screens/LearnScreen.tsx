@@ -145,13 +145,33 @@ export default function LearnScreen({ navigation }: Props) {
 
   const loadStreakAndStats = useCallback(async () => {
     try {
-      const allEvents = await listEvents(200);
+      let allEvents = await listEvents(200);
+
+      // Fresh session hydration: if local events empty and Supabase/backend connected
+      if ((!allEvents || allEvents.length === 0) && supabaseConnected) {
+        try {
+          const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+          const res = await fetch(`${baseUrl}/v1/events/profile/prof_demo_01`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.events && data.events.length > 0) {
+              for (const ev of data.events) {
+                await insertEvent(ev, 'ACKED');
+              }
+              allEvents = await listEvents(200);
+            }
+          }
+        } catch (fetchErr) {
+          console.warn('Hydration from Supabase skipped:', fetchErr);
+        }
+      }
+
       const computed = computeStreakData(allEvents || [], demoMode);
       setStreakState(computed);
     } catch (e) {
       console.warn('Failed to compute streak from database events', e);
     }
-  }, [demoMode]);
+  }, [demoMode, supabaseConnected]);
 
   // Keep greeting synchronized with profile
   useEffect(() => {

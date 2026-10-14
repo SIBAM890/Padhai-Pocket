@@ -176,6 +176,16 @@ async def seed_demo():
     return {"seeded": True, "students": 3, "events": result}
 
 
+@app.get("/v1/events/profile/{profile_id}")
+async def get_profile_events(profile_id: str):
+    """
+    Returns events for a profile from Supabase (or edge fallback)
+    to hydrate local client state on fresh sessions.
+    """
+    events = await storage_dual.read_events_for_profile(profile_id)
+    return {"events": events}
+
+
 @app.post("/v1/agent/plan")
 async def agent_plan(request: Request):
     """
@@ -318,13 +328,19 @@ async def sync_events(request: Request, authorization: Optional[str] = Header(No
 
 
 @app.get("/v1/summary")
-async def get_summary(authorization: Optional[str] = Header(None)):
+async def get_summary(
+    profile_id: Optional[str] = None,
+    authorization: Optional[str] = Header(None)
+):
     """
-    Label counts and current mastery for that device's profiles.
+    Label counts and current mastery for that device's profiles or specific profile.
     """
-    auth_device_id = verify_device_token(authorization)
-
-    events = await storage_dual.read_events_for_device(auth_device_id)
+    if profile_id:
+        events = await storage_dual.read_events_for_profile(profile_id)
+        auth_device_id = events[0].get("device_id", "dev_tab_01") if events else "dev_tab_01"
+    else:
+        auth_device_id = verify_device_token(authorization)
+        events = await storage_dual.read_events_for_device(auth_device_id)
 
     # Aggregate events belonging to this device
     profiles_map: Dict[str, Dict[str, Any]] = {}

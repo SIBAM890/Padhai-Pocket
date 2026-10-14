@@ -38,7 +38,7 @@ export default function App() {
 
   return (
     <GlobalErrorBoundary>
-      <NavigationContainer>
+      <NavigationContainer documentTitle={{ formatter: () => 'Padhai Pocket' }}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Learn" component={LearnScreen} />
           <Stack.Screen name="Trace" component={TraceScreen} />
