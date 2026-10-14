@@ -118,6 +118,31 @@ export default function LearnScreen({ navigation }: Props) {
     computeStreakData([], false)
   );
 
+  // Supabase live connection status from /healthz
+  const [supabaseConnected, setSupabaseConnected] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (forcedOffline || networkMode !== 'ONLINE') {
+      setSupabaseConnected(false);
+      return;
+    }
+    const checkSupabase = async () => {
+      try {
+        const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+        const res = await fetch(`${baseUrl}/healthz`);
+        if (res.ok) {
+          const data = await res.json();
+          setSupabaseConnected(!!data.supabase_connected);
+        }
+      } catch {
+        setSupabaseConnected(false);
+      }
+    };
+    checkSupabase();
+    const interval = setInterval(checkSupabase, 10000);
+    return () => clearInterval(interval);
+  }, [forcedOffline, networkMode]);
+
   const loadStreakAndStats = useCallback(async () => {
     try {
       const allEvents = await listEvents(200);
@@ -590,6 +615,7 @@ export default function LearnScreen({ navigation }: Props) {
         gender={profile.gender}
         networkMode={networkMode}
         forcedOffline={forcedOffline}
+        supabaseConnected={supabaseConnected}
         onAvatarPress={() => setCurrentTab('Profile')}
       />
 
