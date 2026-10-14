@@ -1,0 +1,120 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "bio_pack_v1_99aabbccddeeff00112233445566778899aabbccddeeff0011223344556",
+    "built_at": "2026-10-14T14:30:00Z"
+  },
+  "chapter": {
+    "subject": "Life Science (Biology)",
+    "class": 9,
+    "chapter_no": "1"
+  },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-BIO-CELL-S01",
+      "title_or": "କୋଷର ସଂରଚନା ଏବଂ ମୁଖ୍ୟ ଅଙ୍ଗିକା",
+      "odia_text": "ପ୍ରତ୍ୟେକ ଜୀବ ଶରୀର ଗୋଟିଏ ବା ଏକାଧିକ କୋଷ ଦ୍ୱାରା ଗଠିତ । କୋଷ ହେଉଛି ଜୀବର ମୌଳିକ ଗଠନମୂଳକ ଓ କାର୍ଯ୍ୟକାରୀ ଏକକ । କୋଷଝିଲ୍ଲୀ କୋଷକୁ ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ଆକାର ଦିଏ ଏବଂ କୋଷଜୀବକରେ ବିଭିନ୍ନ ଅଙ୍ଗିକା ଯଥା ମାଇଟୋକଣ୍ଡ୍ରିଆ ଥାଏ ।",
+      "terms": [
+        "T_CELL",
+        "T_MITO"
+      ],
+      "source_page": 1,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    }
+  ],
+  "terms": [
+    {
+      "term_id": "T_CELL",
+      "en": "Cell",
+      "odia_from_textbook": "କୋଷ",
+      "kui": {
+        "description": "ଜୀବ ଶରୀରର ମୌଳିକ ଏକକ",
+        "script": "କୋଷ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_MITO",
+      "en": "Mitochondria",
+      "odia_from_textbook": "ମାଇଟୋକଣ୍ଡ୍ରିଆ",
+      "kui": {
+        "description": "କୋଷର ଶକ୍ତି କେନ୍ଦ୍ର",
+        "script": "ମାଇଟୋକଣ୍ଡ୍ରିଆ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    }
+  ],
+  "items": [
+    {
+      "item_id": "BIO-P1",
+      "concept_id": "cell_structure",
+      "set": "A",
+      "modality": "P",
+      "stem": "ଚିତ୍ରରେ କୋଷର କେଉଁ ଅଙ୍ଗିକା ଦର୍ଶାଯାଇଛି?",
+      "options": [
+        "ମାଇଟୋକଣ୍ଡ୍ରିଆ",
+        "କୋଷଝିଲ୍ଲୀ",
+        "ନ୍ୟୁକ୍ଲିୟସ",
+        "ରାଇବୋଜୋମ୍"
+      ],
+      "correct": 0,
+      "audio": "bio_p1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-A1",
+      "concept_id": "cell_structure",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ କୋଷର ଶକ୍ତି କେନ୍ଦ୍ର କିଏ?",
+      "options": [
+        "ମାଇଟୋକଣ୍ଡ୍ରିଆ",
+        "ଗଲଜିପିଣ୍ଡ",
+        "ଲାଇସୋଜୋମ୍",
+        "କୋଷଭିତ୍ତି"
+      ],
+      "correct": 0,
+      "audio": "bio_a1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-T1",
+      "concept_id": "cell_structure",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଜୀବ ଶରୀରର ମୌଳିକ ଗଠନମୂଳକ ଏବଂ କାର୍ଯ୍ୟକାରୀ ଏକକ କ'ଣ?",
+      "options": [
+        "କୋଷ",
+        "କଳା",
+        "ଅଙ୍ଗ",
+        "ରକ୍ତ"
+      ],
+      "correct": 0,
+      "audio": "bio_t1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "BIO-W1",
+      "concept_id": "cell_structure",
+      "set": "A",
+      "modality": "W",
+      "stem": "କୋଷଝିଲ୍ଲୀର ପ୍ରମୁଖ କାର୍ଯ୍ୟ କ'ଣ?",
+      "options": [
+        "କୋଷକୁ ଆବରଣ ଓ ଆକାର ପ୍ରଦାନ",
+        "ଶକ୍ତି ଉତ୍ପାଦନ",
+        "ପ୍ରୋଟିନ୍ ସଂଶ୍ଳେଷଣ",
+        "ପାଚନ କ୍ରିୟା"
+      ],
+      "correct": 0,
+      "audio": "bio_w1.mp3",
+      "misconception_tag": null
+    }
+  ]
+}

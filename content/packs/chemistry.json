@@ -1,0 +1,120 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "c8b417a8e0f9d8a112233445566778899aabbccddeeff0011223344556677889",
+    "built_at": "2026-10-14T14:30:00Z"
+  },
+  "chapter": {
+    "subject": "Physical Science (Chemistry)",
+    "class": 9,
+    "chapter_no": "4"
+  },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-CHEM-CARBON-S04",
+      "title_or": "ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା ଏବଂ ସହସଂଯୋଜକ ବନ୍ଧ",
+      "odia_text": "ସୂର୍ଯ୍ୟାଲୋକ ଉପସ୍ଥିତିରେ ମିଥେନ୍ ଓ କ୍ଲୋରିନ୍ ମଧ୍ୟରେ ଦ୍ରୁତ ପ୍ରତିକ୍ରିୟା ଘଟି କ୍ଲୋରିନ୍ ପରମାଣୁଗୁଡ଼ିକ ଗୋଟିଏ ପରେ ଗୋଟିଏ ହାଇଡ୍ରୋଜେନ୍ ପରମାଣୁକୁ ବିସ୍ଥାପିତ କରନ୍ତି । ଏହାକୁ ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା କୁହାଯାଏ ।",
+      "terms": [
+        "T_SUBST",
+        "T_COVALENT"
+      ],
+      "source_page": 15,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    }
+  ],
+  "terms": [
+    {
+      "term_id": "T_SUBST",
+      "en": "Substitution",
+      "odia_from_textbook": "ପ୍ରତିସ୍ଥାପନ",
+      "kui": {
+        "description": "ଏକ ପରମାଣୁ ସ୍ଥାନରେ ଅନ୍ୟ ଏକ ପରମାଣୁ ଆସିବା",
+        "script": "ପ୍ରତିସ୍ଥାପନ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_COVALENT",
+      "en": "Covalent Bond",
+      "odia_from_textbook": "ସହସଂଯୋଜକ ବନ୍ଧ",
+      "kui": {
+        "description": "ଇଲେକ୍ଟ୍ରନ୍ ଭାଗୀଦାରୀ ଦ୍ୱାରା ଗଠିତ ବନ୍ଧ",
+        "script": "ସହସଂଯୋଜକ ବନ୍ଧ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    }
+  ],
+  "items": [
+    {
+      "item_id": "CHEM-P1",
+      "concept_id": "substitution_reaction",
+      "set": "A",
+      "modality": "P",
+      "stem": "ମିଥେନ୍ ଏବଂ କ୍ଲୋରିନ୍ ପ୍ରତିକ୍ରିୟାରେ କେଉଁ ପରମାଣୁ ବିସ୍ଥାପିତ ହୁଏ?",
+      "options": [
+        "ହାଇଡ୍ରୋଜେନ୍",
+        "କାର୍ବନ୍",
+        "ଅମ୍ଳଜାନ",
+        "ନାଇଟ୍ରୋଜେନ୍"
+      ],
+      "correct": 0,
+      "audio": "chem_p1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-A1",
+      "concept_id": "substitution_reaction",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ କେଉଁ ପ୍ରକାରର ପ୍ରତିକ୍ରିୟା ଘଟୁଛି?",
+      "options": [
+        "ପ୍ରତିସ୍ଥାପନ",
+        "ସଂଯୋଜନ",
+        "ବିଘଟନ",
+        "ଦ୍ୱୈତ ବିସ୍ଥାପନ"
+      ],
+      "correct": 0,
+      "audio": "chem_a1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-T1",
+      "concept_id": "substitution_reaction",
+      "set": "A",
+      "modality": "T",
+      "stem": "ସୂର୍ଯ୍ୟାଲୋକ ଉପସ୍ଥିତିରେ କ୍ଲୋରିନ୍ ଦ୍ୱାରା ହାଇଡ୍ରୋଜେନ୍ ବିସ୍ଥାପିତ ହେବାକୁ କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା",
+        "ସଂଯୋଜନ ପ୍ରତିକ୍ରିୟା",
+        "ଜାରଣ",
+        "ବିଜାରଣ"
+      ],
+      "correct": 0,
+      "audio": "chem_t1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "CHEM-W1",
+      "concept_id": "substitution_reaction",
+      "set": "A",
+      "modality": "W",
+      "stem": "ପ୍ରତିସ୍ଥାପନ ଶବ୍ଦର ପ୍ରକୃତ ଅର୍ଥ କ'ଣ?",
+      "options": [
+        "ଏକ ପରମାଣୁ ସ୍ଥାନ ଅନ୍ୟ ପରମାଣୁ ନେବା",
+        "ନୂଆ ପରମାଣୁ ସୃଷ୍ଟି ହେବା",
+        "ପରମାଣୁ ନଷ୍ଟ ହେବା",
+        "ଇଲେକ୍ଟ୍ରନ୍ ତ୍ୟାଗ କରିବା"
+      ],
+      "correct": 0,
+      "audio": "chem_w1.mp3",
+      "misconception_tag": null
+    }
+  ]
+}
