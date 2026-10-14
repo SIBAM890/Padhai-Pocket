@@ -48,9 +48,15 @@ import {
   type EngineContext,
 } from '../engine';
 import { computeSeed, probeOrder } from '../engine/seed';
-import { insertEvent, pendingEvents, subscribeDatabase } from '../db/database';
+import { insertEvent, listEvents, pendingEvents, subscribeDatabase } from '../db/database';
 import { syncPending } from '../sync/syncClient';
 import { getDeviceId } from '../utils/device';
+import {
+  getTimeOfDayGreeting,
+  computeStreakData,
+  type StreakComputationResult,
+} from '../utils/streakHelper';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   getHeroChunk,
   getHeroItem,
@@ -100,6 +106,63 @@ export default function LearnScreen({ navigation }: Props) {
 
   // Profile data in local state
   const [profile, setProfile] = useState(mockProfile);
+
+  // Dynamic time-of-day greeting (UI layer only, preserves FR-21 engine purity)
+  const [greeting, setGreeting] = useState<string>(() =>
+    getTimeOfDayGreeting(mockProfile.name)
+  );
+
+  // Dynamic 4-week diagnostic mastery matrix & streak stats
+  const [demoMode, setDemoMode] = useState<boolean>(false);
+  const [streakState, setStreakState] = useState<StreakComputationResult>(() =>
+    computeStreakData([], false)
+  );
+
+  const loadStreakAndStats = useCallback(async () => {
+    try {
+      const allEvents = await listEvents(200);
+      const computed = computeStreakData(allEvents || [], demoMode);
+      setStreakState(computed);
+    } catch (e) {
+      console.warn('Failed to compute streak from database events', e);
+    }
+  }, [demoMode]);
+
+  // Keep greeting synchronized with profile
+  useEffect(() => {
+    setGreeting(getTimeOfDayGreeting(profile.name));
+  }, [profile.name]);
+
+  // Update greeting and streak on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      setGreeting(getTimeOfDayGreeting(profile.name));
+      loadStreakAndStats();
+    }, [profile.name, loadStreakAndStats])
+  );
+
+  // Listen to database mutations and custom event 'padhai-event-updated'
+  useEffect(() => {
+    loadStreakAndStats();
+    const unsub = subscribeDatabase(() => {
+      loadStreakAndStats();
+    });
+
+    const handleCustomEvent = () => {
+      loadStreakAndStats();
+    };
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('padhai-event-updated', handleCustomEvent);
+    }
+
+    return () => {
+      unsub();
+      if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+        window.removeEventListener('padhai-event-updated', handleCustomEvent);
+      }
+    };
+  }, [loadStreakAndStats]);
 
   // Re-render trigger for live telemetry synchronization
   const [, setTelemetryTick] = useState(0);
@@ -318,6 +381,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     if (isCorrect) {
       setTimeout(() => setFlowStep('COMPLETION'), 700);
@@ -352,6 +416,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setSelectedProbeChoice(null);
     advanceProbe('P');
@@ -380,6 +445,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setSelectedProbeChoice(null);
     advanceProbe('A');
@@ -407,6 +473,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setSelectedProbeChoice(null);
     if (result.state.step === 'CONFIRM_ACTIVE') {
@@ -444,6 +511,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     if (result.state.step === 'REMEDIATION_ACTIVE' || !correct) {
       setFlowStep('REMEDIATION');
@@ -469,6 +537,7 @@ export default function LearnScreen({ navigation }: Props) {
     engineStateRef.current = result.state;
     triggerTelemetryUpdate();
     await refreshPending();
+    loadStreakAndStats();
 
     setFlowStep('COMPLETION');
   };
@@ -516,7 +585,7 @@ export default function LearnScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safe}>
       {/* Branded Header */}
       <AppHeader
-        greeting={`Good morning, ${profile.name}`}
+        greeting={greeting}
         subgreeting="Keep learning, one step at a time."
         gender={profile.gender}
         networkMode={networkMode}
@@ -543,15 +612,16 @@ export default function LearnScreen({ navigation }: Props) {
             />
 
             <StreakGrid
-              streakDays={profile.streakDays}
-              minutesThisWeek={profile.minutesThisWeek}
-              gridData={mockStreakGrid}
+              streakDays={streakState.streakDays}
+              minutesThisWeek={streakState.minutesThisWeek}
+              gridData={streakState.gridData}
+              defaultSelectedCell={streakState.todayCell}
             />
 
             <GoalCard
               goalTitle="Complete 1 lesson today"
-              activitiesDone={1}
-              totalActivities={3}
+              activitiesDone={streakState.todayActivitiesDone}
+              totalActivities={streakState.totalGoalActivities}
               onPress={() => setFlowStep('SOUND_CHECK')}
             />
 
@@ -764,9 +834,10 @@ export default function LearnScreen({ navigation }: Props) {
             </View>
 
             <StreakGrid
-              streakDays={profile.streakDays}
-              minutesThisWeek={profile.minutesThisWeek}
-              gridData={mockStreakGrid}
+              streakDays={streakState.streakDays}
+              minutesThisWeek={streakState.minutesThisWeek}
+              gridData={streakState.gridData}
+              defaultSelectedCell={streakState.todayCell}
             />
 
             <View style={styles.progressCard}>
@@ -855,6 +926,14 @@ export default function LearnScreen({ navigation }: Props) {
                 <Text style={styles.demoToggleSub}>Simulate offline behavior on stage</Text>
               </View>
               <Switch value={forcedOffline} onValueChange={setForcedOffline} />
+            </View>
+
+            <View style={styles.demoToggleRow}>
+              <View>
+                <Text style={styles.demoToggleLabel}>Demo Streak Matrix</Text>
+                <Text style={styles.demoToggleSub}>Simulate 4-week diagnostic activity history</Text>
+              </View>
+              <Switch value={demoMode} onValueChange={setDemoMode} />
             </View>
 
             <View style={styles.judgeButtonsRow}>
