@@ -41,6 +41,9 @@ integration_result.json
 
 # PDF source (large file)
 9th_Physical_Science105.pdf
+9th_Physical_Science107.pdf
+9th_Physical_science107.pdf
+*.pdf
 
 # Agent skills (Pritam's tooling)
 .agents/
