@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, radius } from '../theme/theme';
-import { listEvents } from '../db/database';
+import { listEvents, subscribeDatabase } from '../db/database';
 
 export default function RawLogScreen({ navigation }: any) {
   const [jsonText, setJsonText] = useState('Loading log entries...');
@@ -25,6 +25,14 @@ export default function RawLogScreen({ navigation }: any) {
       load();
     }, [load])
   );
+
+  React.useEffect(() => {
+    load();
+    const unsub = subscribeDatabase(() => {
+      load();
+    });
+    return unsub;
+  }, [load]);
 
   const handleCopy = async () => {
     try {

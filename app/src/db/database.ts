@@ -67,6 +67,7 @@ export async function insertEvent(
     JSON.stringify(event),
     status
   );
+  notifyListeners();
 }
 
 export async function listEvents(limit = 200): Promise<StoredEvent[]> {
@@ -127,6 +128,7 @@ export async function markAcked(ids: string[]): Promise<void> {
       id
     );
   }
+  notifyListeners();
 }
 
 export async function markError(ids: string[]): Promise<void> {
@@ -148,6 +150,7 @@ export async function markError(ids: string[]): Promise<void> {
       id
     );
   }
+  notifyListeners();
 }
 
 export async function markRejected(ids: string[], reason: string): Promise<void> {
@@ -166,4 +169,25 @@ export async function markRejected(ids: string[], reason: string): Promise<void>
 export async function purgeProfile(profileId: string): Promise<void> {
   const db = await getDatabase();
   await db.runAsync('DELETE FROM events WHERE profile_id = ?', profileId);
+  notifyListeners();
+}
+
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+function notifyListeners() {
+  for (const l of listeners) {
+    try {
+      l();
+    } catch (e) {
+      console.warn('Listener error', e);
+    }
+  }
+}
+
+export function subscribeDatabase(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }

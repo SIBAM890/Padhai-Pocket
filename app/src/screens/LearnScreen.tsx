@@ -7,6 +7,7 @@ import {
   Text,
   Switch,
   Pressable,
+  useWindowDimensions,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
@@ -32,21 +33,32 @@ import { FriendlyState } from '../components/FriendlyState';
 import { BottomNavigation, type MainNavTab } from '../components/BottomNavigation';
 import { StudentSetupModal } from '../components/StudentSetupModal';
 import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
+import { JudgeTelemetryPanel } from '../components/JudgeTelemetryPanel';
 import {
   mockProfile,
   mockStreakGrid,
   mockSubjects,
   mockLessonsList,
-  mockLessonQuestion,
-  mockProbes,
 } from '../mock/mockData';
 import { useNetworkStatus } from '../network/network';
-import { nextAction, createInitialState, type EngineState, type EngineContext } from '../engine';
+import {
+  nextAction,
+  createInitialState,
+  type EngineState,
+  type EngineContext,
+} from '../engine';
 import { computeSeed, probeOrder } from '../engine/seed';
-import { insertEvent, listEvents, pendingEvents } from '../db/database';
+import { insertEvent, pendingEvents, subscribeDatabase } from '../db/database';
 import { syncPending } from '../sync/syncClient';
-import { getHeroChunk, getHeroItem, getPackHash, getConfirmItem, getKuiGlossary } from '../content/loader';
 import { getDeviceId } from '../utils/device';
+import {
+  getHeroChunk,
+  getHeroItem,
+  getProbeItems,
+  getConfirmItem,
+  getKuiGlossary,
+  getPackHash,
+} from '../content/loader';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
@@ -65,6 +77,9 @@ export type LessonFlowStep =
   | 'COMPLETION';
 
 export default function LearnScreen({ navigation }: Props) {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = windowWidth >= 1024;
+
   const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus();
 
   // Navigation tab state (Home, Learn, Progress, Profile)
@@ -77,26 +92,96 @@ export default function LearnScreen({ navigation }: Props) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [voiceState, setVoiceState] = useState<VoiceState>('Ready');
   const [selectedProbeChoice, setSelectedProbeChoice] = useState<string | null>(null);
-  const [probeOrderSeq, setProbeOrderSeq] = useState<Array<'P' | 'A' | 'T'>>(['T', 'A', 'P']);
-  const [probeIndex, setProbeIndex] = useState<number>(0);
 
   // Modals (isolated from student navigation)
-  // Launches on first open to guide student through Welcome -> Name -> Language -> Subject -> "You're all set!" -> Home
   const [setupModalVisible, setSetupModalVisible] = useState(true);
   const [teacherModalVisible, setTeacherModalVisible] = useState(false);
   const [judgeToolsVisible, setJudgeToolsVisible] = useState(false);
 
   // Profile data in local state
   const [profile, setProfile] = useState(mockProfile);
-  const [deviceId, setDeviceId] = useState<string>('device_init');
+
+  // Re-render trigger for live telemetry synchronization
+  const [, setTelemetryTick] = useState(0);
+  const triggerTelemetryUpdate = useCallback(() => setTelemetryTick((t) => t + 1), []);
+
+  // Content pack loader hooks
+  const heroChunk = getHeroChunk();
+  const heroItem = getHeroItem();
+  const probeItems = getProbeItems();
+  const confirmItem = getConfirmItem();
+  const kuiGlossary = getKuiGlossary();
+  const packHash = getPackHash();
+
+  // Derived real question object from content pack
+  const question = {
+    titleOr: heroChunk?.title ?? 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନର ସଂଜ୍ଞା',
+    storyOr: heroChunk?.odiaText ?? '',
+    promptOr: heroItem?.stem ?? 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
+    options: (heroItem?.options ?? [
+      'ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ',
+      'ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ',
+      'ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ',
+      'ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି',
+    ]).map((opt: string, i: number) => ({
+      id: `opt_${i}`,
+      label: String.fromCharCode(65 + i),
+      text: opt,
+      subtext: i === 0 ? 'ସଠିକ୍ ସଂଜ୍ଞା' : undefined,
+    })),
+    correctOptionId: `opt_${heroItem?.correct ?? 0}`,
+  };
+
+  // Real probe objects from content pack
+  const pictureProbe = {
+    prompt: probeItems?.P?.stem ?? 'ନିମ୍ନ ଚିତ୍ରରେ ଏକ ବସ୍ତୁର ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁରୁ ଅନ୍ତିମ ବିନ୍ଦୁ ପର୍ଯ୍ୟନ୍ତ ଗତି ଦର୍ଶାଯାଇଛି । ଏଥିରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଭାବରେ ଦର୍ଶାଉଛି?',
+    titleOr: 'ଚିତ୍ର ଯାଞ୍ଚ: ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍?',
+    choices: [
+      { id: 'p_0', icon: '🚩', label: 'At the Flag', desc: 'Zero distance from start' },
+      { id: 'p_1', icon: '➡️', label: '3m East', desc: 'Still along the path' },
+      { id: 'p_2', icon: '⬅️', label: '6m West', desc: 'Far away from origin' },
+    ],
+    correctChoiceId: `p_${probeItems?.P?.correct ?? 0}`,
+  };
+
+  const audioProbe = {
+    prompt: probeItems?.A?.stem ?? 'ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଗୋଟିଏ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A ବିନ୍ଦୁକୁ ଗଲା ଏବଂ ପୁଣି O ବିନ୍ଦୁକୁ ଫେରିଆସିଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେତେ ହେବ?',
+    titleOr: 'ଓଡ଼ିଆ ଉଚ୍ଚାରଣ ଶୁଣନ୍ତୁ',
+    choices: [
+      { id: 'a_0', icon: '📍', label: 'Original Spot (ଆରମ୍ଭ ସ୍ଥାନ)' },
+      { id: 'a_1', icon: '📏', label: 'Straight Path (ଦୂରତା)' },
+      { id: 'a_2', icon: '🔄', label: 'Round Trip (ଚକ୍ର)' },
+    ],
+    correctChoiceId: `a_${probeItems?.A?.correct ?? 0}`,
+  };
+
+  const textProbe = {
+    prompt: probeItems?.T?.stem ?? 'ଦୂରତା (distance) ଏବଂ ବିସ୍ଥାପନ (displacement) ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
+    promptOr: probeItems?.T?.stem ?? 'ଦୂରତା (distance) ଏବଂ ବିସ୍ଥାପନ (displacement) ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
+    choices: (probeItems?.T?.options ?? [
+      'ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ',
+      'ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ',
+      'ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ',
+      'ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି',
+    ]).map((opt: string, i: number) => ({
+      id: `t_${i}`,
+      label: String.fromCharCode(65 + i),
+      text: opt,
+    })),
+    correctChoiceId: `t_${probeItems?.T?.correct ?? 0}`,
+  };
+
+  // Seeded probe sequence state (PRD §4.9)
+  const [probeSequence, setProbeSequence] = useState<Array<'P' | 'A' | 'T'>>(['T', 'A', 'P']);
+  const [probeIndex, setProbeIndex] = useState(0);
 
   // Deterministic Engine Context & State Ref
   const profileId = 'prof_demo_01';
   const conceptId = 'distance_vs_displacement';
   const engineContextRef = useRef<EngineContext>({
     now: Date.now(),
-    seed: 1806635391,
-    device_id: 'device_init',
+    seed: 1806635391, // Golden seed for (prof_demo_01, distance_vs_displacement, A)
+    device_id: 'dev_tab_01',
   });
 
   const engineStateRef = useRef<EngineState>(
@@ -106,26 +191,61 @@ export default function LearnScreen({ navigation }: Props) {
       conceptId,
       0.42,
       1,
-      forcedOffline ? 'OFFLINE' : networkMode
+      forcedOffline ? 'OFFLINE' : networkMode,
+      packHash && packHash !== 'unbuilt' ? packHash.slice(0, 12) : 'e3b0c44298fc'
     )
   );
-
-  useEffect(() => {
-    getDeviceId().then((id) => {
-      setDeviceId(id);
-      engineContextRef.current.device_id = id;
-    });
-    computeSeed(profileId, conceptId, 'A').then((seed) => {
-      engineContextRef.current.seed = seed;
-      const order = probeOrder(seed);
-      setProbeOrderSeq(order);
-    });
-  }, []);
 
   // Keep engine state network mode synchronized with actual status
   useEffect(() => {
     engineStateRef.current.network_mode = forcedOffline ? 'OFFLINE' : networkMode;
-  }, [networkMode, forcedOffline]);
+    triggerTelemetryUpdate();
+  }, [networkMode, forcedOffline, triggerTelemetryUpdate]);
+
+  // Load stable device ID and compute seed on mount
+  useEffect(() => {
+    getDeviceId()
+      .then((id) => {
+        if (engineContextRef.current) {
+          engineContextRef.current.device_id = id;
+          triggerTelemetryUpdate();
+        }
+      })
+      .catch(() => {});
+
+    computeSeed(profileId, conceptId, 'A')
+      .then((computed) => {
+        if (engineContextRef.current) {
+          engineContextRef.current.seed = computed;
+          triggerTelemetryUpdate();
+        }
+        const order = probeOrder(computed);
+        setProbeSequence(order);
+      })
+      .catch(() => {});
+  }, [profileId, conceptId, triggerTelemetryUpdate]);
+
+  // Advance to next probe in deterministic sequence or to confirmation
+  const advanceProbe = (currentStepModality: 'P' | 'A' | 'T') => {
+    const nextIdx = probeIndex + 1;
+    setProbeIndex(nextIdx);
+    if (nextIdx >= probeSequence.length) {
+      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+      return;
+    }
+    const nextMod = probeSequence[nextIdx];
+    if (nextMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
+    else if (nextMod === 'A') setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+    else setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
+  };
+
+  // Listen to database changes for real-time telemetry updates
+  useEffect(() => {
+    const unsub = subscribeDatabase(() => {
+      triggerTelemetryUpdate();
+    });
+    return unsub;
+  }, [triggerTelemetryUpdate]);
 
   // Request pedagogical plan from backend LangGraph agent workflow when online
   useEffect(() => {
@@ -151,39 +271,43 @@ export default function LearnScreen({ navigation }: Props) {
     callAgent();
   }, [forcedOffline, networkMode]);
 
-  // When airplane mode is toggled OFF, attempt to sync pending events
+  // When airplane mode is toggled OFF or network becomes ONLINE, attempt to sync pending events
   useEffect(() => {
     if (!forcedOffline && networkMode === 'ONLINE') {
-      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-      syncPending({ baseUrl, deviceId }).catch(() => {});
+      syncPending().catch(() => {});
     }
-  }, [forcedOffline, networkMode, deviceId]);
+  }, [forcedOffline, networkMode]);
 
   // Helper to refresh pending queue & trigger sync if online
   const refreshPending = useCallback(async () => {
     try {
       const pending = await pendingEvents(10);
       if (pending.length > 0 && !forcedOffline && networkMode === 'ONLINE') {
-        const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-        await syncPending({ baseUrl, deviceId });
+        await syncPending();
       }
+      triggerTelemetryUpdate();
     } catch (e) {
       console.warn('refreshPending error', e);
     }
-  }, [forcedOffline, networkMode, deviceId]);
+  }, [forcedOffline, networkMode, triggerTelemetryUpdate]);
 
-  // 1. MCQ Option Selection -> calls nextAction & persists via insertEvent
+  // Active question & options resolution from pack loader
+  const questionTitle = heroChunk?.title || 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନର ସଂଜ୍ଞା';
+  const questionStory = heroChunk?.odiaText || '';
+  const questionPrompt = heroItem?.stem || 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?';
+
+  // 1. MCQ Option Selection -> calls pure nextAction & persists via insertEvent
   const handleSelectOption = async (optId: string) => {
     setSelectedOption(optId);
-    const correct = optId === mockLessonQuestion.correctOptionId;
+    const isCorrect = optId === question.correctOptionId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
       engineStateRef.current,
       {
         type: 'OBSERVE_MCQ',
-        correct,
-        misconception_tag: correct ? null : 'path_equals_displacement',
+        correct: isCorrect,
+        misconception_tag: isCorrect ? null : 'path_equals_displacement',
       },
       engineContextRef.current
     );
@@ -192,44 +316,24 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
-    if (correct) {
+    if (isCorrect) {
       setTimeout(() => setFlowStep('COMPLETION'), 700);
     } else {
       setProbeIndex(0);
-      const firstModality = probeOrderSeq[0] || 'T';
-      const nextStep =
-        firstModality === 'P'
-          ? 'PROBE_PICTURE'
-          : firstModality === 'A'
-          ? 'PROBE_AUDIO'
-          : 'PROBE_TEXT';
-      setTimeout(() => setFlowStep(nextStep), 700);
-    }
-  };
-
-  const advanceProbeStep = (nextIdx: number) => {
-    setSelectedProbeChoice(null);
-    setProbeIndex(nextIdx);
-    if (nextIdx >= probeOrderSeq.length) {
-      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
-    } else {
-      const mod = probeOrderSeq[nextIdx];
-      const nextStep =
-        mod === 'P'
-          ? 'PROBE_PICTURE'
-          : mod === 'A'
-          ? 'PROBE_AUDIO'
-          : 'PROBE_TEXT';
-      setTimeout(() => setFlowStep(nextStep), 700);
+      const firstMod = probeSequence[0] || 'T';
+      if (firstMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
+      else if (firstMod === 'A') setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+      else setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
     }
   };
 
   // 2. Picture Probe Selection -> calls nextAction (modality P)
   const handleSelectPictureProbe = async (choiceId: string) => {
     setSelectedProbeChoice(choiceId);
-    const correct = choiceId === mockProbes.PICTURE.correctChoiceId;
+    const correct = choiceId === pictureProbe.correctChoiceId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
@@ -246,15 +350,17 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
-    advanceProbeStep(probeIndex + 1);
+    setSelectedProbeChoice(null);
+    advanceProbe('P');
   };
 
   // 3. Audio Probe Selection -> calls nextAction (modality A)
   const handleSelectAudioProbe = async (choiceId: string) => {
     setSelectedProbeChoice(choiceId);
-    const correct = choiceId === mockProbes.AUDIO.correctChoiceId;
+    const correct = choiceId === audioProbe.correctChoiceId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
@@ -272,15 +378,17 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
-    advanceProbeStep(probeIndex + 1);
+    setSelectedProbeChoice(null);
+    advanceProbe('A');
   };
 
   // 4. Text Probe Selection -> calls nextAction (modality T)
   const handleSelectTextProbe = async (choiceId: string) => {
     setSelectedProbeChoice(choiceId);
-    const correct = choiceId === mockProbes.TEXT.correctChoiceId;
+    const correct = choiceId === textProbe.correctChoiceId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
@@ -297,9 +405,17 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
-    advanceProbeStep(probeIndex + 1);
+    setSelectedProbeChoice(null);
+    if (result.state.step === 'CONFIRM_ACTIVE') {
+      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+    } else if (result.state.step === 'EPISODE_DONE') {
+      setTimeout(() => setFlowStep('COMPLETION'), 700);
+    } else {
+      advanceProbe('T');
+    }
   };
 
   // 5. Confirmation Selection -> calls nextAction (OBSERVE_CONFIRM_ITEM)
@@ -326,12 +442,13 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
-    if (correct) {
-      setFlowStep('COMPLETION');
-    } else {
+    if (result.state.step === 'REMEDIATION_ACTIVE' || !correct) {
       setFlowStep('REMEDIATION');
+    } else {
+      setFlowStep('COMPLETION');
     }
   };
 
@@ -350,6 +467,7 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
     setFlowStep('COMPLETION');
@@ -362,55 +480,54 @@ export default function LearnScreen({ navigation }: Props) {
         setVoiceState('Thinking');
         setTimeout(() => {
           setVoiceState('Ready');
-          handleSelectOption(mockLessonQuestion.correctOptionId);
+          handleSelectOption(question.correctOptionId);
         }, 1200);
       }, 1500);
-    } else if (voiceState === 'Listening') {
-      setVoiceState('Thinking');
-      setTimeout(() => setVoiceState('Ready'), 1000);
     }
   };
 
   const getOptionState = (optId: string): OptionState => {
     if (!selectedOption) return 'default';
-    if (optId === selectedOption) {
-      return optId === mockLessonQuestion.correctOptionId ? 'correct' : 'needs-review';
+    if (selectedOption === optId) {
+      return optId === question.correctOptionId ? 'correct' : 'needs-review';
     }
-    return 'default';
+    return optId === question.correctOptionId ? 'correct' : 'default';
   };
 
-  // Derive dashboard active subject labels from student profile choice
-  const activeSubjectTitle =
-    profile.subject === 'mathematics'
-      ? 'Mathematics · Number Systems'
-      : profile.subject === 'science'
-      ? 'Science · Cells & Living World'
-      : 'Physics · Motion';
+  const activeSubjectTitle = profile.subject === 'physics'
+    ? 'Physics · Motion & Mechanics (ପଦାର୍ଥ ବିଜ୍ଞାନ)'
+    : profile.subject === 'mathematics'
+    ? 'Mathematics (ଗଣିତ)'
+    : 'Science (ବିଜ୍ଞାନ)';
 
-  const activeSubjectTitleOr =
-    profile.subject === 'mathematics'
-      ? 'ସଂଖ୍ୟା ପ୍ରଣାଳୀ'
-      : profile.subject === 'science'
-      ? 'କୋଷ ଓ ଜୀବ ଜଗତ'
-      : 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ';
+  const activeSubjectTitleOr = profile.subject === 'physics'
+    ? 'ପଦାର୍ଥ ବିଜ୍ଞାନ'
+    : profile.subject === 'mathematics'
+    ? 'ଗଣିତ'
+    : 'ବିଜ୍ଞାନ';
 
-  return (
+  // Kui Glossary term lookup for displacement
+  const kuiTerm = kuiGlossary?.find((t: any) => t.term_id === 'T_DISP');
+  const remediationKuiText = kuiTerm?.kui?.description || 'ବସ୍ତୁ କେଉଁଠାରୁ ଆରମ୍ଭ କରି ଯେଉଁଠାରେ ପହଞ୍ଚେ, ସେହି ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।';
+  const remediationOdiaText = kuiTerm?.odia_from_textbook || 'ବିସ୍ଥାପନ';
+
+  // The complete, 100% preserved visual UI of PadhAI Pocket
+  const studentUI = (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header with greeting and status */}
-        <AppHeader
-          greeting={`Good morning, ${profile.name}`}
-          subgreeting="Keep learning, one step at a time."
-          avatar={profile.avatar}
-          gender={profile.gender}
-          networkMode={networkMode}
-          forcedOffline={forcedOffline}
-          onAvatarPress={() => {
-            setCurrentTab('Profile');
-            setFlowStep('DASHBOARD');
-          }}
-        />
+      {/* Branded Header */}
+      <AppHeader
+        greeting={`Good morning, ${profile.name}`}
+        subgreeting="Keep learning, one step at a time."
+        gender={profile.gender}
+        networkMode={networkMode}
+        forcedOffline={forcedOffline}
+        onAvatarPress={() => setCurrentTab('Profile')}
+      />
 
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ======================================================== */}
         {/* TAB 1: HOME DASHBOARD                                    */}
         {/* ======================================================== */}
@@ -418,10 +535,10 @@ export default function LearnScreen({ navigation }: Props) {
           <View>
             <ContinueLearningCard
               subject={activeSubjectTitle}
-              lessonNumber="Lesson 2"
-              lessonTitle="Displacement and Distance"
-              lessonTitleOr={activeSubjectTitleOr}
-              progressPercent={80}
+              lessonTitle="Displacement vs Distance (ବିସ୍ଥାପନ)"
+              lessonTitleOr="ଦୂରତା ଏବଂ ବିସ୍ଥାପନ"
+              lessonNumber="Lesson 2 of 3"
+              progressPercent={65}
               onContinue={() => setFlowStep('SOUND_CHECK')}
             />
 
@@ -517,16 +634,16 @@ export default function LearnScreen({ navigation }: Props) {
             {flowStep === 'QUESTION_INTERACTION' && (
               <View>
                 <LessonContentCard
-                  conceptTitle={mockLessonQuestion.title}
-                  conceptTitleOr={mockLessonQuestion.titleOr}
-                  story={mockLessonQuestion.storyContext}
-                  storyOr={mockLessonQuestion.storyContextOr}
-                  prompt={mockLessonQuestion.prompt}
-                  promptOr={mockLessonQuestion.promptOr}
+                  conceptTitle={questionTitle}
+                  conceptTitleOr={question.titleOr}
+                  story={questionStory}
+                  storyOr={question.storyOr}
+                  prompt={questionPrompt}
+                  promptOr={question.promptOr}
                 />
 
                 <View style={styles.optionsList}>
-                  {mockLessonQuestion.options.map((opt) => (
+                  {question.options.map((opt) => (
                     <MCQOption
                       key={opt.id}
                       label={opt.label}
@@ -544,10 +661,10 @@ export default function LearnScreen({ navigation }: Props) {
                   onFallbackPress={() => setVoiceState('Tap instead')}
                 />
 
-                {selectedOption && selectedOption !== mockLessonQuestion.correctOptionId && (
+                {selectedOption && selectedOption !== question.correctOptionId && (
                   <View style={styles.supportNote}>
                     <Text style={styles.supportNoteText}>
-                      Let's look at this together · ଚାଲନ୍ତୁ ଏହାକୁ ବୁଝିବା
+                      Let{"'"}s look at this together · ଚାଲନ୍ତୁ ଏହାକୁ ବୁଝିବା
                     </Text>
                   </View>
                 )}
@@ -556,9 +673,9 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'PROBE_PICTURE' && (
               <PictureProbe
-                prompt={mockProbes.PICTURE.prompt}
-                titleOr={mockProbes.PICTURE.titleOr}
-                choices={mockProbes.PICTURE.choices}
+                prompt={pictureProbe.prompt}
+                titleOr={pictureProbe.titleOr}
+                choices={pictureProbe.choices}
                 selectedChoiceId={selectedProbeChoice}
                 onSelect={handleSelectPictureProbe}
               />
@@ -566,8 +683,9 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'PROBE_AUDIO' && (
               <AudioProbe
-                prompt={mockProbes.AUDIO.prompt}
-                choices={mockProbes.AUDIO.choices}
+                prompt={audioProbe.prompt}
+                titleOr={audioProbe.titleOr}
+                choices={audioProbe.choices}
                 selectedChoiceId={selectedProbeChoice}
                 onSelect={handleSelectAudioProbe}
               />
@@ -575,65 +693,46 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'PROBE_TEXT' && (
               <TextProbe
-                prompt={mockProbes.TEXT.prompt}
-                promptOr={mockProbes.TEXT.promptOr}
-                choices={mockProbes.TEXT.choices}
+                prompt={textProbe.prompt}
+                promptOr={textProbe.promptOr}
+                choices={textProbe.choices}
                 selectedChoiceId={selectedProbeChoice}
                 onSelect={handleSelectTextProbe}
               />
             )}
 
-            {flowStep === 'CONFIRMATION' && (() => {
-              const confirmItem = getConfirmItem();
-              const questionStem = confirmItem?.stem || "‘ଦୂରତା’ (Distance) — ବସ୍ତୁ ଅତିକ୍ରମ କରିଥିବା ପଥର ମୋଟ ଦୈର୍ଘ୍ୟକୁ ବୁଝାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।";
-              const optionsList = confirmItem?.options && confirmItem.options.length > 0
-                ? confirmItem.options.map((opt: string, idx: number) => ({
-                    id: `c${idx + 1}`,
-                    label: String.fromCharCode(65 + idx),
-                    text: opt,
-                  }))
-                : [
-                    { id: 'c1', label: 'A', text: '0 m (Zero displacement)' },
-                    { id: 'c2', label: 'B', text: '100 m' },
-                    { id: 'c3', label: 'C', text: '200 m' },
-                  ];
+            {flowStep === 'CONFIRMATION' && (
+              <ConfirmationCard
+                question={confirmItem?.stem || "If you start at point A, run 100 meters, and return to point A, what is your displacement?"}
+                questionOr="ଯଦି ଆପଣ A ବିନ୍ଦୁରୁ ଦୌଡ଼ି ପୁଣି A କୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"
+                options={[
+                  { id: 'c1', label: 'A', text: '0 m (Zero displacement / ଶୂନ ବିସ୍ଥାପନ)' },
+                  { id: 'c2', label: 'B', text: '100 m' },
+                  { id: 'c3', label: 'C', text: '200 m' },
+                ]}
+                selectedOptionId={selectedProbeChoice}
+                onSelect={handleSelectConfirmation}
+                onContinue={handleContinueConfirmation}
+              />
+            )}
 
-              return (
-                <ConfirmationCard
-                  question="W1 Confirmation: Verify understanding of distance vs displacement"
-                  questionOr={questionStem}
-                  options={optionsList}
-                  selectedOptionId={selectedProbeChoice}
-                  onSelect={handleSelectConfirmation}
-                  onContinue={handleContinueConfirmation}
-                />
-              );
-            })()}
-
-            {flowStep === 'REMEDIATION' && (() => {
-              const glossary = getKuiGlossary();
-              const dispTerm = glossary.find((t: any) => t.term_id === 'T_DISP');
-              const kuiDesc = dispTerm?.kui?.description || 'ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।';
-              const odiaTerm = dispTerm?.odia_from_textbook || 'ବିସ୍ଥାପନ';
-
-              return (
-                <RemediationCard
-                  conceptTitle={`Understanding Displacement (${odiaTerm})`}
-                  explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and west 3 meters, you are back at 0 meters!"
-                  explanationOr={kuiDesc}
-                  onListen={() => {}}
-                  onTryAgain={() => {
-                    setSelectedOption(null);
-                    setSelectedProbeChoice(null);
-                    setFlowStep('QUESTION_INTERACTION');
-                  }}
-                  onContinue={handleCompleteRemediation}
-                />
-              );
-            })()}
+            {flowStep === 'REMEDIATION' && (
+              <RemediationCard
+                explanation={remediationKuiText}
+                explanationOr={`ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
+                onListen={() => {}}
+                onTryAgain={() => {
+                  setSelectedOption(null);
+                  setSelectedProbeChoice(null);
+                  setFlowStep('QUESTION_INTERACTION');
+                }}
+                onContinue={handleCompleteRemediation}
+              />
+            )}
 
             {flowStep === 'COMPLETION' && (
               <CompletionCard
+                studentName={profile.name}
                 lessonTitle="Displacement & Distance"
                 pointsEarned={10}
                 streakDays={profile.streakDays}
@@ -676,30 +775,40 @@ export default function LearnScreen({ navigation }: Props) {
               <View style={styles.topicRow}>
                 <View style={styles.topicMeta}>
                   <Text style={styles.topicName}>Motion & Mechanics</Text>
-                  <Text style={styles.topicPercent}>80%</Text>
+                  <Text style={styles.topicPercent}>
+                    {Math.round(engineStateRef.current.concept_mastery * 100)}%
+                  </Text>
                 </View>
                 <View style={styles.topicTrack}>
-                  <View style={[styles.topicFill, { width: '80%', backgroundColor: colors.primary }]} />
+                  <View
+                    style={[
+                      styles.topicFill,
+                      {
+                        width: `${Math.round(engineStateRef.current.concept_mastery * 100)}%`,
+                        backgroundColor: colors.primary,
+                      },
+                    ]}
+                  />
                 </View>
               </View>
 
               <View style={styles.topicRow}>
                 <View style={styles.topicMeta}>
-                  <Text style={styles.topicName}>Laws of Motion</Text>
-                  <Text style={styles.topicPercent}>40%</Text>
+                  <Text style={styles.topicName}>Term Bridge (Displacement / {remediationOdiaText})</Text>
+                  <Text style={styles.topicPercent}>
+                    {Math.round((engineStateRef.current.term_masteries?.['T_DISP'] ?? 0.4) * 100)}%
+                  </Text>
                 </View>
                 <View style={styles.topicTrack}>
-                  <View style={[styles.topicFill, { width: '40%', backgroundColor: colors.secondary }]} />
-                </View>
-              </View>
-
-              <View style={styles.topicRow}>
-                <View style={styles.topicMeta}>
-                  <Text style={styles.topicName}>Gravitation</Text>
-                  <Text style={styles.topicPercent}>10%</Text>
-                </View>
-                <View style={styles.topicTrack}>
-                  <View style={[styles.topicFill, { width: '10%', backgroundColor: colors.accent }]} />
+                  <View
+                    style={[
+                      styles.topicFill,
+                      {
+                        width: `${Math.round((engineStateRef.current.term_masteries?.['T_DISP'] ?? 0.4) * 100)}%`,
+                        backgroundColor: colors.secondary,
+                      },
+                    ]}
+                  />
                 </View>
               </View>
             </View>
@@ -717,7 +826,6 @@ export default function LearnScreen({ navigation }: Props) {
               onOpenTeacherPin={() => setTeacherModalVisible(true)}
             />
 
-            {/* Offline learning confidence notice */}
             <FriendlyState
               type="OFFLINE_READY"
               onAction={() => {
@@ -730,7 +838,7 @@ export default function LearnScreen({ navigation }: Props) {
         )}
 
         {/* ======================================================== */}
-        {/* JUDGE & DEMO CONTROLS (Discreet bottom section)          */}
+        {/* JUDGE & DEMO CONTROLS (Discreet section on mobile)       */}
         {/* ======================================================== */}
         {judgeToolsVisible && (
           <View style={styles.judgeSection}>
@@ -809,9 +917,53 @@ export default function LearnScreen({ navigation }: Props) {
       />
     </SafeAreaView>
   );
+
+  // Desktop Judge Mode Split-Screen View (≥1024px)
+  if (isDesktop) {
+    return (
+      <View style={styles.desktopContainer}>
+        <View style={styles.phoneFrame}>
+          {studentUI}
+        </View>
+        <View style={styles.telemetryPane}>
+          <JudgeTelemetryPanel
+            engineState={engineStateRef.current}
+            engineContext={engineContextRef.current}
+            networkMode={networkMode}
+            forcedOffline={forcedOffline}
+            onToggleForcedOffline={setForcedOffline}
+            onRefreshParent={refreshPending}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  return studentUI;
 }
 
 const styles = StyleSheet.create({
+  desktopContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#0F172A',
+    width: '100%',
+    height: '100%',
+  },
+  phoneFrame: {
+    width: 440,
+    maxWidth: 480,
+    height: '100%',
+    backgroundColor: colors.background,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    overflow: 'hidden',
+  },
+  telemetryPane: {
+    flex: 1,
+    height: '100%',
+    backgroundColor: '#F1F5F9',
+  },
   safe: {
     flex: 1,
     backgroundColor: colors.background,

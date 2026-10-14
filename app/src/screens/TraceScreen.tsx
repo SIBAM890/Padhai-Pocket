@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, Switch } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, radius } from '../theme/theme';
 import { TraceTimeline } from '../components/TraceTimeline';
-import { listEvents } from '../db/database';
+import { mockTraceEvents } from '../mock/mockData';
+import { listEvents, subscribeDatabase } from '../db/database';
 import type { StoredEvent } from '../types/events';
 
 export default function TraceScreen({ navigation }: any) {
   const [events, setEvents] = useState<StoredEvent[]>([]);
+  const [demoMode, setDemoMode] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -18,26 +20,32 @@ export default function TraceScreen({ navigation }: any) {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
   );
 
-  const displayEvents = events.map((row: StoredEvent) => ({
-    id: row.event_id,
-    node: row.node,
-    action: row.action,
-    description: `Action: ${row.action} (seq ${row.seq})`,
-    timestamp: new Date(row.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    status: row.sync_status,
-    seq: row.seq,
-    payload: row.output ?? {},
-  }));
+  useEffect(() => {
+    load();
+    const unsub = subscribeDatabase(() => {
+      load();
+    });
+    return unsub;
+  }, [load]);
+
+  const displayEvents = demoMode
+    ? mockTraceEvents
+    : events.map((row: StoredEvent) => ({
+        id: row.event_id,
+        node: row.node,
+        action: row.action,
+        description: `Action: ${row.action} (seq ${row.seq})`,
+        timestamp: new Date(row.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: row.sync_status,
+        seq: row.seq,
+        payload: row.output ?? {},
+      }));
 
   return (
     <SafeAreaView style={styles.safe}>
