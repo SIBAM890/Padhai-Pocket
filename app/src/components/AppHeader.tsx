@@ -12,6 +12,7 @@ interface AppHeaderProps {
   gender?: 'male' | 'female';
   networkMode: NetworkMode;
   forcedOffline?: boolean;
+  supabaseConnected?: boolean;
   onAvatarPress?: () => void;
 }
 
@@ -22,6 +23,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   gender,
   networkMode,
   forcedOffline,
+  supabaseConnected = false,
   onAvatarPress,
 }) => {
   const isMale = gender === 'male' || avatar === 'male';
@@ -35,6 +37,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </View>
 
       <View style={styles.rightGroup}>
+        {supabaseConnected && !forcedOffline && (
+          <View style={styles.supabasePill}>
+            <Text style={styles.supabaseDot}>●</Text>
+            <Text style={styles.supabaseText}>Synced with Supabase</Text>
+          </View>
+        )}
         <NetworkBadge mode={networkMode} forcedOffline={forcedOffline} />
         <Pressable
           style={styles.avatarButton}
@@ -80,6 +88,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  supabasePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: '#E8F5E9',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    marginRight: 4,
+  },
+  supabaseDot: {
+    color: '#2E7D32',
+    fontSize: 10,
+    marginRight: 4,
+  },
+  supabaseText: {
+    ...typography.caption,
+    color: '#2E7D32',
+    fontWeight: '600',
   },
   avatarButton: {
     width: 44,

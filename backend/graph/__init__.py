@@ -1,4 +1,4 @@
-# Package marker for backend.graph
+# backend/graph package
 from .graph import (
     run_pipeline,
     run_agent_workflow,
