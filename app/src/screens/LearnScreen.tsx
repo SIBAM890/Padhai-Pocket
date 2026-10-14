@@ -24,6 +24,7 @@ import { MicButton, type VoiceState } from '../components/MicButton';
 import { SoundCheck } from '../components/SoundCheck';
 import { PictureProbe } from '../components/PictureProbe';
 import MotionSimulation from '../components/MotionSimulation';
+import { SubjectVisualizer } from '../components/SubjectVisualizer';
 import { AudioProbe } from '../components/AudioProbe';
 import { TextProbe } from '../components/TextProbe';
 import { ConfirmationCard } from '../components/ConfirmationCard';
@@ -40,6 +41,7 @@ import {
   mockStreakGrid,
   mockSubjects,
   mockLessonsList,
+  getLessonsForSubject,
 } from '../mock/mockData';
 import { useNetworkStatus } from '../network/network';
 import {
@@ -83,9 +85,25 @@ export type LessonFlowStep =
   | 'REMEDIATION'
   | 'COMPLETION';
 
-export default function LearnScreen({ navigation }: Props) {
+export default function LearnScreen({ navigation, route }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = windowWidth >= 1024;
+
+  // Safe navigation route param resolution with guaranteed fallbacks
+  const profileId = route?.params?.profileId ?? 'prof_demo_01';
+  const subject = route?.params?.subject ?? (route?.params as any)?.subjectId ?? 'physics';
+  const chunkId = route?.params?.chunkId ?? (route?.params as any)?.topicId ?? 'motion_01';
+
+  const conceptId =
+    chunkId === 'mass_vs_weight' || chunkId === 'BSE9-PHYS-GRAV-S03-01' || chunkId === 'mass_and_weight'
+      ? 'mass_vs_weight'
+      : subject === 'chemistry' || chunkId === 'BSE9-CHEM-CARBON-S04' || chunkId === 'substitution_reaction'
+      ? 'substitution_reaction'
+      : subject === 'biology' || chunkId === 'BSE9-BIO-CELL-S01' || chunkId === 'cell_structure'
+      ? 'cell_structure'
+      : subject === 'maths' || subject === 'mathematics' || chunkId === 'BSE9-MATH-REAL-S01' || chunkId === 'rational_irrational'
+      ? 'rational_irrational'
+      : 'distance_vs_displacement';
 
   const backendBaseUrl = resolveApiBaseUrl();
   const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus(`${backendBaseUrl}/healthz`);
@@ -94,7 +112,18 @@ export default function LearnScreen({ navigation }: Props) {
   const [currentTab, setCurrentTab] = useState<MainNavTab>('Home');
 
   // Progressive student lesson flow
-  const [flowStep, setFlowStep] = useState<LessonFlowStep>('DASHBOARD');
+  const [flowStep, setFlowStep] = useState<LessonFlowStep>(() =>
+    route?.params?.chunkId || route?.params?.topicId ? 'QUESTION_INTERACTION' : 'DASHBOARD'
+  );
+
+  // When a specific chunk or topic is navigated to, launch the question interaction
+  useEffect(() => {
+    if (route?.params?.chunkId || route?.params?.topicId) {
+      setFlowStep('QUESTION_INTERACTION');
+      setSelectedOption(null);
+      setSelectedProbeChoice(null);
+    }
+  }, [route?.params?.chunkId, route?.params?.topicId]);
 
   // Interactive Question & Probe states
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -215,70 +244,92 @@ export default function LearnScreen({ navigation }: Props) {
   const [, setTelemetryTick] = useState(0);
   const triggerTelemetryUpdate = useCallback(() => setTelemetryTick((t) => t + 1), []);
 
-  // Content pack loader hooks
-  const heroChunk = getHeroChunk();
-  const heroItem = getHeroItem();
-  const probeItems = getProbeItems();
-  const confirmItem = getConfirmItem();
-  const kuiGlossary = getKuiGlossary();
-  const packHash = getPackHash();
+  // Content pack loader hooks safely parameterized by subject and chunkId
+  const heroChunk = getHeroChunk(subject, chunkId);
+  const heroItem = getHeroItem(subject, chunkId);
+  const probeItems = getProbeItems(subject, chunkId);
+  const confirmItem = getConfirmItem(subject);
+  const kuiGlossary = getKuiGlossary(subject);
+  const packHash = getPackHash(subject);
+
+  // Fallback options list for robust MCQ rendering
+  const defaultOptions = [
+    'ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ',
+    'ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ',
+    'ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ',
+    'ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି',
+  ];
+  const itemOptions = Array.isArray(heroItem?.options) && heroItem.options.length > 0
+    ? heroItem.options
+    : defaultOptions;
 
   // Derived real question object from content pack
   const question = {
     titleOr: heroChunk?.title ?? 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନର ସଂଜ୍ଞା',
     storyOr: heroChunk?.odiaText ?? '',
     promptOr: heroItem?.stem ?? 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
-    options: (heroItem?.options ?? [
-      'ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ',
-      'ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ',
-      'ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ',
-      'ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି',
-    ]).map((opt: string, i: number) => ({
+    options: itemOptions.map((opt: string, i: number) => ({
       id: `opt_${i}`,
       label: String.fromCharCode(65 + i),
       text: opt,
       subtext: i === 0 ? 'ସଠିକ୍ ସଂଜ୍ଞା' : undefined,
     })),
-    correctOptionId: `opt_${heroItem?.correct ?? 0}`,
+    correctOptionId: `opt_${typeof heroItem?.correct === 'number' ? heroItem.correct : 0}`,
   };
 
   // Real probe objects from content pack
+  const pictureProbeChoices = Array.isArray(probeItems?.P?.options) && probeItems.P.options.length > 0
+    ? probeItems.P.options.map((opt: string, i: number) => ({
+        id: `p_${i}`,
+        icon: i === 0 ? '🚩' : i === 1 ? '➡️' : i === 2 ? '⬅️' : '🔹',
+        label: opt,
+        desc: '',
+      }))
+    : [
+        { id: 'p_0', icon: '🚩', label: 'At the Flag', desc: 'Zero distance from start' },
+        { id: 'p_1', icon: '➡️', label: '3m East', desc: 'Still along the path' },
+        { id: 'p_2', icon: '⬅️', label: '6m West', desc: 'Far away from origin' },
+      ];
+
   const pictureProbe = {
     prompt: probeItems?.P?.stem ?? 'ନିମ୍ନ ଚିତ୍ରରେ ଏକ ବସ୍ତୁର ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁରୁ ଅନ୍ତିମ ବିନ୍ଦୁ ପର୍ଯ୍ୟନ୍ତ ଗତି ଦର୍ଶାଯାଇଛି । ଏଥିରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଭାବରେ ଦର୍ଶାଉଛି?',
     titleOr: 'ଚିତ୍ର ଯାଞ୍ଚ: ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍?',
-    choices: [
-      { id: 'p_0', icon: '🚩', label: 'At the Flag', desc: 'Zero distance from start' },
-      { id: 'p_1', icon: '➡️', label: '3m East', desc: 'Still along the path' },
-      { id: 'p_2', icon: '⬅️', label: '6m West', desc: 'Far away from origin' },
-    ],
-    correctChoiceId: `p_${probeItems?.P?.correct ?? 0}`,
+    choices: pictureProbeChoices,
+    correctChoiceId: `p_${typeof probeItems?.P?.correct === 'number' ? probeItems.P.correct : 0}`,
   };
+
+  const audioProbeChoices = Array.isArray(probeItems?.A?.options) && probeItems.A.options.length > 0
+    ? probeItems.A.options.map((opt: string, i: number) => ({
+        id: `a_${i}`,
+        icon: i === 0 ? '📍' : i === 1 ? '📏' : i === 2 ? '🔄' : '🔹',
+        label: opt,
+      }))
+    : [
+        { id: 'a_0', icon: '📍', label: 'Original Spot (ଆରମ୍ଭ ସ୍ଥାନ)' },
+        { id: 'a_1', icon: '📏', label: 'Straight Path (ଦୂରତା)' },
+        { id: 'a_2', icon: '🔄', label: 'Round Trip (ଚକ୍ର)' },
+      ];
 
   const audioProbe = {
     prompt: probeItems?.A?.stem ?? 'ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଗୋଟିଏ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A ବିନ୍ଦୁକୁ ଗଲା ଏବଂ ପୁଣି O ବିନ୍ଦୁକୁ ଫେରିଆସିଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେତେ ହେବ?',
     titleOr: 'ଓଡ଼ିଆ ଉଚ୍ଚାରଣ ଶୁଣନ୍ତୁ',
-    choices: [
-      { id: 'a_0', icon: '📍', label: 'Original Spot (ଆରମ୍ଭ ସ୍ଥାନ)' },
-      { id: 'a_1', icon: '📏', label: 'Straight Path (ଦୂରତା)' },
-      { id: 'a_2', icon: '🔄', label: 'Round Trip (ଚକ୍ର)' },
-    ],
-    correctChoiceId: `a_${probeItems?.A?.correct ?? 0}`,
+    choices: audioProbeChoices,
+    correctChoiceId: `a_${typeof probeItems?.A?.correct === 'number' ? probeItems.A.correct : 0}`,
   };
+
+  const textProbeOptions = Array.isArray(probeItems?.T?.options) && probeItems.T.options.length > 0
+    ? probeItems.T.options
+    : defaultOptions;
 
   const textProbe = {
     prompt: probeItems?.T?.stem ?? 'ଦୂରତା (distance) ଏବଂ ବିସ୍ଥାପନ (displacement) ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
     promptOr: probeItems?.T?.stem ?? 'ଦୂରତା (distance) ଏବଂ ବିସ୍ଥାପନ (displacement) ମଧ୍ୟରେ ମୁଖ୍ୟ ପାର୍ଥକ୍ୟ କ’ଣ?',
-    choices: (probeItems?.T?.options ?? [
-      'ଦୂରତା ଏକ ଅଦିଶ ରାଶି ଏବଂ ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି ଅଟେ',
-      'ଦୂରତା ସର୍ବଦା ବିସ୍ଥାପନ ଠାରୁ କମ୍ ହୋଇଥାଏ',
-      'ବିସ୍ଥାପନର କୌଣସି ନିର୍ଦ୍ଦିଷ୍ଟ ଦିଗ ନଥାଏ',
-      'ଉଭୟ ଦୂରତା ଓ ବିସ୍ଥାପନ କେବଳ ମୂଳବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରନ୍ତି',
-    ]).map((opt: string, i: number) => ({
+    choices: textProbeOptions.map((opt: string, i: number) => ({
       id: `t_${i}`,
       label: String.fromCharCode(65 + i),
       text: opt,
     })),
-    correctChoiceId: `t_${probeItems?.T?.correct ?? 0}`,
+    correctChoiceId: `t_${typeof probeItems?.T?.correct === 'number' ? probeItems.T.correct : 0}`,
   };
 
   // Seeded probe sequence state (PRD §4.9)
@@ -286,8 +337,6 @@ export default function LearnScreen({ navigation }: Props) {
   const [probeIndex, setProbeIndex] = useState(0);
 
   // Deterministic Engine Context & State Ref
-  const profileId = 'prof_demo_01';
-  const conceptId = 'distance_vs_displacement';
   const engineContextRef = useRef<EngineContext>({
     now: Date.now(),
     seed: 1806635391, // Golden seed for (prof_demo_01, distance_vs_displacement, A)
@@ -306,11 +355,15 @@ export default function LearnScreen({ navigation }: Props) {
     )
   );
 
-  // Keep engine state network mode synchronized with actual status
+  // Keep engine state network mode and concept_id synchronized with actual status
   useEffect(() => {
-    engineStateRef.current.network_mode = forcedOffline ? 'OFFLINE' : networkMode;
-    triggerTelemetryUpdate();
-  }, [networkMode, forcedOffline, triggerTelemetryUpdate]);
+    if (engineStateRef.current) {
+      engineStateRef.current.network_mode = forcedOffline ? 'OFFLINE' : networkMode;
+      engineStateRef.current.concept_id = conceptId;
+      engineStateRef.current.pack_hash = packHash && packHash !== 'unbuilt' ? packHash.slice(0, 12) : 'e3b0c44298fc';
+      triggerTelemetryUpdate();
+    }
+  }, [networkMode, forcedOffline, conceptId, packHash, triggerTelemetryUpdate]);
 
   // Load stable device ID and compute seed on mount
   useEffect(() => {
@@ -367,7 +420,7 @@ export default function LearnScreen({ navigation }: Props) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            candidate_concept_ids: ['distance_vs_displacement'],
+            candidate_concept_ids: [conceptId],
             mastery_bucket: 'low',
             tier_history: [],
           }),
@@ -379,7 +432,7 @@ export default function LearnScreen({ navigation }: Props) {
       }
     };
     callAgent();
-  }, [forcedOffline, networkMode]);
+  }, [forcedOffline, networkMode, conceptId]);
 
   // When airplane mode is toggled OFF or network becomes ONLINE, attempt to sync pending events
   useEffect(() => {
@@ -408,127 +461,143 @@ export default function LearnScreen({ navigation }: Props) {
 
   // 1. MCQ Option Selection -> calls pure nextAction & persists via insertEvent
   const handleSelectOption = async (optId: string) => {
-    setSelectedOption(optId);
-    const isCorrect = optId === question.correctOptionId;
+    try {
+      setSelectedOption(optId);
+      const isCorrect = optId === question.correctOptionId;
 
-    engineContextRef.current.now = Date.now();
-    const result = nextAction(
-      engineStateRef.current,
-      {
-        type: 'OBSERVE_MCQ',
-        correct: isCorrect,
-        misconception_tag: isCorrect ? null : 'path_equals_displacement',
-      },
-      engineContextRef.current
-    );
+      engineContextRef.current.now = Date.now();
+      const result = nextAction(
+        engineStateRef.current,
+        {
+          type: 'OBSERVE_MCQ',
+          correct: isCorrect,
+          misconception_tag: isCorrect ? null : 'path_equals_displacement',
+        },
+        engineContextRef.current
+      );
 
-    for (const event of result.events) {
-      await insertEvent(event as any);
-    }
-    engineStateRef.current = result.state;
-    triggerTelemetryUpdate();
-    await refreshPending();
-    loadStreakAndStats();
+      for (const event of result.events) {
+        await insertEvent(event as any);
+      }
+      engineStateRef.current = result.state;
+      triggerTelemetryUpdate();
+      await refreshPending();
+      loadStreakAndStats();
 
-    if (isCorrect) {
-      setTimeout(() => setFlowStep('COMPLETION'), 700);
-    } else {
-      setProbeIndex(0);
-      const firstMod = probeSequence[0] || 'T';
-      if (firstMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
-      else if (firstMod === 'A') setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
-      else setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
+      if (isCorrect) {
+        setTimeout(() => setFlowStep('COMPLETION'), 700);
+      } else {
+        setProbeIndex(0);
+        const firstMod = probeSequence[0] || 'T';
+        if (firstMod === 'P') setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
+        else if (firstMod === 'A') setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+        else setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
+      }
+    } catch (err) {
+      console.warn('handleSelectOption error:', err);
     }
   };
 
   // 2. Picture Probe Selection -> calls nextAction (modality P)
   const handleSelectPictureProbe = async (choiceId: string) => {
-    setSelectedProbeChoice(choiceId);
-    const correct = choiceId === pictureProbe.correctChoiceId;
+    try {
+      setSelectedProbeChoice(choiceId);
+      const correct = choiceId === pictureProbe.correctChoiceId;
 
-    engineContextRef.current.now = Date.now();
-    const result = nextAction(
-      engineStateRef.current,
-      {
-        type: 'OBSERVE_PROBE_ITEM',
-        modality: 'P',
-        correct,
-      },
-      engineContextRef.current
-    );
+      engineContextRef.current.now = Date.now();
+      const result = nextAction(
+        engineStateRef.current,
+        {
+          type: 'OBSERVE_PROBE_ITEM',
+          modality: 'P',
+          correct,
+        },
+        engineContextRef.current
+      );
 
-    for (const event of result.events) {
-      await insertEvent(event as any);
+      for (const event of result.events) {
+        await insertEvent(event as any);
+      }
+      engineStateRef.current = result.state;
+      triggerTelemetryUpdate();
+      await refreshPending();
+      loadStreakAndStats();
+
+      setSelectedProbeChoice(null);
+      advanceProbe('P');
+    } catch (err) {
+      console.warn('handleSelectPictureProbe error:', err);
     }
-    engineStateRef.current = result.state;
-    triggerTelemetryUpdate();
-    await refreshPending();
-    loadStreakAndStats();
-
-    setSelectedProbeChoice(null);
-    advanceProbe('P');
   };
 
   // 3. Audio Probe Selection -> calls nextAction (modality A)
   const handleSelectAudioProbe = async (choiceId: string) => {
-    setSelectedProbeChoice(choiceId);
-    const correct = choiceId === audioProbe.correctChoiceId;
+    try {
+      setSelectedProbeChoice(choiceId);
+      const correct = choiceId === audioProbe.correctChoiceId;
 
-    engineContextRef.current.now = Date.now();
-    const result = nextAction(
-      engineStateRef.current,
-      {
-        type: 'OBSERVE_PROBE_ITEM',
-        modality: 'A',
-        correct,
-        audio_available: true,
-      },
-      engineContextRef.current
-    );
+      engineContextRef.current.now = Date.now();
+      const result = nextAction(
+        engineStateRef.current,
+        {
+          type: 'OBSERVE_PROBE_ITEM',
+          modality: 'A',
+          correct,
+          audio_available: true,
+        },
+        engineContextRef.current
+      );
 
-    for (const event of result.events) {
-      await insertEvent(event as any);
+      for (const event of result.events) {
+        await insertEvent(event as any);
+      }
+      engineStateRef.current = result.state;
+      triggerTelemetryUpdate();
+      await refreshPending();
+      loadStreakAndStats();
+
+      setSelectedProbeChoice(null);
+      advanceProbe('A');
+    } catch (err) {
+      console.warn('handleSelectAudioProbe error:', err);
     }
-    engineStateRef.current = result.state;
-    triggerTelemetryUpdate();
-    await refreshPending();
-    loadStreakAndStats();
-
-    setSelectedProbeChoice(null);
-    advanceProbe('A');
   };
 
   // 4. Text Probe Selection -> calls nextAction (modality T)
   const handleSelectTextProbe = async (choiceId: string) => {
-    setSelectedProbeChoice(choiceId);
-    const correct = choiceId === textProbe.correctChoiceId;
+    try {
+      setSelectedProbeChoice(choiceId);
+      const correct = choiceId === textProbe.correctChoiceId;
 
-    engineContextRef.current.now = Date.now();
-    const result = nextAction(
-      engineStateRef.current,
-      {
-        type: 'OBSERVE_PROBE_ITEM',
-        modality: 'T',
-        correct,
-      },
-      engineContextRef.current
-    );
+      engineContextRef.current.now = Date.now();
+      const result = nextAction(
+        engineStateRef.current,
+        {
+          type: 'OBSERVE_PROBE_ITEM',
+          modality: 'T',
+          correct,
+        },
+        engineContextRef.current
+      );
 
-    for (const event of result.events) {
-      await insertEvent(event as any);
-    }
-    engineStateRef.current = result.state;
-    triggerTelemetryUpdate();
-    await refreshPending();
-    loadStreakAndStats();
+      for (const event of result.events) {
+        await insertEvent(event as any);
+      }
+      engineStateRef.current = result.state;
+      triggerTelemetryUpdate();
+      await refreshPending();
+      loadStreakAndStats();
 
-    setSelectedProbeChoice(null);
-    if (result.state.step === 'CONFIRM_ACTIVE') {
-      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
-    } else if (result.state.step === 'EPISODE_DONE') {
-      setTimeout(() => setFlowStep('COMPLETION'), 700);
-    } else {
-      advanceProbe('T');
+      setSelectedProbeChoice(null);
+      if (result.state.step === 'CONFIRM_ACTIVE') {
+        setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+      } else if (result.state.step === 'EPISODE_DONE') {
+        setTimeout(() => setFlowStep('COMPLETION'), 700);
+      } else {
+        advanceProbe('T');
+      }
+    } catch (err) {
+      console.warn('handleSelectTextProbe error:', err);
     }
   };
 
@@ -539,66 +608,78 @@ export default function LearnScreen({ navigation }: Props) {
 
   const handleContinueConfirmation = async () => {
     if (!selectedProbeChoice) return;
-    const correct = selectedProbeChoice === 'c1';
+    try {
+      const correct = selectedProbeChoice === 'c1';
 
-    engineContextRef.current.now = Date.now();
-    const result = nextAction(
-      engineStateRef.current,
-      {
-        type: 'OBSERVE_CONFIRM_ITEM',
-        correct,
-        term_id: 'T_DISP',
-      },
-      engineContextRef.current
-    );
+      engineContextRef.current.now = Date.now();
+      const result = nextAction(
+        engineStateRef.current,
+        {
+          type: 'OBSERVE_CONFIRM_ITEM',
+          correct,
+          term_id: 'T_DISP',
+        },
+        engineContextRef.current
+      );
 
-    for (const event of result.events) {
-      await insertEvent(event as any);
-    }
-    engineStateRef.current = result.state;
-    triggerTelemetryUpdate();
-    await refreshPending();
-    loadStreakAndStats();
+      for (const event of result.events) {
+        await insertEvent(event as any);
+      }
+      engineStateRef.current = result.state;
+      triggerTelemetryUpdate();
+      await refreshPending();
+      loadStreakAndStats();
 
-    if (result.state.step === 'REMEDIATION_ACTIVE' || !correct) {
-      setFlowStep('REMEDIATION');
-    } else {
-      setFlowStep('COMPLETION');
+      if (result.state.step === 'REMEDIATION_ACTIVE' || !correct) {
+        setFlowStep('REMEDIATION');
+      } else {
+        setFlowStep('COMPLETION');
+      }
+    } catch (err) {
+      console.warn('handleContinueConfirmation error:', err);
     }
   };
 
   // 6. Remediation Completion -> advance to next item / completion
   const handleCompleteRemediation = async () => {
-    engineContextRef.current.now = Date.now();
-    const result = nextAction(
-      engineStateRef.current,
-      {
-        type: 'NEXT_LESSON',
-      },
-      engineContextRef.current
-    );
+    try {
+      engineContextRef.current.now = Date.now();
+      const result = nextAction(
+        engineStateRef.current,
+        {
+          type: 'NEXT_LESSON',
+        },
+        engineContextRef.current
+      );
 
-    for (const event of result.events) {
-      await insertEvent(event as any);
+      for (const event of result.events) {
+        await insertEvent(event as any);
+      }
+      engineStateRef.current = result.state;
+      triggerTelemetryUpdate();
+      await refreshPending();
+      loadStreakAndStats();
+
+      setFlowStep('COMPLETION');
+    } catch (err) {
+      console.warn('handleCompleteRemediation error:', err);
     }
-    engineStateRef.current = result.state;
-    triggerTelemetryUpdate();
-    await refreshPending();
-    loadStreakAndStats();
-
-    setFlowStep('COMPLETION');
   };
 
   const handleMicPress = () => {
-    if (voiceState === 'Ready') {
-      setVoiceState('Listening');
-      setTimeout(() => {
-        setVoiceState('Thinking');
+    try {
+      if (voiceState === 'Ready') {
+        setVoiceState('Listening');
         setTimeout(() => {
-          setVoiceState('Ready');
-          handleSelectOption(question.correctOptionId);
-        }, 1200);
-      }, 1500);
+          setVoiceState('Thinking');
+          setTimeout(() => {
+            setVoiceState('Ready');
+            handleSelectOption(question.correctOptionId);
+          }, 1200);
+        }, 1500);
+      }
+    } catch (err) {
+      console.warn('handleMicPress error:', err);
     }
   };
 
@@ -610,22 +691,57 @@ export default function LearnScreen({ navigation }: Props) {
     return optId === question.correctOptionId ? 'correct' : 'default';
   };
 
-  const activeSubjectTitle = profile.subject === 'physics'
+  const currentSubject = subject || profile.subject;
+  const activeSubjectTitle = currentSubject === 'physics'
     ? 'Physics · Motion & Mechanics (ପଦାର୍ଥ ବିଜ୍ଞାନ)'
-    : profile.subject === 'mathematics'
-    ? 'Mathematics (ଗଣିତ)'
+    : currentSubject === 'chemistry'
+    ? 'Chemistry · Carbon & Compounds (ରସାୟନ ବିଜ୍ଞାନ)'
+    : currentSubject === 'biology'
+    ? 'Biology · Fundamental Unit of Life (ଜୀବ ବିଜ୍ଞାନ)'
+    : currentSubject === 'mathematics' || currentSubject === 'maths'
+    ? 'Mathematics · Real Numbers (ଗଣିତ)'
     : 'Science (ବିଜ୍ଞାନ)';
 
-  const activeSubjectTitleOr = profile.subject === 'physics'
+  const activeSubjectTitleOr = currentSubject === 'physics'
     ? 'ପଦାର୍ଥ ବିଜ୍ଞାନ'
-    : profile.subject === 'mathematics'
+    : currentSubject === 'chemistry'
+    ? 'ରସାୟନ ବିଜ୍ଞାନ'
+    : currentSubject === 'biology'
+    ? 'ଜୀବ ବିଜ୍ଞାନ'
+    : currentSubject === 'mathematics' || currentSubject === 'maths'
     ? 'ଗଣିତ'
     : 'ବିଜ୍ଞାନ';
 
-  // Kui Glossary term lookup for displacement
-  const kuiTerm = kuiGlossary?.find((t: any) => t.term_id === 'T_DISP');
+  const activeLessonTitle = currentSubject === 'chemistry'
+    ? 'Substitution Reaction & Covalent Bond (ପ୍ରତିସ୍ଥାପନ)'
+    : currentSubject === 'biology'
+    ? 'Cell Structure & Organelles (କୋଷ ଗଠନ)'
+    : currentSubject === 'mathematics' || currentSubject === 'maths'
+    ? 'Rational & Irrational Numbers (ପରିମେୟ ସଂଖ୍ୟା)'
+    : 'Displacement vs Distance (ବିସ୍ଥାପନ)';
+
+  const activeLessonTitleOr = currentSubject === 'chemistry'
+    ? 'ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା'
+    : currentSubject === 'biology'
+    ? 'କୋଷ ଗଠନ ଏବଂ ମାଇଟୋକଣ୍ଡ୍ରିଆ'
+    : currentSubject === 'mathematics' || currentSubject === 'maths'
+    ? 'ପରିମେୟ ଏବଂ ଅପରିମେୟ ସଂଖ୍ୟା'
+    : 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ';
+
+  const activeChapterSubtitle = currentSubject === 'chemistry'
+    ? 'Chapter 4: Carbon and its Compounds'
+    : currentSubject === 'biology'
+    ? 'Chapter 1: Fundamental Unit of Life'
+    : currentSubject === 'mathematics' || currentSubject === 'maths'
+    ? 'Chapter 1: Number Systems'
+    : 'Chapter 5: Motion & Mechanics';
+
+  // Kui Glossary term lookup for displacement or active subject
+  const kuiTerm = kuiGlossary?.find(
+    (t: any) => t.term_id === 'T_DISP' || t.term_id === 'T_SUBST' || t.term_id === 'T_CELL' || t.term_id === 'T_RATIONAL'
+  ) ?? kuiGlossary?.[0];
   const remediationKuiText = kuiTerm?.kui?.description || 'ବସ୍ତୁ କେଉଁଠାରୁ ଆରମ୍ଭ କରି ଯେଉଁଠାରେ ପହଞ୍ଚେ, ସେହି ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।';
-  const remediationOdiaText = kuiTerm?.odia_from_textbook || 'ବିସ୍ଥାପନ';
+  const remediationOdiaText = kuiTerm?.odia_from_textbook || activeSubjectTitleOr;
 
   // The complete, 100% preserved visual UI of PadhAI Pocket
   const studentUI = (
@@ -652,8 +768,8 @@ export default function LearnScreen({ navigation }: Props) {
           <View>
             <ContinueLearningCard
               subject={activeSubjectTitle}
-              lessonTitle="Displacement vs Distance (ବିସ୍ଥାପନ)"
-              lessonTitleOr="ଦୂରତା ଏବଂ ବିସ୍ଥାପନ"
+              lessonTitle={activeLessonTitle}
+              lessonTitleOr={activeLessonTitleOr}
               lessonNumber="Lesson 2 of 3"
               progressPercent={65}
               onContinue={() => setFlowStep('SOUND_CHECK')}
@@ -685,8 +801,7 @@ export default function LearnScreen({ navigation }: Props) {
                   key={sub.id}
                   module={sub}
                   onPress={() => {
-                    setCurrentTab('Learn');
-                    setFlowStep('LESSON_LIST');
+                    navigation.navigate('SubjectPicker', { initialSubjectId: sub.subjectId || 'physics' });
                   }}
                 />
               ))}
@@ -703,9 +818,9 @@ export default function LearnScreen({ navigation }: Props) {
               <View>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>{activeSubjectTitle}</Text>
-                  <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
+                  <Text style={styles.sectionSub}>{activeChapterSubtitle}</Text>
                 </View>
-                {mockLessonsList.map((les) => (
+                {getLessonsForSubject(currentSubject).map((les) => (
                   <LessonBrowserCard
                     key={les.id}
                     lesson={les}
@@ -719,9 +834,9 @@ export default function LearnScreen({ navigation }: Props) {
               <View>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>{activeSubjectTitle}</Text>
-                  <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
+                  <Text style={styles.sectionSub}>{activeChapterSubtitle}</Text>
                 </View>
-                {mockLessonsList.map((les) => (
+                {getLessonsForSubject(currentSubject).map((les) => (
                   <LessonBrowserCard
                     key={les.id}
                     lesson={les}
@@ -760,8 +875,8 @@ export default function LearnScreen({ navigation }: Props) {
                   promptOr={question.promptOr}
                 />
 
-                {/* 2D SVG Motion Simulation: Sunita Home to School */}
-                <MotionSimulation />
+                {/* Interactive 2D SVG Subject Visualizer (Physics / Chemistry / Biology / Maths) */}
+                <SubjectVisualizer subject={subject} chunkId={chunkId} />
 
                 <View style={styles.optionsList}>
                   {question.options.map((opt) => (
@@ -794,8 +909,8 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'PROBE_PICTURE' && (
               <View>
-                {/* 2D SVG Motion Simulation as visual stimulus for Picture Probe */}
-                <MotionSimulation mode="probe" />
+                {/* 2D SVG Subject Visualizer in probe mode for diagram stimulus */}
+                <SubjectVisualizer subject={subject} chunkId={chunkId} mode="probe" />
                 <PictureProbe
                   prompt={pictureProbe.prompt}
                   titleOr={pictureProbe.titleOr}
@@ -830,12 +945,19 @@ export default function LearnScreen({ navigation }: Props) {
             {flowStep === 'CONFIRMATION' && (
               <ConfirmationCard
                 question={confirmItem?.stem || "If you start at point A, run 100 meters, and return to point A, what is your displacement?"}
-                questionOr="ଯଦି ଆପଣ A ବିନ୍ଦୁରୁ ଦୌଡ଼ି ପୁଣି A କୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"
-                options={[
-                  { id: 'c1', label: 'A', text: '0 m (Zero displacement / ଶୂନ ବିସ୍ଥାପନ)' },
-                  { id: 'c2', label: 'B', text: '100 m' },
-                  { id: 'c3', label: 'C', text: '200 m' },
-                ]}
+                questionOr={confirmItem?.stem || "ଯଦି ଆପଣ A ବିନ୍ଦୁରୁ ଦୌଡ଼ି ପୁଣି A କୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"}
+                options={Array.isArray(confirmItem?.options) && confirmItem.options.length > 0
+                  ? confirmItem.options.map((opt: string, i: number) => ({
+                      id: `c_${i}`,
+                      label: String.fromCharCode(65 + i),
+                      text: opt,
+                    }))
+                  : [
+                      { id: 'c1', label: 'A', text: '0 m (Zero displacement / ଶୂନ ବିସ୍ଥାପନ)' },
+                      { id: 'c2', label: 'B', text: '100 m' },
+                      { id: 'c3', label: 'C', text: '200 m' },
+                    ]
+                }
                 selectedOptionId={selectedProbeChoice}
                 onSelect={handleSelectConfirmation}
                 onContinue={handleContinueConfirmation}
@@ -846,9 +968,9 @@ export default function LearnScreen({ navigation }: Props) {
               const matched = engineStateRef.current?.last_resource_match?.selected;
               return (
                 <RemediationCard
-                  conceptTitle={matched?.title_en ? `${matched.title_en}` : 'Understanding Displacement (ବିସ୍ଥାପନ)'}
+                  conceptTitle={matched?.title_en ? `${matched.title_en}` : `${questionTitle} (${activeSubjectTitleOr})`}
                   explanation={remediationKuiText}
-                  explanationOr={matched?.title_or ? `${matched.title_or} — ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।` : `ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
+                  explanationOr={matched?.title_or ? `${matched.title_or} — ${remediationKuiText}` : `ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
                   resourceId={matched?.resource_id}
                   resourceModality={matched?.modality}
                   resourceReasons={matched?.reasons}

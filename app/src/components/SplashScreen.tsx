@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Image, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Image, Easing, Platform } from 'react-native';
+
+const isNative = Platform.OS !== 'web';
 
 interface SplashScreenProps {
   onReady?: () => void;
@@ -23,7 +25,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
 
   const progressAnim = useRef(new Animated.Value(0)).current;
   const progressTextOpacity = useRef(new Animated.Value(0)).current;
-
   const splashOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -34,13 +35,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
           toValue: -4,
           duration: 1000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
+          useNativeDriver: isNative,
         }),
         Animated.timing(floatAnim, {
           toValue: 0,
           duration: 1000,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
+          useNativeDriver: isNative,
         }),
       ])
     );
@@ -53,13 +54,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
         toValue: 1,
         duration: 400,
         easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }),
       Animated.timing(logoScale, {
         toValue: 1.0,
         duration: 400,
         easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }),
     ]).start();
 
@@ -70,13 +71,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
           toValue: 1,
           duration: 300,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: isNative,
         }),
         Animated.timing(titleTranslateY, {
           toValue: 0,
           duration: 300,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: isNative,
         }),
       ]).start();
     }, 400);
@@ -87,7 +88,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
         toValue: 1,
         duration: 300,
         easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }).start();
     }, 600);
 
@@ -96,7 +97,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
       Animated.timing(signal1Opacity, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }).start();
     }, 800);
 
@@ -105,7 +106,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
       Animated.timing(signal2Opacity, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }).start();
     }, 950);
 
@@ -114,7 +115,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
       Animated.timing(signal3Opacity, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }).start();
     }, 1100);
 
@@ -133,7 +134,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
       Animated.timing(progressTextOpacity, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }).start();
     }, 3500);
 
@@ -142,7 +143,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onReady, onComplete 
       Animated.timing(splashOpacity, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: isNative,
       }).start();
     }, 4000);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,13 +20,21 @@ import {
 
 interface Props {
   navigation?: any;
+  route?: any;
   onSelectTopic?: (topic: BseTopic, subject: BseSubject) => void;
 }
 
-export default function SubjectPickerScreen({ navigation, onSelectTopic }: Props) {
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('physics');
+export default function SubjectPickerScreen({ navigation, route, onSelectTopic }: Props) {
+  const initialSubject = route?.params?.initialSubjectId ?? 'physics';
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>(initialSubject);
   const [pendingModalVisible, setPendingModalVisible] = useState(false);
   const [pendingTopicName, setPendingTopicName] = useState('');
+
+  useEffect(() => {
+    if (route?.params?.initialSubjectId) {
+      setSelectedSubjectId(route.params.initialSubjectId);
+    }
+  }, [route?.params?.initialSubjectId]);
 
   const selectedSubject =
     BSE_SUBJECTS.find((s) => s.id === selectedSubjectId) || BSE_SUBJECTS[0];
@@ -42,9 +50,11 @@ export default function SubjectPickerScreen({ navigation, onSelectTopic }: Props
       onSelectTopic(topic, subject);
     } else if (navigation) {
       navigation.navigate('Learn', {
+        profileId: 'prof_demo_01',
+        subject: subject.id,
+        chunkId: topic.chunkId ?? 'motion_01',
         subjectId: subject.id,
         topicId: topic.id,
-        chunkId: topic.chunkId,
       });
     }
   };
