@@ -7,6 +7,7 @@ import {
   Text,
   Switch,
   Pressable,
+  useWindowDimensions,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
@@ -32,6 +33,7 @@ import { FriendlyState } from '../components/FriendlyState';
 import { BottomNavigation, type MainNavTab } from '../components/BottomNavigation';
 import { StudentSetupModal } from '../components/StudentSetupModal';
 import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
+import { JudgeTelemetryPanel } from '../components/JudgeTelemetryPanel';
 import {
   mockProfile,
   mockStreakGrid,
@@ -41,11 +43,24 @@ import {
   mockProbes,
 } from '../mock/mockData';
 import { useNetworkStatus } from '../network/network';
-import { nextAction, createInitialState, type EngineState, type EngineContext } from '../engine';
+import {
+  nextAction,
+  createInitialState,
+  type EngineState,
+  type EngineContext,
+} from '../engine';
 import { computeSeed } from '../engine/seed';
-import { insertEvent, pendingEvents } from '../db/database';
+import { insertEvent, pendingEvents, subscribeDatabase } from '../db/database';
 import { syncPending } from '../sync/syncClient';
 import { getDeviceId } from '../utils/device';
+import {
+  getHeroChunk,
+  getHeroItem,
+  getProbeItems,
+  getConfirmItem,
+  getKuiGlossary,
+  getPackHash,
+} from '../content/loader';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
@@ -64,6 +79,9 @@ export type LessonFlowStep =
   | 'COMPLETION';
 
 export default function LearnScreen({ navigation }: Props) {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = windowWidth >= 1024;
+
   const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus();
 
   // Navigation tab state (Home, Learn, Progress, Profile)
@@ -78,13 +96,24 @@ export default function LearnScreen({ navigation }: Props) {
   const [selectedProbeChoice, setSelectedProbeChoice] = useState<string | null>(null);
 
   // Modals (isolated from student navigation)
-  // Launches on first open to guide student through Welcome -> Name -> Language -> Subject -> "You're all set!" -> Home
   const [setupModalVisible, setSetupModalVisible] = useState(true);
   const [teacherModalVisible, setTeacherModalVisible] = useState(false);
   const [judgeToolsVisible, setJudgeToolsVisible] = useState(false);
 
   // Profile data in local state
   const [profile, setProfile] = useState(mockProfile);
+
+  // Re-render trigger for live telemetry synchronization
+  const [, setTelemetryTick] = useState(0);
+  const triggerTelemetryUpdate = useCallback(() => setTelemetryTick((t) => t + 1), []);
+
+  // Content pack loader hooks
+  const heroChunk = getHeroChunk();
+  const heroItem = getHeroItem();
+  const probeItems = getProbeItems();
+  const confirmItem = getConfirmItem();
+  const kuiGlossary = getKuiGlossary();
+  const packHash = getPackHash();
 
   // Deterministic Engine Context & State Ref
   const profileId = 'prof_demo_01';
@@ -102,14 +131,16 @@ export default function LearnScreen({ navigation }: Props) {
       conceptId,
       0.42,
       1,
-      forcedOffline ? 'OFFLINE' : networkMode
+      forcedOffline ? 'OFFLINE' : networkMode,
+      packHash && packHash !== 'unbuilt' ? packHash.slice(0, 12) : 'e3b0c44298fc'
     )
   );
 
   // Keep engine state network mode synchronized with actual status
   useEffect(() => {
     engineStateRef.current.network_mode = forcedOffline ? 'OFFLINE' : networkMode;
-  }, [networkMode, forcedOffline]);
+    triggerTelemetryUpdate();
+  }, [networkMode, forcedOffline, triggerTelemetryUpdate]);
 
   // Load stable device ID and compute seed on mount
   useEffect(() => {
@@ -117,6 +148,7 @@ export default function LearnScreen({ navigation }: Props) {
       .then((id) => {
         if (engineContextRef.current) {
           engineContextRef.current.device_id = id;
+          triggerTelemetryUpdate();
         }
       })
       .catch(() => {});
@@ -125,12 +157,21 @@ export default function LearnScreen({ navigation }: Props) {
       .then((computed) => {
         if (engineContextRef.current) {
           engineContextRef.current.seed = computed;
+          triggerTelemetryUpdate();
         }
       })
       .catch(() => {});
-  }, [profileId, conceptId]);
+  }, [profileId, conceptId, triggerTelemetryUpdate]);
 
-  // When airplane mode is toggled OFF, attempt to sync pending events
+  // Listen to database changes for real-time telemetry updates
+  useEffect(() => {
+    const unsub = subscribeDatabase(() => {
+      triggerTelemetryUpdate();
+    });
+    return unsub;
+  }, [triggerTelemetryUpdate]);
+
+  // When airplane mode is toggled OFF or network becomes ONLINE, attempt to sync pending events
   useEffect(() => {
     if (!forcedOffline && networkMode === 'ONLINE') {
       syncPending().catch(() => {});
@@ -144,23 +185,29 @@ export default function LearnScreen({ navigation }: Props) {
       if (pending.length > 0 && !forcedOffline && networkMode === 'ONLINE') {
         await syncPending();
       }
+      triggerTelemetryUpdate();
     } catch (e) {
       console.warn('refreshPending error', e);
     }
-  }, [forcedOffline, networkMode]);
+  }, [forcedOffline, networkMode, triggerTelemetryUpdate]);
 
-  // 1. MCQ Option Selection -> calls nextAction & persists via insertEvent
+  // Active question & options resolution from pack loader / mock fallback
+  const questionTitle = heroChunk?.title || mockLessonQuestion.title;
+  const questionStory = heroChunk?.odiaText || mockLessonQuestion.storyContext;
+  const questionPrompt = heroItem?.stem || mockLessonQuestion.prompt;
+
+  // 1. MCQ Option Selection -> calls pure nextAction & persists via insertEvent
   const handleSelectOption = async (optId: string) => {
     setSelectedOption(optId);
-    const correct = optId === mockLessonQuestion.correctOptionId;
+    const isCorrect = optId === 'opt_a' || optId === mockLessonQuestion.correctOptionId;
 
     engineContextRef.current.now = Date.now();
     const result = nextAction(
       engineStateRef.current,
       {
         type: 'OBSERVE_MCQ',
-        correct,
-        misconception_tag: correct ? null : 'path_equals_displacement',
+        correct: isCorrect,
+        misconception_tag: isCorrect ? null : 'path_equals_displacement',
       },
       engineContextRef.current
     );
@@ -169,9 +216,10 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
-    if (correct) {
+    if (isCorrect) {
       setTimeout(() => setFlowStep('COMPLETION'), 700);
     } else {
       setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
@@ -198,6 +246,7 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
     setSelectedProbeChoice(null);
@@ -225,6 +274,7 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
     setSelectedProbeChoice(null);
@@ -251,10 +301,17 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
     setSelectedProbeChoice(null);
-    setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+    if (result.state.step === 'CONFIRM_ACTIVE') {
+      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+    } else if (result.state.step === 'EPISODE_DONE') {
+      setTimeout(() => setFlowStep('COMPLETION'), 700);
+    } else {
+      setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+    }
   };
 
   // 5. Confirmation Selection -> calls nextAction (OBSERVE_CONFIRM_ITEM)
@@ -281,12 +338,13 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
-    if (correct) {
-      setFlowStep('COMPLETION');
-    } else {
+    if (result.state.step === 'REMEDIATION_ACTIVE' || !correct) {
       setFlowStep('REMEDIATION');
+    } else {
+      setFlowStep('COMPLETION');
     }
   };
 
@@ -305,6 +363,7 @@ export default function LearnScreen({ navigation }: Props) {
       await insertEvent(event as any);
     }
     engineStateRef.current = result.state;
+    triggerTelemetryUpdate();
     await refreshPending();
 
     setFlowStep('COMPLETION');
@@ -317,55 +376,54 @@ export default function LearnScreen({ navigation }: Props) {
         setVoiceState('Thinking');
         setTimeout(() => {
           setVoiceState('Ready');
-          handleSelectOption(mockLessonQuestion.correctOptionId);
+          handleSelectOption('opt_a');
         }, 1200);
       }, 1500);
-    } else if (voiceState === 'Listening') {
-      setVoiceState('Thinking');
-      setTimeout(() => setVoiceState('Ready'), 1000);
     }
   };
 
   const getOptionState = (optId: string): OptionState => {
     if (!selectedOption) return 'default';
-    if (optId === selectedOption) {
-      return optId === mockLessonQuestion.correctOptionId ? 'correct' : 'needs-review';
+    if (selectedOption === optId) {
+      return optId === 'opt_a' ? 'correct' : 'needs-review';
     }
-    return 'default';
+    return optId === 'opt_a' ? 'correct' : 'default';
   };
 
-  // Derive dashboard active subject labels from student profile choice
-  const activeSubjectTitle =
-    profile.subject === 'mathematics'
-      ? 'Mathematics · Number Systems'
-      : profile.subject === 'science'
-      ? 'Science · Cells & Living World'
-      : 'Physics · Motion';
+  const activeSubjectTitle = profile.subject === 'physics'
+    ? 'Physics · Motion & Mechanics (ପଦାର୍ଥ ବିଜ୍ଞାନ)'
+    : profile.subject === 'mathematics'
+    ? 'Mathematics (ଗଣିତ)'
+    : 'Science (ବିଜ୍ଞାନ)';
 
-  const activeSubjectTitleOr =
-    profile.subject === 'mathematics'
-      ? 'ସଂଖ୍ୟା ପ୍ରଣାଳୀ'
-      : profile.subject === 'science'
-      ? 'କୋଷ ଓ ଜୀବ ଜଗତ'
-      : 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ';
+  const activeSubjectTitleOr = profile.subject === 'physics'
+    ? 'ପଦାର୍ଥ ବିଜ୍ଞାନ'
+    : profile.subject === 'mathematics'
+    ? 'ଗଣିତ'
+    : 'ବିଜ୍ଞାନ';
 
-  return (
+  // Kui Glossary term lookup for displacement
+  const kuiTerm = kuiGlossary?.find((t: any) => t.term_id === 'T_DISP');
+  const remediationKuiText = kuiTerm?.kui?.description || 'ବସ୍ତୁ କେଉଁଠାରୁ ଆରମ୍ଭ କରି ଯେଉଁଠାରେ ପହଞ୍ଚେ, ସେହି ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।';
+  const remediationOdiaText = kuiTerm?.odia_from_textbook || 'ବିସ୍ଥାପନ';
+
+  // The complete, 100% preserved visual UI of PadhAI Pocket
+  const studentUI = (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header with greeting and status */}
-        <AppHeader
-          greeting={`Good morning, ${profile.name}`}
-          subgreeting="Keep learning, one step at a time."
-          avatar={profile.avatar}
-          gender={profile.gender}
-          networkMode={networkMode}
-          forcedOffline={forcedOffline}
-          onAvatarPress={() => {
-            setCurrentTab('Profile');
-            setFlowStep('DASHBOARD');
-          }}
-        />
+      {/* Branded Header */}
+      <AppHeader
+        greeting={`Good morning, ${profile.name}`}
+        subgreeting="Keep learning, one step at a time."
+        gender={profile.gender}
+        networkMode={networkMode}
+        forcedOffline={forcedOffline}
+        onAvatarPress={() => setCurrentTab('Profile')}
+      />
 
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ======================================================== */}
         {/* TAB 1: HOME DASHBOARD                                    */}
         {/* ======================================================== */}
@@ -373,10 +431,10 @@ export default function LearnScreen({ navigation }: Props) {
           <View>
             <ContinueLearningCard
               subject={activeSubjectTitle}
-              lessonNumber="Lesson 2"
-              lessonTitle="Displacement and Distance"
-              lessonTitleOr={activeSubjectTitleOr}
-              progressPercent={80}
+              lessonTitle="Displacement vs Distance (ବିସ୍ଥାପନ)"
+              lessonTitleOr="ଦୂରତା ଏବଂ ବିସ୍ଥାପନ"
+              lessonNumber="Lesson 2 of 3"
+              progressPercent={65}
               onContinue={() => setFlowStep('SOUND_CHECK')}
             />
 
@@ -472,11 +530,11 @@ export default function LearnScreen({ navigation }: Props) {
             {flowStep === 'QUESTION_INTERACTION' && (
               <View>
                 <LessonContentCard
-                  conceptTitle={mockLessonQuestion.title}
+                  conceptTitle={questionTitle}
                   conceptTitleOr={mockLessonQuestion.titleOr}
-                  story={mockLessonQuestion.storyContext}
+                  story={questionStory}
                   storyOr={mockLessonQuestion.storyContextOr}
-                  prompt={mockLessonQuestion.prompt}
+                  prompt={questionPrompt}
                   promptOr={mockLessonQuestion.promptOr}
                 />
 
@@ -499,10 +557,10 @@ export default function LearnScreen({ navigation }: Props) {
                   onFallbackPress={() => setVoiceState('Tap instead')}
                 />
 
-                {selectedOption && selectedOption !== mockLessonQuestion.correctOptionId && (
+                {selectedOption && selectedOption !== 'opt_a' && (
                   <View style={styles.supportNote}>
                     <Text style={styles.supportNoteText}>
-                      Let's look at this together · ଚାଲନ୍ତୁ ଏହାକୁ ବୁଝିବା
+                      Let{"'"}s look at this together · ଚାଲନ୍ତୁ ଏହାକୁ ବୁଝିବା
                     </Text>
                   </View>
                 )}
@@ -540,10 +598,10 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'CONFIRMATION' && (
               <ConfirmationCard
-                question="If you start at point A, run 100 meters, and return to point A, what is your displacement?"
+                question={confirmItem?.stem || "If you start at point A, run 100 meters, and return to point A, what is your displacement?"}
                 questionOr="ଯଦି ଆପଣ A ବିନ୍ଦୁରୁ ଦୌଡ଼ି ପୁଣି A କୁ ଫେରିଆସନ୍ତି, ତେବେ ବିସ୍ଥାପନ କେତେ?"
                 options={[
-                  { id: 'c1', label: 'A', text: '0 m (Zero displacement)' },
+                  { id: 'c1', label: 'A', text: '0 m (Zero displacement / ଶୂନ ବିସ୍ଥାପନ)' },
                   { id: 'c2', label: 'B', text: '100 m' },
                   { id: 'c3', label: 'C', text: '200 m' },
                 ]}
@@ -555,8 +613,8 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'REMEDIATION' && (
               <RemediationCard
-                explanation="Displacement is the straight-line distance between where you started and where you ended. If you walk east 3 meters and west 3 meters, you are back at 0 meters!"
-                explanationOr="ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବିସ୍ଥାପନ କୁହାଯାଏ।"
+                explanation={remediationKuiText}
+                explanationOr={`ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଏବଂ ଅନ୍ତିମ ବିନ୍ଦୁ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ${remediationOdiaText} କୁହାଯାଏ।`}
                 onListen={() => {}}
                 onTryAgain={() => {
                   setSelectedOption(null);
@@ -569,6 +627,7 @@ export default function LearnScreen({ navigation }: Props) {
 
             {flowStep === 'COMPLETION' && (
               <CompletionCard
+                studentName={profile.name}
                 lessonTitle="Displacement & Distance"
                 pointsEarned={10}
                 streakDays={profile.streakDays}
@@ -611,30 +670,40 @@ export default function LearnScreen({ navigation }: Props) {
               <View style={styles.topicRow}>
                 <View style={styles.topicMeta}>
                   <Text style={styles.topicName}>Motion & Mechanics</Text>
-                  <Text style={styles.topicPercent}>80%</Text>
+                  <Text style={styles.topicPercent}>
+                    {Math.round(engineStateRef.current.concept_mastery * 100)}%
+                  </Text>
                 </View>
                 <View style={styles.topicTrack}>
-                  <View style={[styles.topicFill, { width: '80%', backgroundColor: colors.primary }]} />
+                  <View
+                    style={[
+                      styles.topicFill,
+                      {
+                        width: `${Math.round(engineStateRef.current.concept_mastery * 100)}%`,
+                        backgroundColor: colors.primary,
+                      },
+                    ]}
+                  />
                 </View>
               </View>
 
               <View style={styles.topicRow}>
                 <View style={styles.topicMeta}>
-                  <Text style={styles.topicName}>Laws of Motion</Text>
-                  <Text style={styles.topicPercent}>40%</Text>
+                  <Text style={styles.topicName}>Term Bridge (Displacement / {remediationOdiaText})</Text>
+                  <Text style={styles.topicPercent}>
+                    {Math.round((engineStateRef.current.term_masteries?.['T_DISP'] ?? 0.4) * 100)}%
+                  </Text>
                 </View>
                 <View style={styles.topicTrack}>
-                  <View style={[styles.topicFill, { width: '40%', backgroundColor: colors.secondary }]} />
-                </View>
-              </View>
-
-              <View style={styles.topicRow}>
-                <View style={styles.topicMeta}>
-                  <Text style={styles.topicName}>Gravitation</Text>
-                  <Text style={styles.topicPercent}>10%</Text>
-                </View>
-                <View style={styles.topicTrack}>
-                  <View style={[styles.topicFill, { width: '10%', backgroundColor: colors.accent }]} />
+                  <View
+                    style={[
+                      styles.topicFill,
+                      {
+                        width: `${Math.round((engineStateRef.current.term_masteries?.['T_DISP'] ?? 0.4) * 100)}%`,
+                        backgroundColor: colors.secondary,
+                      },
+                    ]}
+                  />
                 </View>
               </View>
             </View>
@@ -652,7 +721,6 @@ export default function LearnScreen({ navigation }: Props) {
               onOpenTeacherPin={() => setTeacherModalVisible(true)}
             />
 
-            {/* Offline learning confidence notice */}
             <FriendlyState
               type="OFFLINE_READY"
               onAction={() => {
@@ -665,7 +733,7 @@ export default function LearnScreen({ navigation }: Props) {
         )}
 
         {/* ======================================================== */}
-        {/* JUDGE & DEMO CONTROLS (Discreet bottom section)          */}
+        {/* JUDGE & DEMO CONTROLS (Discreet section on mobile)       */}
         {/* ======================================================== */}
         {judgeToolsVisible && (
           <View style={styles.judgeSection}>
@@ -744,9 +812,53 @@ export default function LearnScreen({ navigation }: Props) {
       />
     </SafeAreaView>
   );
+
+  // Desktop Judge Mode Split-Screen View (≥1024px)
+  if (isDesktop) {
+    return (
+      <View style={styles.desktopContainer}>
+        <View style={styles.phoneFrame}>
+          {studentUI}
+        </View>
+        <View style={styles.telemetryPane}>
+          <JudgeTelemetryPanel
+            engineState={engineStateRef.current}
+            engineContext={engineContextRef.current}
+            networkMode={networkMode}
+            forcedOffline={forcedOffline}
+            onToggleForcedOffline={setForcedOffline}
+            onRefreshParent={refreshPending}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  return studentUI;
 }
 
 const styles = StyleSheet.create({
+  desktopContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#0F172A',
+    width: '100%',
+    height: '100%',
+  },
+  phoneFrame: {
+    width: 440,
+    maxWidth: 480,
+    height: '100%',
+    backgroundColor: colors.background,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    overflow: 'hidden',
+  },
+  telemetryPane: {
+    flex: 1,
+    height: '100%',
+    backgroundColor: '#F1F5F9',
+  },
   safe: {
     flex: 1,
     backgroundColor: colors.background,

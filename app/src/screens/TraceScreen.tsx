@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, Switch } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, radius } from '../theme/theme';
 import { TraceTimeline } from '../components/TraceTimeline';
 import { mockTraceEvents } from '../mock/mockData';
-import { listEvents } from '../db/database';
+import { listEvents, subscribeDatabase } from '../db/database';
 import type { StoredEvent } from '../types/events';
 
 export default function TraceScreen({ navigation }: any) {
@@ -25,6 +25,14 @@ export default function TraceScreen({ navigation }: any) {
       load();
     }, [load])
   );
+
+  useEffect(() => {
+    load();
+    const unsub = subscribeDatabase(() => {
+      load();
+    });
+    return unsub;
+  }, [load]);
 
   const displayEvents = demoMode
     ? mockTraceEvents

@@ -5,6 +5,7 @@ import LearnScreen from './src/screens/LearnScreen';
 import TraceScreen from './src/screens/TraceScreen';
 import RawLogScreen from './src/screens/RawLogScreen';
 import { SplashScreen } from './src/components/SplashScreen';
+import { GlobalErrorBoundary } from './src/components/GlobalErrorBoundary';
 import { initDatabase } from './src/db/database';
 
 export type RootStackParamList = {
@@ -28,16 +29,22 @@ export default function App() {
   }, []);
 
   if (!ready) {
-    return <SplashScreen />;
+    return (
+      <GlobalErrorBoundary>
+        <SplashScreen />
+      </GlobalErrorBoundary>
+    );
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Learn" component={LearnScreen} />
-        <Stack.Screen name="Trace" component={TraceScreen} />
-        <Stack.Screen name="RawLog" component={RawLogScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <GlobalErrorBoundary>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Learn" component={LearnScreen} />
+          <Stack.Screen name="Trace" component={TraceScreen} />
+          <Stack.Screen name="RawLog" component={RawLogScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </GlobalErrorBoundary>
   );
 }

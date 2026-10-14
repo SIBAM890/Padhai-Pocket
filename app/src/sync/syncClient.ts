@@ -6,7 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 export const DEFAULT_API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
-export const REGISTRATION_CODE = 'PADHAI-DEMO-2026';
+export const REGISTRATION_CODE = 'REG-DEMO-2026';
 
 export interface SyncConfig {
   baseUrl?: string;
@@ -56,6 +56,14 @@ let storedDeviceToken: string | undefined = undefined;
 export function setDeviceCredentials(deviceId: string, token?: string) {
   storedDeviceId = deviceId;
   storedDeviceToken = token;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (token) {
+        window.localStorage.setItem('device_token', token);
+        window.localStorage.setItem(`device_token_${deviceId}`, token);
+      }
+    }
+  } catch {}
 }
 
 export function getDeviceCredentials() {
@@ -63,18 +71,63 @@ export function getDeviceCredentials() {
 }
 
 /**
- * Gets the stored device token, or registers if missing.
- * For demo, uses a dev token the backend accepts without registration.
+ * Helper to determine best backend URL:
+ * - explicit config URL if supplied
+ * - EXPO_PUBLIC_API_URL env var if supplied
+ * - on web browser: window.location.origin (for Metro reverse-proxy to FastAPI)
+ * - fallback: http://localhost:8000
  */
-export async function getDeviceToken(baseUrl: string = DEFAULT_API_BASE_URL, deviceId: string = storedDeviceId): Promise<string> {
+export function resolveApiBaseUrl(customUrl?: string): string {
+  if (customUrl) return customUrl;
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    return window.location.origin;
+  }
+  return DEFAULT_API_BASE_URL;
+}
+
+/**
+ * Gets the stored device token, or automatically registers if missing.
+ */
+export async function getDeviceToken(
+  baseUrl: string = DEFAULT_API_BASE_URL,
+  deviceId: string = storedDeviceId
+): Promise<string> {
+  if (storedDeviceToken) return storedDeviceToken;
+
+  // 1. Check localStorage if on Web
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored =
+        window.localStorage.getItem(`device_token_${deviceId}`) ||
+        window.localStorage.getItem('device_token');
+      if (stored) {
+        storedDeviceToken = stored;
+        return stored;
+      }
+    }
+  } catch {}
+
+  // 2. Check SecureStore if on native
   try {
     const stored = await SecureStore.getItemAsync('device_token');
-    if (stored) return stored;
-  } catch {
-    // SecureStore might not be available on web
+    if (stored) {
+      storedDeviceToken = stored;
+      return stored;
+    }
+  } catch {}
+
+  // 3. Auto-register device with backend using standard registration code
+  try {
+    const reg = await registerDevice(REGISTRATION_CODE, deviceId, baseUrl);
+    if (reg.ok && reg.token) {
+      storedDeviceToken = reg.token;
+      return reg.token;
+    }
+  } catch (e) {
+    console.warn('Auto-registration failed or backend offline:', e);
   }
 
-  if (storedDeviceToken) return storedDeviceToken;
   return 'dev-token-' + deviceId;
 }
 
@@ -112,7 +165,7 @@ export async function registerDevice(
       const errData = await response.json().catch(() => ({}));
       return {
         ok: false,
-        error: errData?.message || `REGISTRATION_FAILED_${response.status}`,
+        error: errData?.detail || errData?.message || `REGISTRATION_FAILED_${response.status}`,
       };
     }
 
@@ -122,9 +175,7 @@ export async function registerDevice(
 
     try {
       await SecureStore.setItemAsync('device_token', data.token);
-    } catch {
-      // SecureStore may fail on web
-    }
+    } catch {}
 
     return { ok: true, deviceId: returnedDeviceId, token: data.token };
   } catch (err: any) {
@@ -134,9 +185,10 @@ export async function registerDevice(
 
 /**
  * POST /v1/sync/events
+ * Batch event upload with idempotency, ACKED/DUPLICATES handling, and 401/403 stop rules.
  */
 export async function syncPending(config?: SyncConfig): Promise<SyncResult> {
-  const baseUrl = config?.baseUrl || DEFAULT_API_BASE_URL;
+  const baseUrl = config?.baseUrl || resolveApiBaseUrl();
   const deviceId = config?.deviceId || storedDeviceId;
 
   const mode = await detectNetworkMode(`${baseUrl}/healthz`);
@@ -161,6 +213,24 @@ export async function syncPending(config?: SyncConfig): Promise<SyncResult> {
       body: JSON.stringify({ device_id: deviceId, events }),
     });
 
+    // Handle 401/403 auth errors: stop retries and clear stale token
+    if (response.status === 401 || response.status === 403) {
+      storedDeviceToken = undefined;
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.removeItem('device_token');
+          window.localStorage.removeItem(`device_token_${deviceId}`);
+        }
+      } catch {}
+      return {
+        acked: 0,
+        duplicates: 0,
+        rejected: 0,
+        skipped: true,
+        error: `AUTH_${response.status}`,
+      };
+    }
+
     if (!response.ok) {
       throw new Error(`SYNC_${response.status}`);
     }
@@ -171,11 +241,15 @@ export async function syncPending(config?: SyncConfig): Promise<SyncResult> {
       rejected?: Array<{ event_id: string; reason: string }>;
     };
 
+    // ACK both newly acknowledged and duplicate events
     const acked = [...(data.acked ?? []), ...(data.duplicates ?? [])];
     await markAcked(acked);
 
+    // Mark rejected events
     const rejected = (data.rejected ?? []).map((x) => x.event_id);
-    await markError(rejected);
+    if (rejected.length > 0) {
+      await markError(rejected);
+    }
 
     return {
       acked: data.acked?.length ?? 0,
@@ -197,12 +271,14 @@ export async function syncPending(config?: SyncConfig): Promise<SyncResult> {
 
 /**
  * GET /v1/summary
+ * Queries live diagnostic cohort summary from backend.
  */
 export async function getTeacherSummary(
   config?: SyncConfig
 ): Promise<TeacherSummaryResult> {
-  const baseUrl = config?.baseUrl || DEFAULT_API_BASE_URL;
-  const token = config?.token || storedDeviceToken;
+  const baseUrl = config?.baseUrl || resolveApiBaseUrl();
+  const deviceId = config?.deviceId || storedDeviceId;
+  const token = config?.token || (await getDeviceToken(baseUrl, deviceId));
 
   try {
     const response = await fetch(`${baseUrl}/v1/summary`, {
@@ -244,13 +320,15 @@ export async function getTeacherSummary(
 
 /**
  * DELETE /v1/profiles/{id}
+ * Server-side audit-logged purge & local event purge.
  */
 export async function purgeProfileOnServer(
   profileId: string,
   config?: SyncConfig
 ): Promise<PurgeResult> {
-  const baseUrl = config?.baseUrl || DEFAULT_API_BASE_URL;
-  const token = config?.token || storedDeviceToken;
+  const baseUrl = config?.baseUrl || resolveApiBaseUrl();
+  const deviceId = config?.deviceId || storedDeviceId;
+  const token = config?.token || (await getDeviceToken(baseUrl, deviceId));
 
   try {
     const response = await fetch(`${baseUrl}/v1/profiles/${profileId}`, {
@@ -285,6 +363,8 @@ export async function purgeProfileOnServer(
       purgedEventsCount: data.purged_events_count,
     };
   } catch (err: any) {
+    // Purge locally even if backend is offline
+    await purgeProfile(profileId);
     return {
       ok: false,
       profileId,
