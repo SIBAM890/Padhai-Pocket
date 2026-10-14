@@ -10,7 +10,7 @@
 
 import type { PadhaiEvent, StoredEvent, SyncStatus } from '../types/events';
 
-export const STORAGE_KEY = 'padhai_pocket_events_v1';
+export const STORAGE_KEY = 'padhai_events';
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -39,54 +39,41 @@ function notifyListeners() {
 
 function isLocalStorageAvailable(): boolean {
   try {
-    return typeof window !== 'undefined' && !!window.localStorage;
+    return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
   } catch {
     return false;
   }
 }
 
-function loadFromStorage(): Map<string, StoredEvent> {
-  const map = new Map<string, StoredEvent>();
-  if (!isLocalStorageAvailable()) return map;
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as StoredEvent[];
-      if (Array.isArray(parsed)) {
-        for (const ev of parsed) {
-          if (ev && ev.event_id) {
-            map.set(ev.event_id, ev);
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('Failed to load events from localStorage', err);
-  }
-  return map;
-}
-
-function saveToStorage(map: Map<string, StoredEvent>): void {
+function persistEvents(map: Map<string, StoredEvent>): void {
   if (!isLocalStorageAvailable()) return;
-
   try {
-    const arr = Array.from(map.values());
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    window.localStorage.setItem('padhai_events', JSON.stringify(Array.from(map.entries())));
   } catch (err) {
-    console.warn('Failed to save events to localStorage', err);
+    console.warn('Failed to persist events to localStorage', err);
   }
 }
 
-// In-memory cache synced with localStorage
-let eventsMap: Map<string, StoredEvent> = loadFromStorage();
+// Module load: initialize eventsMap from localStorage ('padhai_events')
+const stored = isLocalStorageAvailable() ? window.localStorage.getItem('padhai_events') : null;
+let eventsMap: Map<string, StoredEvent> = new Map(stored ? JSON.parse(stored) : []);
 
 export async function getDatabase(): Promise<void> {
   return;
 }
 
 export async function initDatabase(): Promise<void> {
-  eventsMap = loadFromStorage();
+  // Do NOT clear eventsMap — preserve persisted events across refresh
+  if (isLocalStorageAvailable()) {
+    const fresh = window.localStorage.getItem('padhai_events');
+    if (fresh) {
+      try {
+        eventsMap = new Map(JSON.parse(fresh));
+      } catch (err) {
+        console.warn('Failed to parse padhai_events on init', err);
+      }
+    }
+  }
   notifyListeners();
 }
 
@@ -94,9 +81,6 @@ export async function insertEvent(
   event: PadhaiEvent,
   status: SyncStatus = 'PENDING'
 ): Promise<void> {
-  // Reload latest from storage in case another tab updated
-  eventsMap = loadFromStorage();
-
   const storedEvent: StoredEvent = {
     ...event,
     sync_status: status,
@@ -105,12 +89,11 @@ export async function insertEvent(
   };
 
   eventsMap.set(event.event_id, storedEvent);
-  saveToStorage(eventsMap);
+  persistEvents(eventsMap);
   notifyListeners();
 }
 
 export async function listEvents(limit = 200): Promise<StoredEvent[]> {
-  eventsMap = loadFromStorage();
   const allEvents = Array.from(eventsMap.values());
 
   // Sort by seq descending, then ts descending
@@ -123,7 +106,6 @@ export async function listEvents(limit = 200): Promise<StoredEvent[]> {
 }
 
 export async function pendingEvents(limit = 200): Promise<PadhaiEvent[]> {
-  eventsMap = loadFromStorage();
   const now = Date.now();
   const pending: PadhaiEvent[] = [];
 
@@ -143,7 +125,6 @@ export async function pendingEvents(limit = 200): Promise<PadhaiEvent[]> {
 
 export async function markAcked(ids: string[]): Promise<void> {
   if (!ids.length) return;
-  eventsMap = loadFromStorage();
 
   for (const id of ids) {
     const event = eventsMap.get(id);
@@ -155,13 +136,12 @@ export async function markAcked(ids: string[]): Promise<void> {
     }
   }
 
-  saveToStorage(eventsMap);
+  persistEvents(eventsMap);
   notifyListeners();
 }
 
 export async function markError(ids: string[]): Promise<void> {
   if (!ids.length) return;
-  eventsMap = loadFromStorage();
   const now = Date.now();
 
   for (const id of ids) {
@@ -177,7 +157,7 @@ export async function markError(ids: string[]): Promise<void> {
     }
   }
 
-  saveToStorage(eventsMap);
+  persistEvents(eventsMap);
   notifyListeners();
 }
 
@@ -190,10 +170,12 @@ export async function markRejected(ids: string[], reason: string): Promise<void>
       eventsMap.set(id, event);
     }
   }
+
+  persistEvents(eventsMap);
+  notifyListeners();
 }
 
 export async function purgeProfile(profileId: string): Promise<void> {
-  eventsMap = loadFromStorage();
   let deleted = false;
 
   for (const [id, event] of eventsMap.entries()) {
@@ -204,15 +186,13 @@ export async function purgeProfile(profileId: string): Promise<void> {
   }
 
   if (deleted) {
-    saveToStorage(eventsMap);
+    persistEvents(eventsMap);
     notifyListeners();
   }
 }
 
 export async function clearAllEvents(): Promise<void> {
   eventsMap.clear();
-  if (isLocalStorageAvailable()) {
-    window.localStorage.removeItem(STORAGE_KEY);
-  }
+  persistEvents(eventsMap);
   notifyListeners();
 }
