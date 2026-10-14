@@ -49,7 +49,7 @@ import {
 } from '../engine';
 import { computeSeed, probeOrder } from '../engine/seed';
 import { insertEvent, listEvents, pendingEvents, subscribeDatabase } from '../db/database';
-import { syncPending } from '../sync/syncClient';
+import { syncPending, resolveApiBaseUrl } from '../sync/syncClient';
 import { getDeviceId } from '../utils/device';
 import {
   getTimeOfDayGreeting,
@@ -86,7 +86,8 @@ export default function LearnScreen({ navigation }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = windowWidth >= 1024;
 
-  const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus();
+  const backendBaseUrl = resolveApiBaseUrl();
+  const { networkMode, forcedOffline, setForcedOffline } = useNetworkStatus(`${backendBaseUrl}/healthz`);
 
   // Navigation tab state (Home, Learn, Progress, Profile)
   const [currentTab, setCurrentTab] = useState<MainNavTab>('Home');
