@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LearnScreen from './src/screens/LearnScreen';
+import TraceScreen from './src/screens/TraceScreen';
+import RawLogScreen from './src/screens/RawLogScreen';
+import ProgressScreen from './src/screens/ProgressScreen';
 import { SplashScreen } from './src/components/SplashScreen';
 import { GlobalErrorBoundary } from './src/components/GlobalErrorBoundary';
 import { initDatabase } from './src/db/database';
-import {
-  FinaleNavigator,
-  FinaleStackParamList,
-  FINALE_ROUTES,
-} from './src/navigation/FinaleRoutes';
+import { FINALE_ROUTES } from './src/navigation/FinaleRoutes';
 
 import { StatusBar } from 'react-native';
 import { colors } from './src/theme/theme';
 
-export type RootStackParamList = FinaleStackParamList;
+export type RootStackParamList = {
+  Learn: undefined;
+  Trace: undefined;
+  RawLog: undefined;
+  Progress: { profileId: string };
+};
+
 export { FINALE_ROUTES };
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const appNavigationTheme = {
   ...DefaultTheme,
@@ -53,7 +62,12 @@ export default function App() {
         theme={appNavigationTheme}
         documentTitle={{ formatter: () => 'Padhai Pocket' }}
       >
-        <FinaleNavigator initialRouteName="Learn" />
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Learn" component={LearnScreen} />
+          <Stack.Screen name="Trace" component={TraceScreen} />
+          <Stack.Screen name="RawLog" component={RawLogScreen} />
+          <Stack.Screen name="Progress" component={ProgressScreen} />
+        </Stack.Navigator>
       </NavigationContainer>
     </GlobalErrorBoundary>
   );
