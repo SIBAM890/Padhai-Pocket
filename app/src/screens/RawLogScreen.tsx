@@ -2,24 +2,25 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, radius } from '../theme/theme';
-import { BottomNavigation } from '../components/BottomNavigation';
 import { listEvents } from '../db/database';
-import { mockTraceEvents } from '../mock/mockData';
 
 export default function RawLogScreen({ navigation }: any) {
   const [jsonText, setJsonText] = useState('Loading log entries...');
   const [copiedNotice, setCopiedNotice] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const rows = await listEvents(200);
+      setIsError(false);
+      const rows = await listEvents(100);
       if (rows && rows.length > 0) {
         setJsonText(JSON.stringify(rows, null, 2));
       } else {
-        setJsonText(JSON.stringify(mockTraceEvents, null, 2));
+        setJsonText('[]');
       }
-    } catch {
-      setJsonText(JSON.stringify(mockTraceEvents, null, 2));
+    } catch (err: any) {
+      setIsError(true);
+      setJsonText(`Failed to load SQLite log entries: ${err?.message ?? 'Unknown error'}`);
     }
   }, []);
 
@@ -29,9 +30,29 @@ export default function RawLogScreen({ navigation }: any) {
     }, [load])
   );
 
-  const handleCopy = () => {
-    setCopiedNotice(true);
-    setTimeout(() => setCopiedNotice(false), 2000);
+  const handleCopy = async () => {
+    try {
+      // Cross-platform clipboard support: expo-clipboard if present, navigator.clipboard on web
+      let copied = false;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const Clipboard = require('expo-clipboard');
+        if (Clipboard && Clipboard.setStringAsync) {
+          await Clipboard.setStringAsync(jsonText);
+          copied = true;
+        }
+      } catch {}
+
+      if (!copied && typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(jsonText);
+        copied = true;
+      }
+
+      setCopiedNotice(true);
+      setTimeout(() => setCopiedNotice(false), 2000);
+    } catch (e) {
+      console.warn('Clipboard write failed', e);
+    }
   };
 
   return (
@@ -58,18 +79,19 @@ export default function RawLogScreen({ navigation }: any) {
             onPress={load}
             accessibilityRole="button"
           >
-            <Text style={styles.toolBtnText}>🔄 Refresh Log</Text>
+            <Text style={styles.toolBtnText}>Refresh</Text>
           </Pressable>
         </View>
 
-        {/* JSON Viewer */}
-        <View style={styles.codeContainer}>
-          <Text selectable style={styles.code}>
+        {/* Code display card in light palette */}
+        <View style={[styles.codeContainer, isError && styles.codeContainerError]}>
+          <Text selectable style={[styles.code, isError && styles.codeError]}>
             {jsonText}
           </Text>
         </View>
       </ScrollView>
 
+      {/* Navigation footer */}
       <View style={styles.navBar}>
         <Pressable
           style={styles.navBtn}
@@ -85,7 +107,7 @@ export default function RawLogScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#050a12',
+    backgroundColor: colors.background,
   },
   container: {
     padding: spacing.md + 2,
@@ -96,7 +118,7 @@ const styles = StyleSheet.create({
   },
   kicker: {
     ...typography.caption,
-    color: colors.primaryLight,
+    color: colors.primary,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
@@ -138,11 +160,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  codeContainerError: {
+    borderColor: colors.error,
+    backgroundColor: colors.errorLight,
+  },
   code: {
     ...typography.mono,
     color: colors.primary,
     fontSize: 12,
     lineHeight: 18,
+  },
+  codeError: {
+    color: colors.error,
   },
   navBar: {
     backgroundColor: '#FFFFFF',

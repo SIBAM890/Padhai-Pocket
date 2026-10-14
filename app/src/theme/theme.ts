@@ -24,6 +24,9 @@ export const colors = {
   success: '#22C55E',            // Energetic Green (used sparingly)
   successLight: '#DCFCE7',
   
+  error: '#EF4444',              // Clean Red for errors and diagnostic flags
+  errorLight: '#FEE2E2',
+
   accent: '#FF6B5F',             // Warm Coral for milestones & streaks
   accentLight: '#FFEBEA',
   

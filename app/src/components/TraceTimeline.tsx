@@ -59,8 +59,26 @@ export const TraceTimeline: React.FC<TraceTimelineProps> = ({
                     <Text style={[styles.nodeText, { color: nodeColor }]}>{ev.node}</Text>
                   </View>
                   <Text style={styles.time}>{ev.timestamp}</Text>
-                  <View style={[styles.statusTag, ev.status === 'ACKED' ? styles.statusAcked : styles.statusPending]}>
-                    <Text style={[styles.statusText, ev.status === 'ACKED' ? styles.statusTextAcked : styles.statusTextPending]}>
+                  <View
+                    style={[
+                      styles.statusTag,
+                      ev.status === 'ACKED'
+                        ? styles.statusAcked
+                        : ev.status === 'ERROR'
+                        ? styles.statusError
+                        : styles.statusPending,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        ev.status === 'ACKED'
+                          ? styles.statusTextAcked
+                          : ev.status === 'ERROR'
+                          ? styles.statusTextError
+                          : styles.statusTextPending,
+                      ]}
+                    >
                       {ev.status}
                     </Text>
                   </View>
@@ -180,6 +198,9 @@ const styles = StyleSheet.create({
   statusPending: {
     backgroundColor: colors.warningLight,
   },
+  statusError: {
+    backgroundColor: colors.errorLight,
+  },
   statusText: {
     fontSize: 10,
     fontWeight: '800',
@@ -189,6 +210,9 @@ const styles = StyleSheet.create({
   },
   statusTextPending: {
     color: colors.warning,
+  },
+  statusTextError: {
+    color: colors.error,
   },
   action: {
     ...typography.body,

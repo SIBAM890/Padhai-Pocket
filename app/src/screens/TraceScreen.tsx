@@ -1,36 +1,22 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, Switch } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, typography, spacing, radius } from '../theme/theme';
 import { TraceTimeline } from '../components/TraceTimeline';
-import { BottomNavigation } from '../components/BottomNavigation';
 import { mockTraceEvents } from '../mock/mockData';
 import { listEvents } from '../db/database';
 import type { StoredEvent } from '../types/events';
 
 export default function TraceScreen({ navigation }: any) {
-  const [events, setEvents] = useState<any[]>(mockTraceEvents);
+  const [events, setEvents] = useState<StoredEvent[]>([]);
+  const [demoMode, setDemoMode] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const dbRows = await listEvents(100);
-      if (dbRows && dbRows.length > 0) {
-        // Map SQLite rows to TraceTimeline format
-        const mapped = dbRows.map((row: StoredEvent, index: number) => ({
-          id: row.event_id,
-          node: row.node,
-          action: row.action,
-          description: `Action: ${row.action} (seq ${row.seq})`,
-          timestamp: new Date(row.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          status: row.sync_status,
-          seq: row.seq,
-          payload: row.output ?? {},
-        }));
-        setEvents(mapped);
-      }
+      setEvents(dbRows ?? []);
     } catch {
-      // Fallback cleanly to mock trace events if SQLite is empty
-      setEvents(mockTraceEvents);
+      setEvents([]);
     }
   }, []);
 
@@ -39,6 +25,19 @@ export default function TraceScreen({ navigation }: any) {
       load();
     }, [load])
   );
+
+  const displayEvents = demoMode
+    ? mockTraceEvents
+    : events.map((row: StoredEvent) => ({
+        id: row.event_id,
+        node: row.node,
+        action: row.action,
+        description: `Action: ${row.action} (seq ${row.seq})`,
+        timestamp: new Date(row.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: row.sync_status,
+        seq: row.seq,
+        payload: row.output ?? {},
+      }));
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -51,11 +50,36 @@ export default function TraceScreen({ navigation }: any) {
           </Text>
         </View>
 
-        <TraceTimeline
-          episodeId="Episode #001 · BSE9-PHYS-MOTION-S02"
-          summaryTitle="State Machine: OBSERVE ➔ MASTERY ➔ PROBE ➔ REFLECT ➔ ACT"
-          events={events}
-        />
+        {/* Explicit Demo Mode Toggle */}
+        <View style={styles.demoRow}>
+          <View>
+            <Text style={styles.demoLabel}>Demo Trace Data</Text>
+            <Text style={styles.demoSub}>Show mock events for stage demonstration</Text>
+          </View>
+          <Switch value={demoMode} onValueChange={setDemoMode} />
+        </View>
+
+        {!demoMode && events.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>📋</Text>
+            <Text style={styles.emptyTitle}>No events yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Answer a question first to view live engine transitions and SQLite rows.
+            </Text>
+            <Pressable
+              style={styles.emptyBtn}
+              onPress={() => navigation.navigate('Learn')}
+            >
+              <Text style={styles.emptyBtnText}>Go to Lesson</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <TraceTimeline
+            episodeId="Episode #001 · BSE9-PHYS-MOTION-S02"
+            summaryTitle="State Machine: OBSERVE ➔ MASTERY ➔ PROBE ➔ REFLECT ➔ ACT"
+            events={displayEvents}
+          />
+        )}
       </ScrollView>
 
       <View style={styles.navBar}>
@@ -90,7 +114,7 @@ const styles = StyleSheet.create({
   },
   kicker: {
     ...typography.caption,
-    color: colors.primaryLight,
+    color: colors.primary,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
@@ -103,6 +127,63 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.textMuted,
     marginTop: 4,
+    marginBottom: spacing.sm,
+  },
+  demoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  demoLabel: {
+    ...typography.bodySmall,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  demoSub: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  emptyContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.hero,
+    padding: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginVertical: spacing.xl,
+  },
+  emptyIcon: {
+    fontSize: 40,
+    marginBottom: spacing.md,
+  },
+  emptyTitle: {
+    ...typography.h2,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  emptySubtitle: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.lg,
+  },
+  emptyBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.button,
+  },
+  emptyBtnText: {
+    ...typography.button,
   },
   navBar: {
     flexDirection: 'row',

@@ -11,6 +11,9 @@
     "plugins": [
       "expo-sqlite",
       "expo-secure-store"
-    ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.padhaipocket.app"
+    }
   }
 }

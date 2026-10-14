@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 import {
@@ -22,20 +22,41 @@ export interface SetupFinishData {
 
 interface StudentSetupModalProps {
   visible: boolean;
+  initialProfile?: Partial<SetupFinishData>;
   onFinish: (data: SetupFinishData) => void;
   onClose?: () => void;
 }
 
 export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
   visible,
+  initialProfile,
   onFinish,
   onClose,
 }) => {
   const [step, setStep] = useState<SetupStep>('WELCOME');
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState<'male' | 'female'>('female');
-  const [selectedLanguage, setSelectedLanguage] = useState<'odia' | 'english'>('odia');
-  const [selectedSubject, setSelectedSubject] = useState<'physics' | 'mathematics' | 'science'>('physics');
+  const [name, setName] = useState(initialProfile?.name || '');
+  const [gender, setGender] = useState<'male' | 'female'>(initialProfile?.gender || 'female');
+  const [selectedLanguage, setSelectedLanguage] = useState<'odia' | 'english'>(
+    initialProfile?.language || 'odia'
+  );
+  const [selectedSubject, setSelectedSubject] = useState<'physics' | 'mathematics' | 'science'>(
+    initialProfile?.subject || 'physics'
+  );
+
+  // When modal is reopened, reset to editing step with initialProfile loaded
+  useEffect(() => {
+    if (visible) {
+      if (initialProfile?.name) {
+        setName(initialProfile.name);
+        setGender(initialProfile.gender || 'female');
+        setSelectedLanguage(initialProfile.language || 'odia');
+        setSelectedSubject(initialProfile.subject || 'physics');
+        setStep('NAME_GENDER');
+      } else {
+        setStep('WELCOME');
+      }
+    }
+  }, [visible, initialProfile]);
 
   if (!visible) return null;
 
@@ -66,7 +87,15 @@ export const StudentSetupModal: React.FC<StudentSetupModalProps> = ({
 
             <Pressable
               style={styles.secondaryBtn}
-              onPress={() => setStep('ALL_SET')}
+              onPress={() => {
+                if (initialProfile?.name) {
+                  setName(initialProfile.name);
+                  setGender(initialProfile.gender || 'female');
+                  setSelectedLanguage(initialProfile.language || 'odia');
+                  setSelectedSubject(initialProfile.subject || 'physics');
+                }
+                setStep('ALL_SET');
+              }}
               accessibilityRole="button"
               accessibilityLabel="I already have a profile"
             >

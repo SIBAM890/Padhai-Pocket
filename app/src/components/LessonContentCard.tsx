@@ -29,6 +29,13 @@ export const LessonContentCard: React.FC<LessonContentCardProps> = ({
       <Text style={styles.title}>{conceptTitle}</Text>
       {conceptTitleOr && <Text style={styles.titleOr}>{conceptTitleOr}</Text>}
 
+      {story && (
+        <View style={styles.storyBox}>
+          <Text style={styles.storyText}>{story}</Text>
+          {storyOr && <Text style={styles.storyOrText}>{storyOr}</Text>}
+        </View>
+      )}
+
       {/* Visual East/West movement track */}
       <View style={styles.diagramContainer}>
         <Text style={styles.diagramTitle}>Visual Concept Guide</Text>
@@ -96,6 +103,25 @@ const styles = StyleSheet.create({
     color: colors.secondary,
     fontWeight: '600',
     marginTop: 2,
+  },
+  storyBox: {
+    backgroundColor: colors.primaryLight,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    marginVertical: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  storyText: {
+    ...typography.bodySmall,
+    color: colors.textPrimary,
+    lineHeight: 20,
+    fontWeight: '600',
+  },
+  storyOrText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   diagramContainer: {
     backgroundColor: colors.background,

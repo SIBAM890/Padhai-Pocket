@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -41,6 +41,10 @@ import {
   mockProbes,
 } from '../mock/mockData';
 import { useNetworkStatus } from '../network/network';
+import { nextAction, createInitialState, type EngineState, type EngineContext } from '../engine';
+import { computeSeed } from '../engine/seed';
+import { insertEvent, pendingEvents } from '../db/database';
+import { syncPending } from '../sync/syncClient';
 import type { RootStackParamList } from '../../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Learn'>;
@@ -81,15 +85,208 @@ export default function LearnScreen({ navigation }: Props) {
   // Profile data in local state
   const [profile, setProfile] = useState(mockProfile);
 
-  // Handlers
-  const handleSelectOption = (optId: string) => {
+  // Deterministic Engine Context & State Ref
+  const profileId = 'prof_demo_01';
+  const conceptId = 'distance_vs_displacement';
+  const engineContextRef = useRef<EngineContext>({
+    now: Date.now(),
+    seed: computeSeed(profileId, conceptId, 'A'),
+  });
+
+  const engineStateRef = useRef<EngineState>(
+    createInitialState(
+      profileId,
+      'sess_01',
+      conceptId,
+      0.42,
+      1,
+      forcedOffline ? 'OFFLINE' : networkMode
+    )
+  );
+
+  // Keep engine state network mode synchronized with actual status
+  useEffect(() => {
+    engineStateRef.current.network_mode = forcedOffline ? 'OFFLINE' : networkMode;
+  }, [networkMode, forcedOffline]);
+
+  // When airplane mode is toggled OFF, attempt to sync pending events
+  useEffect(() => {
+    if (!forcedOffline && networkMode === 'ONLINE') {
+      syncPending().catch(() => {});
+    }
+  }, [forcedOffline, networkMode]);
+
+  // Helper to refresh pending queue & trigger sync if online
+  const refreshPending = useCallback(async () => {
+    try {
+      const pending = await pendingEvents(10);
+      if (pending.length > 0 && !forcedOffline && networkMode === 'ONLINE') {
+        await syncPending();
+      }
+    } catch (e) {
+      console.warn('refreshPending error', e);
+    }
+  }, [forcedOffline, networkMode]);
+
+  // 1. MCQ Option Selection -> calls nextAction & persists via insertEvent
+  const handleSelectOption = async (optId: string) => {
     setSelectedOption(optId);
-    if (optId === mockLessonQuestion.correctOptionId) {
+    const correct = optId === mockLessonQuestion.correctOptionId;
+
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_MCQ',
+        correct,
+        misconception_tag: correct ? null : 'path_equals_displacement',
+      },
+      engineContextRef.current
+    );
+
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    if (correct) {
       setTimeout(() => setFlowStep('COMPLETION'), 700);
     } else {
-      // Natural transition to probe exploration
       setTimeout(() => setFlowStep('PROBE_PICTURE'), 700);
     }
+  };
+
+  // 2. Picture Probe Selection -> calls nextAction (modality P)
+  const handleSelectPictureProbe = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+    const correct = choiceId === mockProbes.PICTURE.correctChoiceId;
+
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_PROBE_ITEM',
+        modality: 'P',
+        correct,
+      },
+      engineContextRef.current
+    );
+
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    setSelectedProbeChoice(null);
+    setTimeout(() => setFlowStep('PROBE_AUDIO'), 700);
+  };
+
+  // 3. Audio Probe Selection -> calls nextAction (modality A)
+  const handleSelectAudioProbe = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+    const correct = choiceId === mockProbes.AUDIO.correctChoiceId;
+
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_PROBE_ITEM',
+        modality: 'A',
+        correct,
+        audio_available: true,
+      },
+      engineContextRef.current
+    );
+
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    setSelectedProbeChoice(null);
+    setTimeout(() => setFlowStep('PROBE_TEXT'), 700);
+  };
+
+  // 4. Text Probe Selection -> calls nextAction (modality T)
+  const handleSelectTextProbe = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+    const correct = choiceId === mockProbes.TEXT.correctChoiceId;
+
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_PROBE_ITEM',
+        modality: 'T',
+        correct,
+      },
+      engineContextRef.current
+    );
+
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    setSelectedProbeChoice(null);
+    setTimeout(() => setFlowStep('CONFIRMATION'), 700);
+  };
+
+  // 5. Confirmation Selection -> calls nextAction (OBSERVE_CONFIRM_ITEM)
+  const handleSelectConfirmation = async (choiceId: string) => {
+    setSelectedProbeChoice(choiceId);
+  };
+
+  const handleContinueConfirmation = async () => {
+    if (!selectedProbeChoice) return;
+    const correct = selectedProbeChoice === 'c1';
+
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'OBSERVE_CONFIRM_ITEM',
+        correct,
+        term_id: 'T_DISP',
+      },
+      engineContextRef.current
+    );
+
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    if (correct) {
+      setFlowStep('COMPLETION');
+    } else {
+      setFlowStep('REMEDIATION');
+    }
+  };
+
+  // 6. Remediation Completion -> advance to next item / completion
+  const handleCompleteRemediation = async () => {
+    engineContextRef.current.now = Date.now();
+    const result = nextAction(
+      engineStateRef.current,
+      {
+        type: 'NEXT_LESSON',
+      },
+      engineContextRef.current
+    );
+
+    for (const event of result.events) {
+      await insertEvent(event as any);
+    }
+    engineStateRef.current = result.state;
+    await refreshPending();
+
+    setFlowStep('COMPLETION');
   };
 
   const handleMicPress = () => {
@@ -116,6 +313,21 @@ export default function LearnScreen({ navigation }: Props) {
     return 'default';
   };
 
+  // Derive dashboard active subject labels from student profile choice
+  const activeSubjectTitle =
+    profile.subject === 'mathematics'
+      ? 'Mathematics · Number Systems'
+      : profile.subject === 'science'
+      ? 'Science · Cells & Living World'
+      : 'Physics · Motion';
+
+  const activeSubjectTitleOr =
+    profile.subject === 'mathematics'
+      ? 'ସଂଖ୍ୟା ପ୍ରଣାଳୀ'
+      : profile.subject === 'science'
+      ? 'କୋଷ ଓ ଜୀବ ଜଗତ'
+      : 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ';
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -127,7 +339,10 @@ export default function LearnScreen({ navigation }: Props) {
           gender={profile.gender}
           networkMode={networkMode}
           forcedOffline={forcedOffline}
-          onAvatarPress={() => setCurrentTab('Profile')}
+          onAvatarPress={() => {
+            setCurrentTab('Profile');
+            setFlowStep('DASHBOARD');
+          }}
         />
 
         {/* ======================================================== */}
@@ -136,12 +351,12 @@ export default function LearnScreen({ navigation }: Props) {
         {currentTab === 'Home' && flowStep === 'DASHBOARD' && (
           <View>
             <ContinueLearningCard
-              subject="Physics · Motion"
+              subject={activeSubjectTitle}
               lessonNumber="Lesson 2"
               lessonTitle="Displacement and Distance"
-              lessonTitleOr="ଦୂରତା ଏବଂ ବିସ୍ଥାପନ"
+              lessonTitleOr={activeSubjectTitleOr}
               progressPercent={80}
-              onContinue={() => setFlowStep('LESSON_INTRO')}
+              onContinue={() => setFlowStep('SOUND_CHECK')}
             />
 
             <StreakGrid
@@ -154,7 +369,7 @@ export default function LearnScreen({ navigation }: Props) {
               goalTitle="Complete 1 lesson today"
               activitiesDone={1}
               totalActivities={3}
-              onPress={() => setFlowStep('LESSON_INTRO')}
+              onPress={() => setFlowStep('SOUND_CHECK')}
             />
 
             {/* Subject Modules */}
@@ -181,19 +396,19 @@ export default function LearnScreen({ navigation }: Props) {
         {/* ======================================================== */}
         {/* TAB 2 / LESSON FLOW: BROWSER & LESSON EXPERIENCE        */}
         {/* ======================================================== */}
-        {(currentTab === 'Learn' || flowStep !== 'DASHBOARD') && (
+        {(currentTab === 'Learn' || flowStep !== 'DASHBOARD') && currentTab !== 'Progress' && currentTab !== 'Profile' && (
           <View>
             {flowStep === 'DASHBOARD' && (
               <View>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Physics · Motion</Text>
+                  <Text style={styles.sectionTitle}>{activeSubjectTitle}</Text>
                   <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
                 </View>
                 {mockLessonsList.map((les) => (
                   <LessonBrowserCard
                     key={les.id}
                     lesson={les}
-                    onPress={() => setFlowStep('LESSON_INTRO')}
+                    onPress={() => setFlowStep('SOUND_CHECK')}
                   />
                 ))}
               </View>
@@ -202,34 +417,34 @@ export default function LearnScreen({ navigation }: Props) {
             {flowStep === 'LESSON_LIST' && (
               <View>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Physics · Motion</Text>
+                  <Text style={styles.sectionTitle}>{activeSubjectTitle}</Text>
                   <Text style={styles.sectionSub}>Chapter 5 Lessons</Text>
                 </View>
                 {mockLessonsList.map((les) => (
                   <LessonBrowserCard
                     key={les.id}
                     lesson={les}
-                    onPress={() => setFlowStep('LESSON_INTRO')}
+                    onPress={() => setFlowStep('SOUND_CHECK')}
                   />
                 ))}
               </View>
             )}
 
+            {flowStep === 'SOUND_CHECK' && (
+              <SoundCheck
+                onHeard={() => setFlowStep('LESSON_INTRO')}
+                onCannotHear={() => setFlowStep('LESSON_INTRO')}
+              />
+            )}
+
             {flowStep === 'LESSON_INTRO' && (
               <LessonIntroCard
-                title="Motion & Mechanics"
-                titleOr="ଦୂରତା ଏବଂ ବିସ୍ଥାପନ"
+                title={activeSubjectTitle}
+                titleOr={activeSubjectTitleOr}
                 estimatedMinutes={5}
                 lessonNumber="Lesson 2 of 3"
                 onStart={() => setFlowStep('QUESTION_INTERACTION')}
                 onBack={() => setFlowStep('DASHBOARD')}
-              />
-            )}
-
-            {flowStep === 'SOUND_CHECK' && (
-              <SoundCheck
-                onHeard={() => setFlowStep('QUESTION_INTERACTION')}
-                onCannotHear={() => setFlowStep('PROBE_PICTURE')}
               />
             )}
 
@@ -279,10 +494,7 @@ export default function LearnScreen({ navigation }: Props) {
                 titleOr={mockProbes.PICTURE.titleOr}
                 choices={mockProbes.PICTURE.choices}
                 selectedChoiceId={selectedProbeChoice}
-                onSelect={(id) => {
-                  setSelectedProbeChoice(id);
-                  setTimeout(() => setFlowStep('CONFIRMATION'), 700);
-                }}
+                onSelect={handleSelectPictureProbe}
               />
             )}
 
@@ -291,10 +503,7 @@ export default function LearnScreen({ navigation }: Props) {
                 prompt={mockProbes.AUDIO.prompt}
                 choices={mockProbes.AUDIO.choices}
                 selectedChoiceId={selectedProbeChoice}
-                onSelect={(id) => {
-                  setSelectedProbeChoice(id);
-                  setTimeout(() => setFlowStep('CONFIRMATION'), 700);
-                }}
+                onSelect={handleSelectAudioProbe}
               />
             )}
 
@@ -304,10 +513,7 @@ export default function LearnScreen({ navigation }: Props) {
                 promptOr={mockProbes.TEXT.promptOr}
                 choices={mockProbes.TEXT.choices}
                 selectedChoiceId={selectedProbeChoice}
-                onSelect={(id) => {
-                  setSelectedProbeChoice(id);
-                  setTimeout(() => setFlowStep('CONFIRMATION'), 700);
-                }}
+                onSelect={handleSelectTextProbe}
               />
             )}
 
@@ -321,8 +527,8 @@ export default function LearnScreen({ navigation }: Props) {
                   { id: 'c3', label: 'C', text: '200 m' },
                 ]}
                 selectedOptionId={selectedProbeChoice}
-                onSelect={setSelectedProbeChoice}
-                onContinue={() => setFlowStep('COMPLETION')}
+                onSelect={handleSelectConfirmation}
+                onContinue={handleContinueConfirmation}
               />
             )}
 
@@ -333,9 +539,10 @@ export default function LearnScreen({ navigation }: Props) {
                 onListen={() => {}}
                 onTryAgain={() => {
                   setSelectedOption(null);
+                  setSelectedProbeChoice(null);
                   setFlowStep('QUESTION_INTERACTION');
                 }}
-                onContinue={() => setFlowStep('COMPLETION')}
+                onContinue={handleCompleteRemediation}
               />
             )}
 
@@ -486,6 +693,7 @@ export default function LearnScreen({ navigation }: Props) {
         onSelectTab={(tab) => {
           setCurrentTab(tab);
           if (tab === 'Home') setFlowStep('DASHBOARD');
+          if (tab === 'Progress' || tab === 'Profile') setFlowStep('DASHBOARD');
         }}
         onOpenJudgeTools={() => setJudgeToolsVisible(!judgeToolsVisible)}
       />
@@ -493,6 +701,7 @@ export default function LearnScreen({ navigation }: Props) {
       {/* Modals */}
       <StudentSetupModal
         visible={setupModalVisible}
+        initialProfile={profile}
         onClose={() => setSetupModalVisible(false)}
         onFinish={(data) => {
           setProfile((p) => ({
@@ -533,42 +742,44 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   sectionSub: {
-    ...typography.bodySmall,
+    ...typography.caption,
     color: colors.textMuted,
     marginTop: 2,
   },
   subjectsRow: {
-    gap: spacing.sm,
-    paddingBottom: spacing.sm,
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
   },
   optionsList: {
-    marginVertical: spacing.sm,
+    marginVertical: spacing.md,
+    gap: spacing.sm,
   },
   supportNote: {
     backgroundColor: '#F5F7FF',
     padding: spacing.md,
     borderRadius: radius.card,
+    marginTop: spacing.md,
     alignItems: 'center',
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
-    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
   },
   supportNoteText: {
-    ...typography.bodySmall,
-    fontWeight: '700',
+    ...typography.caption,
     color: colors.primary,
+    fontWeight: '700',
   },
   progressCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: radius.card,
-    padding: spacing.lg,
+    padding: spacing.md,
+    marginTop: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.lg,
-    ...shadows.card,
+    ...shadows.subtle,
   },
   progressCardTitle: {
-    ...typography.cardHeading,
+    ...typography.body,
+    fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: spacing.md,
   },
@@ -582,31 +793,31 @@ const styles = StyleSheet.create({
   },
   topicName: {
     ...typography.bodySmall,
-    fontWeight: '600',
     color: colors.textPrimary,
+    fontWeight: '600',
   },
   topicPercent: {
     ...typography.caption,
-    fontWeight: '700',
     color: colors.textMuted,
+    fontWeight: '700',
   },
   topicTrack: {
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.background,
+    borderRadius: radius.full,
     overflow: 'hidden',
   },
   topicFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: radius.full,
   },
   judgeSection: {
     backgroundColor: '#FFFFFF',
     borderRadius: radius.card,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.xl,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    marginTop: spacing.lg,
     ...shadows.subtle,
   },
   judgeTop: {

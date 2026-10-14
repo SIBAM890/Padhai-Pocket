@@ -15,7 +15,7 @@ export const NetworkBadge: React.FC<NetworkBadgeProps> = ({ mode, forcedOffline 
     <View style={[styles.container, isOnline ? styles.onlineBox : styles.offlineBox]}>
       <Text style={styles.icon}>{isOnline ? '☁️' : '💾'}</Text>
       <Text style={[styles.label, isOnline ? styles.onlineLabel : styles.offlineLabel]}>
-        {isOnline ? 'Synced' : 'Saved on device'}
+        {isOnline ? 'Online' : 'Saved on device'}
       </Text>
     </View>
   );
