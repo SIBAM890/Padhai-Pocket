@@ -1,29 +1,9 @@
 import motionPack from '../../../content/motion_pack.json';
-
-// Safely load other verified subject packs with graceful fallbacks
-let gravitationPack: any = null;
-try {
-  // @ts-ignore
-  gravitationPack = require('../../../content/gravitation_pack.json');
-} catch {
-  gravitationPack = null;
-}
-
-let chemistryPack: any = null;
-try {
-  // @ts-ignore
-  chemistryPack = require('../../../content/packs/chemistry.json');
-} catch {
-  chemistryPack = null;
-}
-
-let biologyPack: any = null;
-try {
-  // @ts-ignore
-  biologyPack = require('../../../content/packs/biology.json');
-} catch {
-  biologyPack = null;
-}
+import gravitationPack from '../../../content/gravitation_pack.json';
+import physicsPack from '../../../content/packs/physics.json';
+import chemistryPack from '../../../content/packs/chemistry.json';
+import biologyPack from '../../../content/packs/biology.json';
+import mathsPack from '../../../content/packs/maths.json';
 
 export interface HeroChunk {
   chunkId: string;
@@ -62,10 +42,13 @@ export function getPackForSubject(subject?: string, chunkId?: string): any {
   if (s === 'biology' || c?.includes('bio') || c?.includes('cell')) {
     return biologyPack || motionPack;
   }
+  if (s === 'maths' || s === 'mathematics' || c?.includes('math') || c?.includes('rational') || c?.includes('real')) {
+    return mathsPack || motionPack;
+  }
   if (c?.includes('grav') || c === 'mass_and_weight' || c === 'mass_vs_weight') {
     return gravitationPack || motionPack;
   }
-  return motionPack;
+  return physicsPack || motionPack;
 }
 
 export function getHeroChunk(subject?: string, chunkId?: string): HeroChunk | null {

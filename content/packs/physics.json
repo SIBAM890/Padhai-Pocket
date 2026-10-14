@@ -1,0 +1,335 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "4a11284a85573a8ae426e5758701cc3baace83c8cd095b7e4c8d0d70eb0b1a9d",
+    "built_at": "2026-10-14T15:18:13Z"
+  },
+  "chapter": {
+    "subject": "Physical Science",
+    "class": 9,
+    "chapter_no": "5"
+  },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-PHYS-MOTION-S02-01",
+      "title_or": "ଏକ ସରଳରେଖାରେ ଗତି ଏବଂ ଦୂରତା",
+      "odia_text": "ବସ୍ତୁ ସରଳରେଖାରେ ଗତିକଲେ, ବସ୍ତୁର ସେହି ଗତିକୁ ସରଳରୈଖିକ ଗତି କୁହାଯାଏ । ମନେକର ଗୋଟିଏ ବସ୍ତୁ ଏକ ସରଳରେଖାରେ ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ବିନ୍ଦୁ ‘O’ ଠାରୁ ତାହାର ଗତି ଆରମ୍ଭ କଲା । ଭିନ୍ନ ଭିନ୍ନ ସମୟରେ A, B ଓ C ବସ୍ତୁର ବିଭିନ୍ନ ଅବସ୍ଥାନର ତିନୋଟି ବିନ୍ଦୁ । ବସ୍ତୁଟି C ଓ B ବିନ୍ଦୁ ଦେଇ A ଆଡ଼କୁ ଯାଇଛି । ସେଠାରୁ ପୁନଶ୍ଚ ସେ B ବିନ୍ଦୁ ଦେଇ C ବିନ୍ଦୁକୁ ଫେରିଆସିଛି । ବସ୍ତୁଟି ଅତିକ୍ରାନ୍ତ କରିଥିବା ମୋଟ ଦୂରତା = OA + AC = 60 km + 35 km = 95 km । ଦୂରତା ଏକ ଅଦିଶ ରାଶି (scalar quantity) ଅଟେ । ଏହାର ଦିଗ ନଥାଏ । ଏହି ଭୌତିକ ରାଶିର ପରିମାଣକୁ କେବଳ ସଂଖ୍ୟାଦ୍ୱାରା ପ୍ରକାଶ କରାଯାଏ ।",
+      "terms": [
+        "T_DIST"
+      ],
+      "source_page": 58,
+      "status": "demo_approved",
+      "reviewed_by": "Pritam"
+    },
+    {
+      "chunk_id": "BSE9-PHYS-MOTION-S02-02",
+      "title_or": "ବିସ୍ଥାପନ ଏବଂ ଦୂରତାର ସଂଜ୍ଞା",
+      "odia_text": "ଗୋଟିଏ ବସ୍ତୁ ଏକ ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁରୁ ତାର ଗତି ଆରମ୍ଭ କରି ଏକ ଅନ୍ତିମ ବିନ୍ଦୁରେ ପହଞ୍ଚିଲା ପରେ ସେହି ବିନ୍ଦୁ ଦ୍ୱୟ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ବସ୍ତୁର ବିସ୍ଥାପନ (displacement) କୁହାଯାଏ । ବିସ୍ଥାପନ ଏକ ସଦିଶ ରାଶି (vector quantity) ଅଟେ । ଏହାର ଉଭୟ ପରିମାଣ ଓ ଦିଗ ରହିଥାଏ । ବିସ୍ଥାପନର ଦିଗ ସର୍ବଦା ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁରୁ ଅନ୍ତିମ ବିନ୍ଦୁ ଆଡ଼କୁ ହୋଇଥାଏ । ଗୋଟିଏ ବସ୍ତୁ ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁରୁ ବାହାରି କୌଣସି ଏକ ପଥରେ ଗତିକରି ଅନ୍ତିମ ବିନ୍ଦୁରେ ପହଞ୍ଚିଲେ ବସ୍ତୁଟି ଅତିକ୍ରମ କରିଥିବା ପଥର ପ୍ରକୃତ ଦୈର୍ଘ୍ୟ (length)କୁ ଦୂରତା କୁହାଯାଏ । ମାତ୍ର ବିସ୍ଥାପନ କେବଳ ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଓ ଅନ୍ତିମ ବିନ୍ଦୁ ଉପରେ ନିର୍ଭର କରିଥାଏ । ସେହି ବିନ୍ଦୁ ଦ୍ୱୟ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତା ଦ୍ୱାରା ବିସ୍ଥାପନର ପରିମାଣ ପ୍ରକାଶିତ ହୁଏ । ଦୂରତାର ଏକକ ବିସ୍ଥାପନର ଏକକ ସହ ସମାନ । ଯଥା : km ବା m ବା cm ଇତ୍ୟାଦି ।",
+      "terms": [
+        "T_DIST",
+        "T_DISP"
+      ],
+      "source_page": 58,
+      "status": "demo_approved",
+      "reviewed_by": "Pritam"
+    },
+    {
+      "chunk_id": "BSE9-PHYS-MOTION-S02-03",
+      "title_or": "ଦୂରତା ଏବଂ ବିସ୍ଥାପନର ଉଦାହରଣ ଓ ପାର୍ଥକ୍ୟ",
+      "odia_text": "ଚିତ୍ର 5.1ରେ ବସ୍ତୁଟି ‘O’ ଠାରୁ A ପର୍ଯ୍ୟନ୍ତ ଏକ ସରଳରେଖାରେ 60km ଦୂରତା ଯାଇଛି । ଏଠାରେ ବିସ୍ଥାପନର ପରିମାଣ ମଧ୍ୟ ସେହି 60km । ବସ୍ତୁଟି ‘O’ ଠାରୁ A ପର୍ଯ୍ୟନ୍ତ ଯାଇ ପୁନଶ୍ଚ Bକୁ ଫେରିଆସିଲେ, ଅତିକ୍ରାନ୍ତ ଦୂରତା ହେବ, = OA + AB = 60 km + 25 km = 85 km । ମାତ୍ର B ସ୍ଥାନରେ ମୂଳବିନ୍ଦୁ ‘O’ ଠାରୁ ବସ୍ତୁର ବିସ୍ଥାପନ 35 km ଅଟେ । ତେଣୁ ବିସ୍ଥାପନର ପରିମାଣ (35 km) ଅତିକ୍ରାନ୍ତ ଦୂରତାର ପରିମାଣ (85 km) ସହ ସମାନ ନୁହେଁ । ଆଉ ମଧ୍ୟ ତୁମେ ଦେଖିବ ଯେ, ଗୋଟିଏ ବିନ୍ଦୁରେ ବସ୍ତୁର ବିସ୍ଥାପନ ଶୂନ ହୋଇପାରେ, ମାତ୍ର ଅତିକ୍ରାନ୍ତ ଦୂରତା ଶୂନ ହେବ ନାହିଁ । ଯଦି ବସ୍ତୁଟି B ସ୍ଥାନରୁ ମୂଳବିନ୍ଦୁ ‘O’କୁ ଫେରିଆସେ, ତାହାହେଲେ ସେ କ୍ଷେତ୍ରରେ ବସ୍ତୁର ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ ଓ ଅନ୍ତିମ ବିନ୍ଦୁ ସମାନ ହୋଇଯିବାରୁ ବସ୍ତୁର ବିସ୍ଥାପନ ଶୂନ ହେବ । ମାତ୍ର ଦୂରତା ଏଠାରେ, OA + AO = 60km + 60km = 120km ।",
+      "terms": [
+        "T_DIST",
+        "T_DISP"
+      ],
+      "source_page": 58,
+      "status": "demo_approved",
+      "reviewed_by": "Pritam"
+    }
+  ],
+  "terms": [
+    {
+      "term_id": "T_DIST",
+      "en": "distance",
+      "odia_from_textbook": "ଦୂରତା",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_DISP",
+      "en": "displacement",
+      "odia_from_textbook": "ବିସ୍ଥାପନ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_SPEED",
+      "en": "speed",
+      "odia_from_textbook": "ବେଗ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_VEL",
+      "en": "velocity",
+      "odia_from_textbook": "ପରିବେଗ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_ACC",
+      "en": "acceleration",
+      "odia_from_textbook": "ତ୍ୱରଣ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    },
+    {
+      "term_id": "T_REST",
+      "en": "rest / motion",
+      "odia_from_textbook": "ସ୍ଥିର / ଗତିଶୀଳ",
+      "kui": {
+        "description": "",
+        "script": "[VERIFY with speaker]",
+        "audio": null
+      },
+      "validated_by": null,
+      "dialect": null,
+      "status": "pending"
+    }
+  ],
+  "items": [
+    {
+      "item_id": "DVD-A-P",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "modality": "P",
+      "stem": "ନିମ୍ନ ଚିତ୍ର 5.1 ଅନୁସାରେ ଏକ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A (60 km) କୁ ଗଲା ଏବଂ ପୁଣି B (35 km) କୁ ଫେରିଆସିଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଦର୍ଶାଉଛି?",
+      "options": [
+        "assets/dvd_ap_opt0.png",
+        "assets/dvd_ap_opt1.png",
+        "assets/dvd_ap_opt2.png",
+        "assets/dvd_ap_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "DVD-A-P.opus",
+      "misconception_tag": "path_equals_displacement",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-A-A",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଧ୍ୟାନ ଦେଇ ଶୁଣନ୍ତୁ: ଏକ ବସ୍ତୁ O ରୁ ବାହାରି A (60 km) କୁ ଯାଇ ପୁଣି B (35 km) କୁ ଫେରିଲେ, ତାର ବିସ୍ଥାପନର ପରିମାଣ କେତେ ଶୁଣି ବାଛନ୍ତୁ ।",
+      "options": [
+        "DVD-A-A-opt0.opus",
+        "DVD-A-A-opt1.opus",
+        "DVD-A-A-opt2.opus",
+        "DVD-A-A-opt3.opus"
+      ],
+      "correct": 0,
+      "audio": "DVD-A-A.opus",
+      "misconception_tag": "term_confusion_disp_dist",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-A-T",
+      "concept_id": "distance_vs_displacement",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଗୋଟିଏ ବସ୍ତୁ ସରଳରେଖାରେ O ବିନ୍ଦୁରୁ ବାହାରି A ବିନ୍ଦୁ (60 km) କୁ ଗଲା ଏବଂ ପୁଣି ସେହି ପଥରେ 25 km ଫେରି B ବିନ୍ଦୁ (35 km) ରେ ପହଞ୍ଚିଲା । ଏଠାରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେତେ?",
+      "options": [
+        "35 km",
+        "85 km",
+        "60 km",
+        "25 km"
+      ],
+      "correct": 0,
+      "audio": "DVD-A-T.opus",
+      "misconception_tag": "adds_return_path_for_displacement",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-B-P",
+      "concept_id": "distance_vs_displacement",
+      "set": "B",
+      "modality": "P",
+      "stem": "ଚିତ୍ର 5.1 ଅନୁସାରେ ଏକ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A (60 km) କୁ ଯାଇ ପୁଣି C ବିନ୍ଦୁ (25 km) କୁ ଫେରିଆସିଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରଟି ସଠିକ୍ ଦର୍ଶାଉଛି?",
+      "options": [
+        "assets/dvd_bp_opt0.png",
+        "assets/dvd_bp_opt1.png",
+        "assets/dvd_bp_opt2.png",
+        "assets/dvd_bp_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "DVD-B-P.opus",
+      "misconception_tag": "path_equals_displacement",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-B-A",
+      "concept_id": "distance_vs_displacement",
+      "set": "B",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଗୋଟିଏ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A (60 km) କୁ ଗଲା ଏବଂ ପୁଣି ସମ୍ପୂର୍ଣ୍ଣ ଭାବେ O ବିନ୍ଦୁକୁ ଫେରିଆସିଲା । ଏହାର ବିସ୍ଥାପନ କେତେ ଶୁଣି ବାଛନ୍ତୁ ।",
+      "options": [
+        "DVD-B-A-opt0.opus",
+        "DVD-B-A-opt1.opus",
+        "DVD-B-A-opt2.opus",
+        "DVD-B-A-opt3.opus"
+      ],
+      "correct": 0,
+      "audio": "DVD-B-A.opus",
+      "misconception_tag": "term_confusion_disp_dist",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-B-T",
+      "concept_id": "distance_vs_displacement",
+      "set": "B",
+      "modality": "T",
+      "stem": "ଗୋଟିଏ ବସ୍ତୁ O ବିନ୍ଦୁରୁ ବାହାରି A ବିନ୍ଦୁ (60 km) କୁ ଗଲା ଏବଂ ପୁଣି ସେହି ପଥରେ ପ୍ରାରମ୍ଭିକ ବିନ୍ଦୁ O କୁ ଫେରିଆସିଲା । ଏହି କ୍ଷେତ୍ରରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେତେ?",
+      "options": [
+        "0 km",
+        "120 km",
+        "60 km",
+        "30 km"
+      ],
+      "correct": 0,
+      "audio": "DVD-B-T.opus",
+      "misconception_tag": "round_trip_nonzero_displacement",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-CONF-W1",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "modality": "W",
+      "stem": "‘ବିସ୍ଥାପନ’ (Displacement) — ବସ୍ତୁର ପ୍ରାରମ୍ଭିକ ଓ ଅନ୍ତିମ ସ୍ଥିତି ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ଦୂରତାକୁ ଦର୍ଶାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।",
+      "options": [
+        "assets/dvd_w1_opt0.png",
+        "assets/dvd_w1_opt1.png",
+        "assets/dvd_w1_opt2.png",
+        "assets/dvd_w1_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "DVD-CONF-W1.opus",
+      "misconception_tag": "term_misidentification",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-CONF-W2",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "modality": "W",
+      "stem": "‘ଦୂରତା’ (Distance) — ବସ୍ତୁ ଅତିକ୍ରମ କରିଥିବା ପଥର ମୋଟ ଦୈର୍ଘ୍ୟକୁ ବୁଝାଉଥିବା ଚିତ୍ରଟିକୁ ବାଛନ୍ତୁ ।",
+      "options": [
+        "assets/dvd_w2_opt0.png",
+        "assets/dvd_w2_opt1.png",
+        "assets/dvd_w2_opt2.png",
+        "assets/dvd_w2_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "DVD-CONF-W2.opus",
+      "misconception_tag": "term_misidentification",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-CONF-TX",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "modality": "TX",
+      "stem": "ବସ୍ତୁର ପ୍ରାରମ୍ଭିକ ଓ ଅନ୍ତିମ ଅବସ୍ଥାନ ମଧ୍ୟରେ ଥିବା ସର୍ବନିମ୍ନ ସରଳରୈଖିକ ଦୂରତାକୁ କ’ଣ କୁହାଯାଏ?",
+      "options": [
+        "ବିସ୍ଥାପନ",
+        "ଦୂରତା",
+        "ବେଗ",
+        "ତ୍ୱରଣ"
+      ],
+      "correct": 0,
+      "audio": "DVD-CONF-TX.opus",
+      "misconception_tag": "reading_comprehension_confusion",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-CONF-PX",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "modality": "PX",
+      "stem": "ଏକ ବୃତ୍ତାକାର ପଥରେ ଏକ ବସ୍ତୁ ଗୋଟିଏ ସମ୍ପୂର୍ଣ୍ଣ ଘେରା ବୁଲି ନିଜର ପ୍ରାରମ୍ଭିକ ସ୍ଥାନରେ ପହଞ୍ଚିଲା । ଏହି ସ୍ଥିତିରେ ବସ୍ତୁର ବିସ୍ଥାପନ କେଉଁ ଚିତ୍ରରେ ସଠିକ୍ ଦର୍ଶାଯାଇଛି?",
+      "options": [
+        "assets/dvd_px_opt0.png",
+        "assets/dvd_px_opt1.png",
+        "assets/dvd_px_opt2.png",
+        "assets/dvd_px_opt3.png"
+      ],
+      "correct": 0,
+      "audio": "DVD-CONF-PX.opus",
+      "misconception_tag": "concept_confusion_origin_loop",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-EXIT-PM1",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "modality": "T",
+      "stem": "ଭାଗ୍ୟଶ୍ରୀ 90 ମିଟର ଲମ୍ବ ଏକ ପହଁରା ପୋଖରୀର ଏକ ମୁଣ୍ଡରୁ ଅନ୍ୟ ମୁଣ୍ଡକୁ ଯାଇ ପୁଣି ସେହି ପଥରେ ପ୍ରାରମ୍ଭିକ ସ୍ଥାନକୁ ଫେରିଆସିଲେ । ତାଙ୍କର ମୋଟ ବିସ୍ଥାପନ କେତେ?",
+      "options": [
+        "0 m",
+        "180 m",
+        "90 m",
+        "45 m"
+      ],
+      "correct": 0,
+      "audio": "DVD-EXIT-PM1.opus",
+      "misconception_tag": "displacement_scalar_assumption",
+      "status": "demo_approved"
+    },
+    {
+      "item_id": "DVD-EXIT-PM2",
+      "concept_id": "distance_vs_displacement",
+      "set": "C",
+      "modality": "T",
+      "stem": "ରାମବାବୁ ଘରୁ ବାହାରି ପୂର୍ବ ଦିଗରେ 2 କିଲୋମିଟର ଚାଲିଲେ ଏବଂ ପୁଣି ପଶ୍ଚିମ ଦିଗରେ 2 କିଲୋମିଟର ଫେରି ନିଜ ଘରେ ପହଞ୍ଚିଲେ । ସେ ଅତିକ୍ରମ କରିଥିବା ମୋଟ ଦୂରତା କେତେ?",
+      "options": [
+        "4 km",
+        "0 km",
+        "2 km",
+        "1 km"
+      ],
+      "correct": 0,
+      "audio": "DVD-EXIT-PM2.opus",
+      "misconception_tag": "confuses_distance_with_displacement",
+      "status": "demo_approved"
+    }
+  ]
+}

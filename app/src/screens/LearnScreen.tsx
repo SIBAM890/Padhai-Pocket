@@ -24,6 +24,7 @@ import { MicButton, type VoiceState } from '../components/MicButton';
 import { SoundCheck } from '../components/SoundCheck';
 import { PictureProbe } from '../components/PictureProbe';
 import MotionSimulation from '../components/MotionSimulation';
+import { SubjectVisualizer } from '../components/SubjectVisualizer';
 import { AudioProbe } from '../components/AudioProbe';
 import { TextProbe } from '../components/TextProbe';
 import { ConfirmationCard } from '../components/ConfirmationCard';
@@ -815,8 +816,8 @@ export default function LearnScreen({ navigation, route }: Props) {
                   promptOr={question.promptOr}
                 />
 
-                {/* 2D SVG Motion Simulation: Sunita Home to School */}
-                <MotionSimulation />
+                {/* Interactive 2D SVG Subject Visualizer (Physics / Chemistry / Biology / Maths) */}
+                <SubjectVisualizer subject={subject} chunkId={chunkId} />
 
                 <View style={styles.optionsList}>
                   {question.options.map((opt) => (
@@ -849,8 +850,8 @@ export default function LearnScreen({ navigation, route }: Props) {
 
             {flowStep === 'PROBE_PICTURE' && (
               <View>
-                {/* 2D SVG Motion Simulation as visual stimulus for Picture Probe */}
-                <MotionSimulation mode="probe" />
+                {/* 2D SVG Subject Visualizer in probe mode for diagram stimulus */}
+                <SubjectVisualizer subject={subject} chunkId={chunkId} mode="probe" />
                 <PictureProbe
                   prompt={pictureProbe.prompt}
                   titleOr={pictureProbe.titleOr}

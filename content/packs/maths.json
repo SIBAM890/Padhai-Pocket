@@ -1,0 +1,120 @@
+{
+  "pack_version": "1.0",
+  "manifest": {
+    "sha256": "math_pack_v1_00112233445566778899aabbccddeeff00112233445566778899aabbccdd",
+    "built_at": "2026-10-14T14:30:00Z"
+  },
+  "chapter": {
+    "subject": "Mathematics",
+    "class": 9,
+    "chapter_no": "1"
+  },
+  "chunks": [
+    {
+      "chunk_id": "BSE9-MATH-REAL-S01",
+      "title_or": "ବାସ୍ତବ ସଂଖ୍ୟା ଏବଂ ପରିମେୟ ସଂଖ୍ୟା",
+      "odia_text": "ଯେଉଁ ସଂଖ୍ୟାଗୁଡ଼ିକୁ p/q ଆକାରରେ ପ୍ରକାଶ କରାଯାଇପାରେ ଯେଉଁଠାରେ p ଓ q ପୂର୍ଣ୍ଣ ସଂଖ୍ୟା ଏବଂ q ≠ 0, ସେଗୁଡ଼ିକୁ ପରିମେୟ ସଂଖ୍ୟା (rational number) କୁହାଯାଏ । ସମସ୍ତ ପରିମେୟ ଓ ଅପରିମେୟ ସଂଖ୍ୟାକୁ ଏକତ୍ର ବାସ୍ତବ ସଂଖ୍ୟା କୁହାଯାଏ ।",
+      "terms": [
+        "T_RATIONAL",
+        "T_IRRATIONAL"
+      ],
+      "source_page": 1,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
+    }
+  ],
+  "terms": [
+    {
+      "term_id": "T_RATIONAL",
+      "en": "Rational Number",
+      "odia_from_textbook": "ପରିମେୟ ସଂଖ୍ୟା",
+      "kui": {
+        "description": "p/q ରୂପରେ ଲେଖାଯାଉଥିବା ସଂଖ୍ୟା",
+        "script": "ପରିମେୟ ସଂଖ୍ୟା",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_IRRATIONAL",
+      "en": "Irrational Number",
+      "odia_from_textbook": "ଅପରିମେୟ ସଂଖ୍ୟା",
+      "kui": {
+        "description": "p/q ରୂପରେ ଲେଖାଯାଇ ନପାରୁଥିବା ସଂଖ୍ୟା",
+        "script": "ଅପରିମେୟ ସଂଖ୍ୟା",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    }
+  ],
+  "items": [
+    {
+      "item_id": "MATH-P1",
+      "concept_id": "rational_irrational",
+      "set": "A",
+      "modality": "P",
+      "stem": "ସଂଖ୍ୟା ରେଖାରେ କେଉଁ ସଂଖ୍ୟାଟି ପରିମେୟ ସଂଖ୍ୟା (p/q, q ≠ 0) ଦର୍ଶାଉଛି?",
+      "options": [
+        "3/4 (ପରିମେୟ ସଂଖ୍ୟା)",
+        "√2 (ଅପରିମେୟ ସଂଖ୍ୟା)",
+        "π (ଅପରିମେୟ ସଂଖ୍ୟା)",
+        "√3 (ଅପରିମେୟ ସଂଖ୍ୟା)"
+      ],
+      "correct": 0,
+      "audio": "math_p1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-A1",
+      "concept_id": "rational_irrational",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: 0 କ'ଣ ଏକ ପରିମେୟ ସଂଖ୍ୟା?",
+      "options": [
+        "ହଁ, କାରଣ 0 = 0/1",
+        "ନାହିଁ, ଏହା ପରିମେୟ ନୁହେଁ",
+        "କେବଳ ଧନାତ୍ମକ ସଂଖ୍ୟା ପରିମେୟ",
+        "ଏହା ଏକ କାଳ୍ପନିକ ସଂଖ୍ୟା"
+      ],
+      "correct": 0,
+      "audio": "math_a1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-T1",
+      "concept_id": "rational_irrational",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଯେଉଁ ସଂଖ୍ୟାକୁ p/q (p, q ∈ Z, q ≠ 0) ରୂପରେ ପ୍ରକାଶ କରାଯାଇପାରେ, ତାହାକୁ କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ପରିମେୟ ସଂଖ୍ୟା (Rational number)",
+        "ଅପରିମେୟ ସଂଖ୍ୟା (Irrational number)",
+        "ଅବାସ୍ତବ ସଂଖ୍ୟା",
+        "କେବଳ ଭଗ୍ନାଂଶ"
+      ],
+      "correct": 0,
+      "audio": "math_t1.mp3",
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-W1",
+      "concept_id": "rational_irrational",
+      "set": "A",
+      "modality": "W",
+      "stem": "ପରିମେୟ ସଂଖ୍ୟା ଶବ୍ଦର ସଠିକ୍ ଅର୍ଥ କ'ଣ?",
+      "options": [
+        "ଅନୁପାତ ଆକାରରେ ପ୍ରକାଶଯୋଗ୍ୟ ସଂଖ୍ୟା",
+        "କେବଳ ଦଶମିକ ସଂଖ୍ୟା",
+        "ଗଣନ ସଂଖ୍ୟା ମାତ୍ର",
+        "କେବଳ ଯୁଗ୍ମ ସଂଖ୍ୟା"
+      ],
+      "correct": 0,
+      "audio": "math_w1.mp3",
+      "misconception_tag": null
+    }
+  ]
+}

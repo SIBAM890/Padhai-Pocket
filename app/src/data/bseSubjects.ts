@@ -11,57 +11,19 @@
  * Safely loads pack files with graceful fallbacks.
  */
 
-// Safely load motion pack and gravitation pack
-let motionPack: any = null;
-let gravitationPack: any = null;
+import motionPackRaw from '../../../content/motion_pack.json';
+import gravitationPackRaw from '../../../content/gravitation_pack.json';
+import physicsPackRaw from '../../../content/packs/physics.json';
+import chemistryPackRaw from '../../../content/packs/chemistry.json';
+import biologyPackRaw from '../../../content/packs/biology.json';
+import mathsPackRaw from '../../../content/packs/maths.json';
 
-try {
-  // @ts-ignore
-  motionPack = require('../../../content/motion_pack.json');
-} catch {
-  motionPack = null;
-}
-
-try {
-  // @ts-ignore
-  gravitationPack = require('../../../content/gravitation_pack.json');
-} catch {
-  gravitationPack = null;
-}
-
-// Dynamic/future pack loads with graceful fallback stubs
-let physicsPack: any = null;
-let chemistryPack: any = null;
-let biologyPack: any = null;
-let mathsPack: any = null;
-
-try {
-  // @ts-ignore
-  physicsPack = require('../../../content/packs/physics.json');
-} catch {
-  physicsPack = motionPack;
-}
-
-try {
-  // @ts-ignore
-  chemistryPack = require('../../../content/packs/chemistry.json');
-} catch {
-  chemistryPack = null;
-}
-
-try {
-  // @ts-ignore
-  biologyPack = require('../../../content/packs/biology.json');
-} catch {
-  biologyPack = null;
-}
-
-try {
-  // @ts-ignore
-  mathsPack = require('../../../content/packs/maths.json');
-} catch {
-  mathsPack = null;
-}
+export const motionPack: any = motionPackRaw;
+export const gravitationPack: any = gravitationPackRaw;
+export const physicsPack: any = physicsPackRaw || motionPackRaw;
+export const chemistryPack: any = chemistryPackRaw;
+export const biologyPack: any = biologyPackRaw;
+export const mathsPack: any = mathsPackRaw;
 
 export type SubjectId = 'physics' | 'chemistry' | 'biology' | 'maths';
 
@@ -139,6 +101,16 @@ export function computeTopicStatus(
   if (subjectId === 'biology' && (topicId === 'cell_structure' || topicId === 'cell_unit_of_life')) {
     const isApproved =
       biologyPack?.status === 'demo_approved' || biologyPack != null;
+    return {
+      status: isApproved ? 'Preview' : 'Structure ready',
+      statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+      ready: isApproved,
+    };
+  }
+
+  if (subjectId === 'maths' && (topicId === 'rational_irrational' || topicId === 'number_systems' || topicId === 'real_numbers')) {
+    const isApproved =
+      mathsPack?.status === 'demo_approved' || mathsPack != null;
     return {
       status: isApproved ? 'Preview' : 'Structure ready',
       statusOr: isApproved ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
@@ -363,10 +335,10 @@ export const BSE_SUBJECTS: BseSubject[] = [
     titleOr: 'ଗଣିତ',
     icon: '📐',
     accentColor: '#F59E0B',
-    status: 'Structure ready',
-    statusOr: 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+    status: mathsPack ? 'Preview' : 'Structure ready',
+    statusOr: mathsPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
     totalTopics: 3,
-    readyTopics: 0,
+    readyTopics: mathsPack ? 1 : 0,
     chapters: [
       {
         id: 'number_systems',
@@ -378,10 +350,12 @@ export const BSE_SUBJECTS: BseSubject[] = [
             id: 'rational_irrational',
             title: 'Rational and Irrational Numbers',
             titleOr: 'ପରିମେୟ ଏବଂ ଅପରିମେୟ ସଂଖ୍ୟା',
-            status: 'Pack pending',
-            statusOr: 'ପ୍ୟାକ୍ ଅପେକ୍ଷାରେ ଅଛି',
-            ready: false,
+            status: mathsPack ? 'Preview' : 'Structure ready',
+            statusOr: mathsPack ? 'ପ୍ରାକ୍-ଦର୍ଶନ' : 'ପାଠ୍ୟକ୍ରମ ପ୍ରସ୍ତୁତ',
+            ready: Boolean(mathsPack),
             estimatedMins: 6,
+            chunkId: 'BSE9-MATH-REAL-S01',
+            conceptId: 'rational_irrational',
           },
           {
             id: 'real_numbers',
