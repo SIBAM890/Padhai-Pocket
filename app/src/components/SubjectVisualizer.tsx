@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, {
   Circle,
   Line,
@@ -11,6 +11,7 @@ import Svg, {
 } from 'react-native-svg';
 import MotionSimulation from './MotionSimulation';
 import { colors, radius, shadows, spacing } from '../theme/theme';
+import { playOdiaVoice, stopOdiaAudio, type OdiaAudioKey } from '../audio/odiaAudio';
 
 export interface SubjectVisualizerProps {
   subject: string;
@@ -23,6 +24,29 @@ export function SubjectVisualizer({
   chunkId,
   mode = 'interactive',
 }: SubjectVisualizerProps) {
+  const [playingKey, setPlayingKey] = useState<OdiaAudioKey | null>(null);
+
+  useEffect(() => {
+    return () => {
+      stopOdiaAudio();
+    };
+  }, []);
+
+  const handlePlayVoice = (key: OdiaAudioKey) => {
+    if (playingKey === key) {
+      stopOdiaAudio();
+      setPlayingKey(null);
+      return;
+    }
+    setPlayingKey(key);
+    playOdiaVoice({
+      key,
+      onStart: () => setPlayingKey(key),
+      onEnd: () => setPlayingKey(null),
+      onError: () => setPlayingKey(null),
+    });
+  };
+
   const s = subject?.toLowerCase() || 'physics';
   const c = chunkId?.toLowerCase() || '';
 
@@ -36,6 +60,17 @@ export function SubjectVisualizer({
             <Text style={styles.titleEn}>
               Methane (CH₄) + Chlorine (Cl₂) ➔ Chloromethane (CH₃Cl)
             </Text>
+            <Pressable
+              style={[styles.voiceBtn, playingKey === 'chemistry' && styles.voiceBtnActive]}
+              onPress={() => handlePlayVoice('chemistry')}
+              accessibilityRole="button"
+              accessibilityLabel="Listen in Pure Odia Dialect"
+            >
+              <Text style={styles.voiceBtnIcon}>{playingKey === 'chemistry' ? '🔊' : '▶️'}</Text>
+              <Text style={[styles.voiceBtnText, playingKey === 'chemistry' && styles.voiceBtnTextActive]}>
+                {playingKey === 'chemistry' ? 'ଶୁଣୁଛନ୍ତି... (Playing Odia Dialect)' : '🔊 ଶୁଣନ୍ତୁ (Pure Odia Voice)'}
+              </Text>
+            </Pressable>
           </View>
           <View style={[styles.badge, { backgroundColor: '#E6FFFA', borderColor: '#319795' }]}>
             <Text style={[styles.badgeText, { color: '#234E52' }]}>
@@ -167,6 +202,17 @@ export function SubjectVisualizer({
             <Text style={styles.titleEn}>
               Fundamental Unit of Life · Plant/Animal Cell & Organelles
             </Text>
+            <Pressable
+              style={[styles.voiceBtn, playingKey === 'biology' && styles.voiceBtnActive]}
+              onPress={() => handlePlayVoice('biology')}
+              accessibilityRole="button"
+              accessibilityLabel="Listen in Pure Odia Dialect"
+            >
+              <Text style={styles.voiceBtnIcon}>{playingKey === 'biology' ? '🔊' : '▶️'}</Text>
+              <Text style={[styles.voiceBtnText, playingKey === 'biology' && styles.voiceBtnTextActive]}>
+                {playingKey === 'biology' ? 'ଶୁଣୁଛନ୍ତି... (Playing Odia Dialect)' : '🔊 ଶୁଣନ୍ତୁ (Pure Odia Voice)'}
+              </Text>
+            </Pressable>
           </View>
           <View style={[styles.badge, { backgroundColor: '#DCFCE7', borderColor: '#22C55E' }]}>
             <Text style={[styles.badgeText, { color: '#15803D' }]}>
@@ -259,6 +305,17 @@ export function SubjectVisualizer({
             <Text style={styles.titleEn}>
               Rational (p/q, q ≠ 0) vs Irrational Numbers (√2, π)
             </Text>
+            <Pressable
+              style={[styles.voiceBtn, playingKey === 'maths' && styles.voiceBtnActive]}
+              onPress={() => handlePlayVoice('maths')}
+              accessibilityRole="button"
+              accessibilityLabel="Listen in Pure Odia Dialect"
+            >
+              <Text style={styles.voiceBtnIcon}>{playingKey === 'maths' ? '🔊' : '▶️'}</Text>
+              <Text style={[styles.voiceBtnText, playingKey === 'maths' && styles.voiceBtnTextActive]}>
+                {playingKey === 'maths' ? 'ଶୁଣୁଛନ୍ତି... (Playing Odia Dialect)' : '🔊 ଶୁଣନ୍ତୁ (Pure Odia Voice)'}
+              </Text>
+            </Pressable>
           </View>
           <View style={[styles.badge, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}>
             <Text style={[styles.badgeText, { color: '#92400E' }]}>
@@ -340,6 +397,17 @@ export function SubjectVisualizer({
             <Text style={styles.titleEn}>
               Earth (g = 9.8 m/s²) vs Moon (g = 1.6 m/s² · 1/6th)
             </Text>
+            <Pressable
+              style={[styles.voiceBtn, playingKey === 'gravitation' && styles.voiceBtnActive]}
+              onPress={() => handlePlayVoice('gravitation')}
+              accessibilityRole="button"
+              accessibilityLabel="Listen in Pure Odia Dialect"
+            >
+              <Text style={styles.voiceBtnIcon}>{playingKey === 'gravitation' ? '🔊' : '▶️'}</Text>
+              <Text style={[styles.voiceBtnText, playingKey === 'gravitation' && styles.voiceBtnTextActive]}>
+                {playingKey === 'gravitation' ? 'ଶୁଣୁଛନ୍ତି... (Playing Odia Dialect)' : '🔊 ଶୁଣନ୍ତୁ (Pure Odia Voice)'}
+              </Text>
+            </Pressable>
           </View>
           <View style={[styles.badge, { backgroundColor: '#EDE9FE', borderColor: '#8B5CF6' }]}>
             <Text style={[styles.badgeText, { color: '#6D28D9' }]}>
@@ -495,5 +563,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#0369A1',
     textAlign: 'center',
+  },
+  voiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderRadius: radius.full,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
+    marginTop: spacing.xs + 2,
+    alignSelf: 'flex-start',
+    gap: 4,
+  },
+  voiceBtnActive: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#16A34A',
+  },
+  voiceBtnIcon: {
+    fontSize: 12,
+  },
+  voiceBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  voiceBtnTextActive: {
+    color: '#15803D',
   },
 });

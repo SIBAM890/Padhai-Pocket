@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { playOdiaVoice, stopOdiaAudio } from '../audio/odiaAudio';
 
 interface AudioChoice {
   id: string;
@@ -29,10 +30,25 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      stopOdiaAudio();
+    };
+  }, []);
+
   const handlePlay = () => {
-    setIsPlaying(true);
-    onPlayAudio?.();
-    setTimeout(() => setIsPlaying(false), 2000);
+    if (onPlayAudio) {
+      onPlayAudio();
+      return;
+    }
+
+    playOdiaVoice({
+      key: 'probe_audio',
+      text: prompt,
+      onStart: () => setIsPlaying(true),
+      onEnd: () => setIsPlaying(false),
+      onError: () => setIsPlaying(false),
+    });
   };
 
   return (
@@ -40,7 +56,9 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
       <View style={styles.badge}>
         <Text style={styles.badgeText}>AUDIO FIRST ACTIVITY</Text>
       </View>
-      <Text style={styles.fallbackNotice}>[Audio simulated — native Odia TTS pending]</Text>
+      <Text style={[styles.fallbackNotice, { color: '#0F766E' }]}>
+        [🔊 Pure Odia Dialect Audio · ଖାଣ୍ଟି ଓଡ଼ିଆ ଉଚ୍ଚାରଣ]
+      </Text>
 
       <Text style={styles.title}>{title}</Text>
       {titleOr && <Text style={styles.titleOr}>{titleOr}</Text>}
@@ -54,7 +72,7 @@ export const AudioProbe: React.FC<AudioProbeProps> = ({
       >
         <Text style={styles.audioIcon}>{isPlaying ? '🔊' : '▶️'}</Text>
         <Text style={styles.audioLabel}>
-          {isPlaying ? 'Playing in Odia / Kui...' : 'Tap to Listen (ଶୁଣନ୍ତୁ)'}
+          {isPlaying ? 'Playing in Pure Odia...' : 'Tap to Listen (ଶୁଣନ୍ତୁ)'}
         </Text>
       </Pressable>
 

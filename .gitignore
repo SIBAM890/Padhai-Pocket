@@ -63,4 +63,7 @@ Thumbs.db
 *.db-shm
 
 # Scratch scripts
-eval/scratch/
+eval/scratch/
+
+# Backend dynamic caches
+backend/cache/

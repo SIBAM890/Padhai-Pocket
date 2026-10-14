@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
+import { playOdiaVoice, stopOdiaAudio } from '../audio/odiaAudio';
 
 interface RemediationCardProps {
   conceptTitle?: string;
@@ -11,7 +12,7 @@ interface RemediationCardProps {
   resourceModality?: string;
   resourceReasons?: string[];
   matchScore?: number;
-  onListen: () => void;
+  onListen?: () => void;
   onTryAgain: () => void;
   onContinue: () => void;
 }
@@ -29,6 +30,32 @@ export const RemediationCard: React.FC<RemediationCardProps> = ({
   onTryAgain,
   onContinue,
 }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      stopOdiaAudio();
+    };
+  }, []);
+
+  const handleListen = () => {
+    if (isPlaying) {
+      stopOdiaAudio();
+      setIsPlaying(false);
+      return;
+    }
+    if (onListen) {
+      onListen();
+    }
+    setIsPlaying(true);
+    playOdiaVoice({
+      key: 'remediation',
+      text: explanationOr || explanation,
+      onStart: () => setIsPlaying(true),
+      onEnd: () => setIsPlaying(false),
+      onError: () => setIsPlaying(false),
+    });
+  };
   return (
     <View style={styles.card}>
       <View style={styles.badgeRow}>
@@ -68,17 +95,38 @@ export const RemediationCard: React.FC<RemediationCardProps> = ({
       {explanationOr && <Text style={styles.explanationOr}>{explanationOr}</Text>}
 
       <View style={styles.actionsColumn}>
-        <Pressable style={styles.listenBtn} onPress={onListen}>
-          <Text style={styles.listenIcon}>🔊</Text>
-          <Text style={styles.listenText}>Listen in Odia (ଓଡ଼ିଆରେ ଶୁଣନ୍ତୁ)</Text>
+        <Pressable
+          style={[styles.listenBtn, isPlaying && styles.listenBtnPlaying]}
+          onPress={handleListen}
+          accessibilityRole="button"
+          accessibilityLabel="Listen in Pure Odia Dialect"
+        >
+          <Text style={styles.listenIcon}>{isPlaying ? '🔊' : '▶️'}</Text>
+          <Text style={[styles.listenText, isPlaying && styles.listenTextPlaying]}>
+            {isPlaying ? 'ଶୁଣୁଛନ୍ତି... (Playing Pure Odia)' : 'Listen in Odia (ଓଡ଼ିଆରେ ଶୁଣନ୍ତୁ)'}
+          </Text>
         </Pressable>
 
         <View style={styles.rowButtons}>
-          <Pressable style={[styles.btn, styles.tryAgainBtn]} onPress={onTryAgain}>
+          <Pressable
+            style={[styles.btn, styles.tryAgainBtn]}
+            onPress={() => {
+              stopOdiaAudio();
+              onTryAgain();
+            }}
+            accessibilityRole="button"
+          >
             <Text style={styles.tryAgainText}>Try Another Question</Text>
           </Pressable>
 
-          <Pressable style={[styles.btn, styles.continueBtn]} onPress={onContinue}>
+          <Pressable
+            style={[styles.btn, styles.continueBtn]}
+            onPress={() => {
+              stopOdiaAudio();
+              onContinue();
+            }}
+            accessibilityRole="button"
+          >
             <Text style={styles.continueText}>Continue</Text>
           </Pressable>
         </View>
@@ -209,6 +257,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.button,
     padding: spacing.md,
     gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  listenBtnPlaying: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#16A34A',
   },
   listenIcon: {
     fontSize: 18,
@@ -217,6 +271,9 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: '700',
     color: colors.secondary,
+  },
+  listenTextPlaying: {
+    color: '#15803D',
   },
   rowButtons: {
     flexDirection: 'row',
