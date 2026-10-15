@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
   selectedContainer: {
     borderColor: colors.primary,
-    backgroundColor: '#F5F7FF',
+    backgroundColor: colors.primaryLight,
   },
   correctContainer: {
     borderColor: colors.success,
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: radius.sm,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,

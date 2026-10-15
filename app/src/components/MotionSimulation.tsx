@@ -232,12 +232,12 @@ export default function MotionSimulation({
             y1={P0.y}
             x2={P2.x}
             y2={P2.y}
-            stroke="#304FFE"
+            stroke="#C2410C"
             strokeWidth={3}
             strokeDasharray="5, 4"
           />
           {/* Vector Arrowhead pointing to School (300, 60) without markerEnd */}
-          <Polygon points="286,52 300,60 292,70" fill="#304FFE" />
+          <Polygon points="286,52 300,60 292,70" fill="#C2410C" />
 
           {/* Curved Road Path: Distance (ଦୂରତା) */}
           <Path
@@ -256,7 +256,7 @@ export default function MotionSimulation({
             y={P0.y + 24}
             fontSize="12"
             fontWeight="bold"
-            fill="#1E293B"
+            fill="#143F46"
           >
             ଘର (A)
           </SvgText>
@@ -269,7 +269,7 @@ export default function MotionSimulation({
             y={P2.y - 12}
             fontSize="12"
             fontWeight="bold"
-            fill="#1E293B"
+            fill="#143F46"
           >
             ବିଦ୍ୟାଳୟ (B)
           </SvgText>
@@ -280,14 +280,14 @@ export default function MotionSimulation({
             y={90}
             fontSize="11"
             fontWeight="bold"
-            fill="#304FFE"
+            fill="#C2410C"
           >
             ବିସ୍ଥାପନ (300 m) ➔
           </SvgText>
 
           {/* Sunita Traveling Marker */}
           <G x={currentPos.x - 12} y={currentPos.y - 20}>
-            <Circle cx={12} cy={12} r={14} fill="#FFFFFF" stroke="#304FFE" strokeWidth={2} />
+            <Circle cx={12} cy={12} r={14} fill="#FFFFFF" stroke="#C2410C" strokeWidth={2} />
             <SvgText x={4} y={17} fontSize="14">
               👧
             </SvgText>
@@ -302,7 +302,7 @@ export default function MotionSimulation({
           <Text style={styles.legendText}>ବକ୍ର ପଥ: ଦୂରତା (Distance)</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#304FFE' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#C2410C' }]} />
           <Text style={styles.legendText}>ସିଧା ସଦିଶ: ବିସ୍ଥାପନ (Displacement)</Text>
         </View>
       </View>

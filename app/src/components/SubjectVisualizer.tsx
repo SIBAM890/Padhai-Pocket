@@ -148,9 +148,9 @@ export function SubjectVisualizer({
 
             {/* Reaction Arrow */}
             <G x={205} y={80}>
-              <Line x1={0} y1={10} x2={25} y2={10} stroke="#304FFE" strokeWidth={3} />
-              <Polygon points="25,5 33,10 25,15" fill="#304FFE" />
-              <SvgText x={-2} y={-2} fontSize="9" fontWeight="bold" fill="#304FFE">
+              <Line x1={0} y1={10} x2={25} y2={10} stroke="#C2410C" strokeWidth={3} />
+              <Polygon points="25,5 33,10 25,15" fill="#C2410C" />
+              <SvgText x={-2} y={-2} fontSize="9" fontWeight="bold" fill="#C2410C">
                 ଦ୍ରୁତ ବିସ୍ଥାପନ
               </SvgText>
             </G>

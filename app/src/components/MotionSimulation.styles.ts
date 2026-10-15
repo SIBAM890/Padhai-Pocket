@@ -72,8 +72,8 @@ export const styles = StyleSheet.create({
     borderColor: '#FDBA74',
   },
   meterDisplacement: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#A5B4FC',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.border,
   },
   meterLabel: {
     fontSize: 11,
