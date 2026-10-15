@@ -204,13 +204,51 @@ CORE_ODIA_PHRASES = {
 }
 
 
+def odia_to_phonetic_devanagari(text: str) -> str:
+    replacements = {
+        'ଯାଉଛନ୍ତି': 'जाउछन्ति',
+        'ଯାଇ': 'जाइ',
+        'ଯେଉଁଠାରେ': 'जेउंठे',
+        'ଯାହା': 'जाहा',
+        'ପଢାଇ': 'पढाइ',
+        'ପଢ଼ାଇ': 'पढाइ',
+        'ପକେଟ୍': 'पकेट',
+        'ପକେଟ୍‌କୁ': 'पकेटकु',
+        'ନିଉଟନ୍': 'न्यूटन',
+        'କିଲୋଗ୍ରାମ': 'किलोग्राम',
+        'ମିଥେନ୍': 'मिथेन',
+        'କ୍ଲୋରିନ୍': 'क्लोरिन',
+        'ହାଇଡ୍ରୋଜେନ୍': 'हाइड्रोजन',
+        'ମାଇଟୋକଣ୍ଡ୍ରିଆ': 'माइटोकोन्ड्रिया',
+        'ଏଟିପି': 'ए-टी-पी',
+        'ଏ-ଟି-ପି': 'ए-टी-पी',
+    }
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+
+    out = []
+    for ch in text:
+        cp = ord(ch)
+        if 0x0B01 <= cp <= 0x0B7F:
+            dev_cp = cp - 0x0200
+            if dev_cp == 0x0933:
+                out.append('ल')
+            elif dev_cp == 0x095F:
+                out.append('य')
+            else:
+                out.append(chr(dev_cp))
+        else:
+            out.append(ch)
+    return ''.join(out)
+
+
 @app.get("/v1/tts")
 @app.head("/v1/tts")
 @app.post("/v1/tts")
 async def get_tts(request: Request, text: Optional[str] = None, key: Optional[str] = None):
     """
     Pure Odia dialect text-to-speech endpoint.
-    Uses espeak-ng Odia phoneme synthesizer ('-v or') and ffmpeg MP3 transcoding.
+    Uses high-definition neural speech synthesis with fallback to espeak-ng.
     Cached on disk for sub-millisecond responses on repeat calls.
     """
     if not text and not key:
@@ -258,28 +296,36 @@ async def get_tts(request: Request, text: Optional[str] = None, key: Optional[st
             },
         )
 
-    wav_p = None
     mp3_p = None
     try:
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_f, \
-             tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as mp3_f:
-            wav_p = wav_f.name
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as mp3_f:
             mp3_p = mp3_f.name
 
-        subprocess.run(
-            ["espeak-ng", "-v", "or", "-s", "125", "-p", "50", "-g", "6", clean_text, "-w", wav_p],
-            check=True,
-            timeout=8,
-        )
-        subprocess.run(
-            ["ffmpeg", "-y", "-i", wav_p, "-b:a", "64k", "-f", "mp3", mp3_p],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True,
-            timeout=8,
-        )
+        try:
+            import edge_tts
+            dev_text = odia_to_phonetic_devanagari(clean_text)
+            comm = edge_tts.Communicate(dev_text, 'hi-IN-SwaraNeural', rate='-4%', pitch='+2Hz')
+            await comm.save(mp3_p)
+            audio_bytes = Path(mp3_p).read_bytes()
+        except Exception as neural_err:
+            # Fallback to espeak-ng if edge-tts encounters an issue
+            wav_p = mp3_p.replace(".mp3", ".wav")
+            subprocess.run(
+                ["espeak-ng", "-v", "or+f3", "-s", "110", "-p", "55", "-g", "8", clean_text, "-w", wav_p],
+                check=True,
+                timeout=8,
+            )
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", wav_p, "-b:a", "64k", "-f", "mp3", mp3_p],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=True,
+                timeout=8,
+            )
+            audio_bytes = Path(mp3_p).read_bytes()
+            if os.path.exists(wav_p):
+                os.remove(wav_p)
 
-        audio_bytes = Path(mp3_p).read_bytes()
         cached_file.write_bytes(audio_bytes)
 
         return Response(

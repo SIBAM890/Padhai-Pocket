@@ -10,6 +10,8 @@ import Svg, {
   Polygon,
 } from 'react-native-svg';
 import MotionSimulation from './MotionSimulation';
+import { Gravitation3DSimulation } from './Gravitation3DSimulation';
+import { Chemistry3DSimulation } from './Chemistry3DSimulation';
 import { colors, radius, shadows, spacing } from '../theme/theme';
 import { playOdiaVoice, stopOdiaAudio, type OdiaAudioKey } from '../audio/odiaAudio';
 
@@ -52,145 +54,14 @@ export function SubjectVisualizer({
   const s = subject?.toLowerCase() || 'physics';
   const c = chunkId?.toLowerCase() || '';
 
-  // 1. Chemistry Substitution Reaction Simulation (Carbon & Compounds)
+  // 1. Chemistry Simulation (3D Molecular Substitution & 3D States of Matter)
   if (s === 'chemistry' || c.includes('chem') || c.includes('carbon')) {
     return (
-      <View style={styles.card}>
-        <View style={styles.headerRow}>
-          <View style={styles.titleCol}>
-            <Text style={styles.titleOr}>ରସାୟନ ପ୍ରତିକ୍ରିୟା • 2D Chemical Reaction</Text>
-            <Text style={styles.titleEn}>
-              Methane (CH₄) + Chlorine (Cl₂) ➔ Chloromethane (CH₃Cl)
-            </Text>
-            <Pressable
-              style={[styles.voiceBtn, playingKey === 'chemistry' && styles.voiceBtnActive]}
-              onPress={() => handlePlayVoice('chemistry')}
-              accessibilityRole="button"
-              accessibilityLabel="Listen in Pure Odia Dialect"
-            >
-              <Text style={styles.voiceBtnIcon}>{playingKey === 'chemistry' ? '🔊' : '▶️'}</Text>
-              <Text style={[styles.voiceBtnText, playingKey === 'chemistry' && styles.voiceBtnTextActive]}>
-                {playingKey === 'chemistry' ? 'ଶୁଣୁଛନ୍ତି... (Playing Odia Dialect)' : '🔊 ଶୁଣନ୍ତୁ (Pure Odia Voice)'}
-              </Text>
-            </Pressable>
-          </View>
-          <View style={[styles.badge, { backgroundColor: '#E6FFFA', borderColor: '#319795' }]}>
-            <Text style={[styles.badgeText, { color: '#234E52' }]}>
-              ପ୍ରତିସ୍ଥାପନ ପ୍ରତିକ୍ରିୟା
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.svgContainer}>
-          <Svg width="100%" height={190} viewBox="0 0 340 190">
-            {/* Background */}
-            <Rect x="0" y="0" width="340" height="190" fill="#FDFBF7" />
-
-            {/* Sunlight rays indicator */}
-            <G x={145} y={15}>
-              <Circle cx={25} cy={15} r={10} fill="#F59E0B" />
-              <Line x1={25} y1={2} x2={25} y2={-4} stroke="#F59E0B" strokeWidth={2} />
-              <Line x1={37} y1={7} x2={43} y2={3} stroke="#F59E0B" strokeWidth={2} />
-              <Line x1={37} y1={23} x2={43} y2={27} stroke="#F59E0B" strokeWidth={2} />
-              <SvgText x={8} y={38} fontSize="9" fontWeight="bold" fill="#B45309">
-                ସୂର୍ଯ୍ୟାଲୋକ (hν)
-              </SvgText>
-            </G>
-
-            {/* Reactant 1: Methane (CH4) */}
-            <G x={30} y={45}>
-              {/* Bonds */}
-              <Line x1={40} y1={40} x2={40} y2={10} stroke="#94A3B8" strokeWidth={3} />
-              <Line x1={40} y1={40} x2={10} y2={40} stroke="#94A3B8" strokeWidth={3} />
-              <Line x1={40} y1={40} x2={70} y2={40} stroke="#94A3B8" strokeWidth={3} />
-              <Line x1={40} y1={40} x2={40} y2={70} stroke="#94A3B8" strokeWidth={3} />
-
-              {/* Central Carbon */}
-              <Circle cx={40} cy={40} r={16} fill="#1E293B" />
-              <SvgText x={35} y={45} fontSize="14" fontWeight="bold" fill="#FFFFFF">
-                C
-              </SvgText>
-
-              {/* 4 Hydrogens */}
-              <Circle cx={40} cy={10} r={9} fill="#38BDF8" />
-              <SvgText x={37} y={14} fontSize="10" fontWeight="bold" fill="#FFFFFF">H</SvgText>
-
-              <Circle cx={10} cy={40} r={9} fill="#38BDF8" />
-              <SvgText x={7} y={44} fontSize="10" fontWeight="bold" fill="#FFFFFF">H</SvgText>
-
-              <Circle cx={70} cy={40} r={9} fill="#38BDF8" />
-              <SvgText x={67} y={44} fontSize="10" fontWeight="bold" fill="#FFFFFF">H</SvgText>
-
-              <Circle cx={40} cy={70} r={9} fill="#38BDF8" />
-              <SvgText x={37} y={74} fontSize="10" fontWeight="bold" fill="#FFFFFF">H</SvgText>
-
-              <SvgText x={15} y={100} fontSize="11" fontWeight="bold" fill="#0F172A">
-                ମିଥେନ୍ (CH₄)
-              </SvgText>
-            </G>
-
-            {/* Plus Sign */}
-            <SvgText x={122} y={90} fontSize="20" fontWeight="bold" fill="#64748B">
-              +
-            </SvgText>
-
-            {/* Reactant 2: Chlorine molecule (Cl-Cl) */}
-            <G x={140} y={65}>
-              <Line x1={15} y1={25} x2={45} y2={25} stroke="#22C55E" strokeWidth={3} />
-              <Circle cx={15} cy={25} r={13} fill="#16A34A" />
-              <SvgText x={9} y={29} fontSize="11" fontWeight="bold" fill="#FFFFFF">Cl</SvgText>
-              <Circle cx={45} cy={25} r={13} fill="#16A34A" />
-              <SvgText x={39} y={29} fontSize="11" fontWeight="bold" fill="#FFFFFF">Cl</SvgText>
-              <SvgText x={12} y={55} fontSize="11" fontWeight="bold" fill="#0F172A">
-                କ୍ଲୋରିନ୍ (Cl₂)
-              </SvgText>
-            </G>
-
-            {/* Reaction Arrow */}
-            <G x={205} y={80}>
-              <Line x1={0} y1={10} x2={25} y2={10} stroke="#C2410C" strokeWidth={3} />
-              <Polygon points="25,5 33,10 25,15" fill="#C2410C" />
-              <SvgText x={-2} y={-2} fontSize="9" fontWeight="bold" fill="#C2410C">
-                ଦ୍ରୁତ ବିସ୍ଥାପନ
-              </SvgText>
-            </G>
-
-            {/* Product: Chloromethane (CH3Cl) */}
-            <G x={245} y={45}>
-              <Line x1={40} y1={40} x2={40} y2={10} stroke="#16A34A" strokeWidth={3} />
-              <Line x1={40} y1={40} x2={10} y2={40} stroke="#94A3B8" strokeWidth={3} />
-              <Line x1={40} y1={40} x2={70} y2={40} stroke="#94A3B8" strokeWidth={3} />
-              <Line x1={40} y1={40} x2={40} y2={70} stroke="#94A3B8" strokeWidth={3} />
-
-              <Circle cx={40} cy={40} r={16} fill="#1E293B" />
-              <SvgText x={35} y={45} fontSize="14" fontWeight="bold" fill="#FFFFFF">C</SvgText>
-
-              {/* Substituted Chlorine on top! */}
-              <Circle cx={40} cy={10} r={11} fill="#16A34A" />
-              <SvgText x={35} y={14} fontSize="10" fontWeight="bold" fill="#FFFFFF">Cl</SvgText>
-
-              <Circle cx={10} cy={40} r={9} fill="#38BDF8" />
-              <SvgText x={7} y={44} fontSize="10" fontWeight="bold" fill="#FFFFFF">H</SvgText>
-
-              <Circle cx={70} cy={40} r={9} fill="#38BDF8" />
-              <SvgText x={67} y={44} fontSize="10" fontWeight="bold" fill="#FFFFFF">H</SvgText>
-
-              <Circle cx={40} cy={70} r={9} fill="#38BDF8" />
-              <SvgText x={37} y={74} fontSize="10" fontWeight="bold" fill="#FFFFFF">H</SvgText>
-
-              <SvgText x={15} y={100} fontSize="11" fontWeight="bold" fill="#0F172A">
-                କ୍ଲୋରୋମିଥେନ୍ (CH₃Cl)
-              </SvgText>
-            </G>
-          </Svg>
-        </View>
-
-        <View style={styles.pillBox}>
-          <Text style={styles.pillText}>
-            ✓ ସୂର୍ଯ୍ୟାଲୋକ ଉପସ୍ଥିତିରେ ଗୋଟିଏ H ପରମାଣୁ Cl ଦ୍ୱାରା ପ୍ରତିସ୍ଥାପିତ ହୋଇଛି (Substitution)
-          </Text>
-        </View>
-      </View>
+      <Chemistry3DSimulation
+        onOpenJugaadLab={onOpenJugaadLab}
+        playingVoice={playingKey === 'chemistry'}
+        onToggleVoice={() => handlePlayVoice('chemistry')}
+      />
     );
   }
 
@@ -382,7 +253,7 @@ export function SubjectVisualizer({
     );
   }
 
-  // 4. Physics Gravitation Simulation (Mass vs Weight & Earth vs Moon)
+  // 4. Physics Gravitation Simulation (3D Gravitation & Mass vs Weight)
   if (
     c.includes('grav') ||
     c.includes('mass') ||
@@ -392,122 +263,11 @@ export function SubjectVisualizer({
     c === 'BSE9-PHYS-GRAV-S03-02'
   ) {
     return (
-      <View style={styles.card}>
-        <View style={styles.headerRow}>
-          <View style={styles.titleCol}>
-            <Text style={styles.titleOr}>ବସ୍ତୁତ୍ୱ ଓ ଭାର • 2D Gravitation Sim</Text>
-            <Text style={styles.titleEn}>
-              Earth (g = 9.8 m/s²) vs Moon (g = 1.6 m/s² · 1/6th)
-            </Text>
-            <Pressable
-              style={[styles.voiceBtn, playingKey === 'gravitation' && styles.voiceBtnActive]}
-              onPress={() => handlePlayVoice('gravitation')}
-              accessibilityRole="button"
-              accessibilityLabel="Listen in Pure Odia Dialect"
-            >
-              <Text style={styles.voiceBtnIcon}>{playingKey === 'gravitation' ? '🔊' : '▶️'}</Text>
-              <Text style={[styles.voiceBtnText, playingKey === 'gravitation' && styles.voiceBtnTextActive]}>
-                {playingKey === 'gravitation' ? 'ଶୁଣୁଛନ୍ତି... (Playing Odia Dialect)' : '🔊 ଶୁଣନ୍ତୁ (Pure Odia Voice)'}
-              </Text>
-            </Pressable>
-          </View>
-          <View style={[styles.badge, { backgroundColor: '#EDE9FE', borderColor: '#8B5CF6' }]}>
-            <Text style={[styles.badgeText, { color: '#6D28D9' }]}>
-              ମାଧ୍ୟାକର୍ଷଣ • W = mg
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.svgContainer}>
-          <Svg width="100%" height={190} viewBox="0 0 340 190">
-            <Rect x="0" y="0" width="340" height="190" fill="#F8FAFC" />
-
-            {/* Middle Divider */}
-            <Line x1={170} y1={15} x2={170} y2={175} stroke="#E2E8F0" strokeWidth={1} strokeDasharray="3, 3" />
-
-            {/* --- LEFT: EARTH (ପୃଥିବୀ) --- */}
-            {/* Earth Surface Sphere */}
-            <Circle cx={85} cy={185} r={55} fill="#DBEAFE" stroke="#3B82F6" strokeWidth={2} />
-            <SvgText x={55} y={160} fontSize="11" fontWeight="bold" fill="#1D4ED8">
-              ପୃଥିବୀ (Earth)
-            </SvgText>
-
-            {/* Earth Data Badge */}
-            <Rect x={15} y={15} width="68" height="28" rx="4" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth={1} />
-            <SvgText x={19} y={27} fontSize="9" fontWeight="bold" fill="#1E40AF">g = 9.8 m/s²</SvgText>
-            <SvgText x={19} y={38} fontSize="9" fontWeight="bold" fill="#2563EB">W = 98 N</SvgText>
-
-            {/* Earth Spring Scale */}
-            <Line x1={85} y1={20} x2={85} y2={45} stroke="#64748B" strokeWidth={2} />
-            <Rect x={70} y={45} width="30" height="38" rx="4" fill="#E2E8F0" stroke="#475569" strokeWidth={2} />
-            <Path d="M 78 52 L 92 56 L 78 60 L 92 64 L 85 70" stroke="#3B82F6" strokeWidth={2} fill="none" />
-            <Line x1={85} y1={83} x2={85} y2={92} stroke="#475569" strokeWidth={2} />
-
-            {/* 10 kg Block on Earth */}
-            <Rect x={67} y={92} width="36" height="28" rx="4" fill="#3B82F6" stroke="#1D4ED8" strokeWidth={2} />
-            <SvgText x={73} y={110} fontSize="11" fontWeight="bold" fill="#FFFFFF">10 kg</SvgText>
-
-            {/* Earth Gravity Vector (Heavy Downward Force) */}
-            <Line x1={85} y1={123} x2={85} y2={143} stroke="#DC2626" strokeWidth={3} />
-            <Polygon points="81,141 85,147 89,141" fill="#DC2626" />
-            <SvgText x={94} y={137} fontSize="9" fontWeight="bold" fill="#DC2626">98 N</SvgText>
-
-            {/* --- CENTER: CONSTANT MASS BADGE --- */}
-            <Rect x={135} y={65} width="70" height="32" rx="6" fill="#FEF3C7" stroke="#F59E0B" strokeWidth={1} />
-            <SvgText x={141} y={78} fontSize="8" fontWeight="bold" fill="#92400E">ବସ୍ତୁତ୍ୱ ସମାନ</SvgText>
-            <SvgText x={140} y={90} fontSize="9" fontWeight="bold" fill="#B45309">Mass = 10 kg</SvgText>
-            <SvgText x={143} y={120} fontSize="10" fontWeight="bold" fill="#7C3AED">W ÷ 6 ➔</SvgText>
-
-            {/* --- RIGHT: MOON (ଚନ୍ଦ୍ର) --- */}
-            {/* Moon Surface Sphere */}
-            <Circle cx={255} cy={185} r={55} fill="#E2E8F0" stroke="#94A3B8" strokeWidth={2} />
-            <Circle cx={235} cy={155} r={4} fill="#CBD5E1" />
-            <Circle cx={275} cy={165} r={6} fill="#CBD5E1" />
-            <SvgText x={232} y={160} fontSize="11" fontWeight="bold" fill="#475569">
-              ଚନ୍ଦ୍ର (Moon)
-            </SvgText>
-
-            {/* Moon Data Badge */}
-            <Rect x={255} y={15} width="72" height="28" rx="4" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={1} />
-            <SvgText x={259} y={27} fontSize="9" fontWeight="bold" fill="#334155">g = 1.6 m/s²</SvgText>
-            <SvgText x={259} y={38} fontSize="9" fontWeight="bold" fill="#64748B">W = 16.3 N (1/6)</SvgText>
-
-            {/* Moon Spring Scale (Slightly Stretched) */}
-            <Line x1={255} y1={20} x2={255} y2={45} stroke="#64748B" strokeWidth={2} />
-            <Rect x={240} y={45} width="30" height="38" rx="4" fill="#F1F5F9" stroke="#64748B" strokeWidth={2} />
-            <Path d="M 248 54 L 262 57 L 248 60 L 255 65" stroke="#94A3B8" strokeWidth={2} fill="none" />
-            <Line x1={255} y1={83} x2={255} y2={92} stroke="#64748B" strokeWidth={2} />
-
-            {/* Same 10 kg Block on Moon */}
-            <Rect x={237} y={92} width="36" height="28" rx="4" fill="#3B82F6" stroke="#1D4ED8" strokeWidth={2} />
-            <SvgText x={243} y={110} fontSize="11" fontWeight="bold" fill="#FFFFFF">10 kg</SvgText>
-
-            {/* Moon Gravity Vector (1/6th Force) */}
-            <Line x1={255} y1={123} x2={255} y2={133} stroke="#DC2626" strokeWidth={2} />
-            <Polygon points="252,131 255,137 258,131" fill="#DC2626" />
-            <SvgText x={262} y={133} fontSize="8" fontWeight="bold" fill="#DC2626">16.3 N</SvgText>
-          </Svg>
-        </View>
-
-        <View style={[styles.pillBox, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
-          <Text style={[styles.pillText, { color: '#6D28D9' }]}>
-            ✓ ବସ୍ତୁତ୍ୱ (10 kg) ସବୁ ସ୍ଥାନରେ ସମାନ ରହେ; କିନ୍ତୁ ଚନ୍ଦ୍ରରେ ମାଧ୍ୟାକର୍ଷଣ କମ୍ ଥିବାରୁ ଓଜନ 1/6 ହୋଇଯାଏ (W = mg)
-          </Text>
-        </View>
-
-        {onOpenJugaadLab && (
-          <Pressable
-            style={styles.jugaadBannerBtn}
-            onPress={onOpenJugaadLab}
-            accessibilityRole="button"
-            accessibilityLabel="Open Pocket Jugaad Lab Pendulum Experiment"
-          >
-            <Text style={styles.jugaadBannerBtnText}>
-              🔬 ପକେଟ୍ ଜୁଗାଡ଼ ଲ୍ୟାବ୍ ରେ ମାଧ୍ୟାକର୍ଷଣ (g) ମାପନ୍ତୁ (Launch Pendulum Lab) ➔
-            </Text>
-          </Pressable>
-        )}
-      </View>
+      <Gravitation3DSimulation
+        onOpenJugaadLab={onOpenJugaadLab}
+        playingVoice={playingKey === 'gravitation'}
+        onToggleVoice={() => handlePlayVoice('gravitation')}
+      />
     );
   }
 
