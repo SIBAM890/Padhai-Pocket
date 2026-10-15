@@ -37,6 +37,7 @@ import { StudentSetupModal } from '../components/StudentSetupModal';
 import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
 import { JugaadLabModal } from '../components/JugaadLabModal';
 import { StudentProgressModal } from '../components/StudentProgressModal';
+import { BktTrajectoryChart } from '../components/BktTrajectoryChart';
 import { JudgeTelemetryPanel } from '../components/JudgeTelemetryPanel';
 import {
   mockProfile,
@@ -1285,6 +1286,13 @@ export default function LearnScreen({ navigation, route }: Props) {
               minutesThisWeek={streakState.minutesThisWeek}
               gridData={streakState.gridData}
               defaultSelectedCell={streakState.todayCell}
+            />
+
+            {/* High Quality Interactive BKT Trajectory Graph */}
+            <BktTrajectoryChart
+              history={studentProgressSnapshot.concepts[0]?.history || [0.42]}
+              conceptTitle={studentProgressSnapshot.concepts[0]?.title_en}
+              conceptTitleOr={studentProgressSnapshot.concepts[0]?.title_or}
             />
 
             <View style={styles.progressCard}>
