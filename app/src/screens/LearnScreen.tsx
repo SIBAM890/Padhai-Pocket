@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -36,6 +36,7 @@ import { BottomNavigation, type MainNavTab } from '../components/BottomNavigatio
 import { StudentSetupModal } from '../components/StudentSetupModal';
 import { TeacherDashboardModal } from '../components/TeacherDashboardModal';
 import { JugaadLabModal } from '../components/JugaadLabModal';
+import { StudentProgressModal } from '../components/StudentProgressModal';
 import { JudgeTelemetryPanel } from '../components/JudgeTelemetryPanel';
 import {
   mockProfile,
@@ -48,9 +49,12 @@ import { useNetworkStatus } from '../network/network';
 import {
   nextAction,
   createInitialState,
+  computeStudentProgress,
   type EngineState,
   type EngineContext,
+  type NextStudyRecommendation,
 } from '../engine';
+import type { StoredEvent } from '../types/events';
 import { computeSeed, probeOrder } from '../engine/seed';
 import { insertEvent, listEvents, pendingEvents, subscribeDatabase } from '../db/database';
 import { syncPending, resolveApiBaseUrl } from '../sync/syncClient';
@@ -168,6 +172,8 @@ export default function LearnScreen({ navigation, route }: Props) {
   const [setupModalVisible, setSetupModalVisible] = useState(true);
   const [teacherModalVisible, setTeacherModalVisible] = useState(false);
   const [jugaadModalVisible, setJugaadModalVisible] = useState(false);
+  const [progressModalVisible, setProgressModalVisible] = useState(false);
+  const [storedEvents, setStoredEvents] = useState<StoredEvent[]>([]);
   const [judgeToolsVisible, setJudgeToolsVisible] = useState(false);
 
   // Profile data in local state
@@ -234,6 +240,7 @@ export default function LearnScreen({ navigation, route }: Props) {
 
       const computed = computeStreakData(allEvents || [], demoMode);
       setStreakState(computed);
+      setStoredEvents(allEvents || []);
     } catch (e) {
       console.warn('Failed to compute streak from database events', e);
     }
@@ -282,8 +289,29 @@ export default function LearnScreen({ navigation, route }: Props) {
   }, [loadStreakAndStats]);
 
   // Re-render trigger for live telemetry synchronization
-  const [, setTelemetryTick] = useState(0);
+  const [telemetryTick, setTelemetryTick] = useState(0);
   const triggerTelemetryUpdate = useCallback(() => setTelemetryTick((t) => t + 1), []);
+
+  // Live event-sourced Student Progress Snapshot (FR-30 & FR-8 compliant)
+  const studentProgressSnapshot = useMemo(() => {
+    return computeStudentProgress(profileId, storedEvents, engineStateRef.current);
+  }, [profileId, storedEvents, telemetryTick]);
+
+  const handleStartRecommendation = (rec: NextStudyRecommendation) => {
+    if (rec.type === 'SENSOR_LAB') {
+      setJugaadModalVisible(true);
+    } else if (rec.type === 'TERM_FOLLOW_UP' || rec.type === 'CONCEPT_REVISION') {
+      setCurrentTab('Learn');
+      setFlowStep('QUESTION_INTERACTION');
+      setSelectedOption(null);
+      setSelectedProbeChoice(null);
+    } else if (rec.type === 'NEXT_CONCEPT') {
+      setCurrentTab('Learn');
+      setFlowStep('QUESTION_INTERACTION');
+      setSelectedOption(null);
+      setSelectedProbeChoice(null);
+    }
+  };
 
   // Content pack loader hooks safely parameterized by subject and chunkId
   const heroChunk = getHeroChunk(subject, chunkId);
@@ -852,6 +880,87 @@ export default function LearnScreen({ navigation, route }: Props) {
               onContinue={() => setFlowStep('SOUND_CHECK')}
             />
 
+            {/* Live Student Progress Strip (FR-30 & FR-8 Compliant) */}
+            <View style={styles.progressStripCard}>
+              <View style={styles.progressStripHeader}>
+                <View style={styles.progressStripTitleCol}>
+                  <Text style={styles.progressStripTitle}>
+                    📈 ଲାଇଭ୍ ପ୍ରଗତି (Live Mastery Tracker)
+                  </Text>
+                  <Text style={styles.progressStripSub}>
+                    BKT Real-Time · {studentProgressSnapshot.total_events} SQLite events logged
+                  </Text>
+                </View>
+                <Pressable
+                  style={styles.progressStripBtn}
+                  onPress={() => setProgressModalVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open My Progress Tracker"
+                >
+                  <Text style={styles.progressStripBtnText}>
+                    📊 ମୋ ପ୍ରଗତି (My Progress Tracker)
+                  </Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.progressStripMetricsRow}>
+                <View style={styles.progressStripMetric}>
+                  <View style={styles.progressStripMetricTop}>
+                    <Text style={styles.progressStripMetricLabel}>
+                      ଧାରଣା (Concept): {studentProgressSnapshot.concepts[0]?.title_or || 'ବିସ୍ଥାପନ'}
+                    </Text>
+                    <Text style={styles.progressStripMetricVal}>
+                      {studentProgressSnapshot.overall_concept_pct}%
+                    </Text>
+                  </View>
+                  <View style={styles.progressStripTrack}>
+                    <View
+                      style={[
+                        styles.progressStripFill,
+                        {
+                          width: `${studentProgressSnapshot.overall_concept_pct}%`,
+                          backgroundColor: colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.progressStripMetric}>
+                  <View style={styles.progressStripMetricTop}>
+                    <Text style={styles.progressStripMetricLabel}>
+                      ଓଡ଼ିଆ ଶବ୍ଦ: {studentProgressSnapshot.terms[0]?.odia_word || 'ବିସ୍ଥାପନ'} ({studentProgressSnapshot.terms[0]?.en_word || 'Displacement'})
+                    </Text>
+                    <Text style={styles.progressStripMetricVal}>
+                      {Math.round((studentProgressSnapshot.terms[0]?.current_mastery ?? 0.4) * 100)}%
+                    </Text>
+                  </View>
+                  <View style={styles.progressStripTrack}>
+                    <View
+                      style={[
+                        styles.progressStripFill,
+                        {
+                          width: `${Math.round((studentProgressSnapshot.terms[0]?.current_mastery ?? 0.4) * 100)}%`,
+                          backgroundColor: colors.secondary,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <Pressable
+                style={styles.progressStripRecPill}
+                onPress={() => setProgressModalVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel="View Autonomous Next Step Recommendation"
+              >
+                <Text style={styles.progressStripRecText}>
+                  🚀 ପରବର୍ତ୍ତୀ ପାଦ: {studentProgressSnapshot.next_recommendation.title_or} ➔
+                </Text>
+              </Pressable>
+            </View>
+
             <StreakGrid
               streakDays={streakState.streakDays}
               minutesThisWeek={streakState.minutesThisWeek}
@@ -1177,13 +1286,27 @@ export default function LearnScreen({ navigation, route }: Props) {
             />
 
             <View style={styles.progressCard}>
-              <Text style={styles.progressCardTitle}>Topics Explored</Text>
+              <View style={styles.progressStripHeader}>
+                <Text style={styles.progressCardTitle}>Topics Explored</Text>
+                <Pressable
+                  style={styles.progressStripBtn}
+                  onPress={() => setProgressModalVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Full Student Progress Tracker"
+                >
+                  <Text style={styles.progressStripBtnText}>
+                    📊 ମୋ ପ୍ରଗତି (Full Tracker)
+                  </Text>
+                </Pressable>
+              </View>
 
               <View style={styles.topicRow}>
                 <View style={styles.topicMeta}>
-                  <Text style={styles.topicName}>Motion & Mechanics</Text>
+                  <Text style={styles.topicName}>
+                    {studentProgressSnapshot.concepts[0]?.title_en || 'Distance vs Displacement'} ({studentProgressSnapshot.concepts[0]?.title_or || 'ଦୂରତା ଏବଂ ବିସ୍ଥାପନ'})
+                  </Text>
                   <Text style={styles.topicPercent}>
-                    {Math.round(engineStateRef.current.concept_mastery * 100)}%
+                    {studentProgressSnapshot.overall_concept_pct}%
                   </Text>
                 </View>
                 <View style={styles.topicTrack}>
@@ -1191,7 +1314,7 @@ export default function LearnScreen({ navigation, route }: Props) {
                     style={[
                       styles.topicFill,
                       {
-                        width: `${Math.round(engineStateRef.current.concept_mastery * 100)}%`,
+                        width: `${studentProgressSnapshot.overall_concept_pct}%`,
                         backgroundColor: colors.primary,
                       },
                     ]}
@@ -1201,9 +1324,11 @@ export default function LearnScreen({ navigation, route }: Props) {
 
               <View style={styles.topicRow}>
                 <View style={styles.topicMeta}>
-                  <Text style={styles.topicName}>Term Bridge (Displacement / {remediationOdiaText})</Text>
+                  <Text style={styles.topicName}>
+                    Term Bridge ({studentProgressSnapshot.terms[0]?.en_word || 'Displacement'} / {studentProgressSnapshot.terms[0]?.odia_word || remediationOdiaText})
+                  </Text>
                   <Text style={styles.topicPercent}>
-                    {Math.round((engineStateRef.current.term_masteries?.['T_DISP'] ?? 0.4) * 100)}%
+                    {Math.round((studentProgressSnapshot.terms[0]?.current_mastery ?? 0.4) * 100)}%
                   </Text>
                 </View>
                 <View style={styles.topicTrack}>
@@ -1211,7 +1336,7 @@ export default function LearnScreen({ navigation, route }: Props) {
                     style={[
                       styles.topicFill,
                       {
-                        width: `${Math.round((engineStateRef.current.term_masteries?.['T_DISP'] ?? 0.4) * 100)}%`,
+                        width: `${Math.round((studentProgressSnapshot.terms[0]?.current_mastery ?? 0.4) * 100)}%`,
                         backgroundColor: colors.secondary,
                       },
                     ]}
@@ -1354,6 +1479,15 @@ export default function LearnScreen({ navigation, route }: Props) {
           await refreshPending();
           loadStreakAndStats();
         }}
+      />
+
+      <StudentProgressModal
+        visible={progressModalVisible}
+        onClose={() => setProgressModalVisible(false)}
+        profileId={profileId}
+        events={storedEvents}
+        engineState={engineStateRef.current}
+        onStartRecommendation={handleStartRecommendation}
       />
     </SafeAreaView>
   );
@@ -1639,5 +1773,94 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  progressStripCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    ...shadows.subtle,
+  },
+  progressStripHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  progressStripTitleCol: {
+    flex: 1,
+  },
+  progressStripTitle: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  progressStripSub: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontSize: 10,
+    marginTop: 1,
+  },
+  progressStripBtn: {
+    backgroundColor: '#EFF6FF',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  progressStripBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  progressStripMetricsRow: {
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  progressStripMetric: {
+    marginBottom: 2,
+  },
+  progressStripMetricTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  progressStripMetricLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  progressStripMetricVal: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  progressStripTrack: {
+    height: 6,
+    backgroundColor: colors.background,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+  },
+  progressStripFill: {
+    height: '100%',
+    borderRadius: radius.full,
+  },
+  progressStripRecPill: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: radius.md,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  progressStripRecText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1E293B',
   },
 });
