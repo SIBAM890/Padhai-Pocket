@@ -6,41 +6,46 @@ let dbInitPromise: Promise<SQLite.SQLiteDatabase> | undefined;
 export function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbInitPromise) {
     dbInitPromise = (async () => {
-      const db = await SQLite.openDatabaseAsync('padhai-pocket.db');
-      await db.execAsync(`
-        PRAGMA journal_mode = WAL;
-        CREATE TABLE IF NOT EXISTS schema_version (
-          version INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS events (
-          event_id TEXT PRIMARY KEY NOT NULL,
-          profile_id TEXT NOT NULL,
-          seq INTEGER NOT NULL,
-          ts TEXT NOT NULL,
-          origin TEXT NOT NULL,
-          node TEXT NOT NULL,
-          action TEXT NOT NULL,
-          payload_json TEXT NOT NULL,
-          sync_status TEXT NOT NULL DEFAULT 'PENDING',
-          retry_count INTEGER NOT NULL DEFAULT 0,
-          next_retry_at INTEGER NOT NULL DEFAULT 0,
-          reject_reason TEXT
-        );
-        CREATE INDEX IF NOT EXISTS idx_events_profile_seq ON events(profile_id, seq);
-        CREATE INDEX IF NOT EXISTS idx_events_sync ON events(sync_status, next_retry_at);
-      `);
-
       try {
-        await db.execAsync('ALTER TABLE events ADD COLUMN reject_reason TEXT;');
-      } catch {}
+        const db = await SQLite.openDatabaseAsync('padhai-pocket.db');
+        await db.execAsync(`
+          PRAGMA journal_mode = WAL;
+          CREATE TABLE IF NOT EXISTS schema_version (
+            version INTEGER NOT NULL
+          );
+          CREATE TABLE IF NOT EXISTS events (
+            event_id TEXT PRIMARY KEY NOT NULL,
+            profile_id TEXT NOT NULL,
+            seq INTEGER NOT NULL,
+            ts TEXT NOT NULL,
+            origin TEXT NOT NULL,
+            node TEXT NOT NULL,
+            action TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            sync_status TEXT NOT NULL DEFAULT 'PENDING',
+            retry_count INTEGER NOT NULL DEFAULT 0,
+            next_retry_at INTEGER NOT NULL DEFAULT 0,
+            reject_reason TEXT
+          );
+          CREATE INDEX IF NOT EXISTS idx_events_profile_seq ON events(profile_id, seq);
+          CREATE INDEX IF NOT EXISTS idx_events_sync ON events(sync_status, next_retry_at);
+        `);
 
-      const version = await db.getFirstAsync<{ version: number }>(
-        'SELECT version FROM schema_version LIMIT 1'
-      );
-      if (!version) {
-        await db.runAsync('INSERT INTO schema_version(version) VALUES (?)', 1);
+        try {
+          await db.execAsync('ALTER TABLE events ADD COLUMN reject_reason TEXT;');
+        } catch {}
+
+        const version = await db.getFirstAsync<{ version: number }>(
+          'SELECT version FROM schema_version LIMIT 1'
+        );
+        if (!version) {
+          await db.runAsync('INSERT INTO schema_version(version) VALUES (?)', 1);
+        }
+        return db;
+      } catch (err) {
+        dbInitPromise = undefined;
+        throw err;
       }
-      return db;
     })();
   }
   return dbInitPromise;
