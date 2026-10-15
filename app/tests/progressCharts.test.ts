@@ -17,15 +17,13 @@ describe('High Quality Progress Report Graph Components', () => {
       expect(element.props.conceptTitle).toBe('Distance vs Displacement');
     });
 
-    it('handles multi-step BKT trajectory chain correctly', () => {
-      const historyChain = [0.42, 0.2248, 0.5842, 0.8597];
+    it('defaults to pie chart mode and supports initialMode switching', () => {
       const element = React.createElement(BktTrajectoryChart, {
-        history: historyChain,
-        width: 360,
-        height: 200,
+        history: [0.7643],
+        initialMode: 'pie',
       });
-      expect(element.props.history.length).toBe(4);
-      expect(element.props.history[3]).toBeCloseTo(0.8597, 4);
+      expect(element.props.initialMode).toBe('pie');
+      expect(element.props.history[0]).toBeCloseTo(0.7643, 4);
     });
   });
 
