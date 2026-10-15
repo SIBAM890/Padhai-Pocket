@@ -16,6 +16,9 @@ import {
   type NextStudyRecommendation,
   type ReplayVerificationResult,
 } from '../engine';
+import { BktTrajectoryChart } from './BktTrajectoryChart';
+import { ModalityRadarChart } from './ModalityRadarChart';
+import { TermMasteryBarChart } from './TermMasteryBarChart';
 
 export interface StudentProgressModalProps {
   visible: boolean;
@@ -193,6 +196,15 @@ export function StudentProgressModal({
               BSE Odisha Class 9 Physics · Mathematical BKT trajectory updated per event
             </Text>
 
+            {/* High Quality BKT Trajectory Graph */}
+            {snapshot.concepts.length > 0 && (
+              <BktTrajectoryChart
+                history={snapshot.concepts[0]?.history || [0.42]}
+                conceptTitle={snapshot.concepts[0]?.title_en}
+                conceptTitleOr={snapshot.concepts[0]?.title_or}
+              />
+            )}
+
             {snapshot.concepts.map((concept) => {
               const pct = Math.round(concept.current_mastery * 100);
               const statusColor =
@@ -275,6 +287,9 @@ export function StudentProgressModal({
               Textbook terminology mastery with independent BKT tracking
             </Text>
 
+            {/* High Quality Term Mastery Bar Chart */}
+            <TermMasteryBarChart terms={snapshot.terms} />
+
             <View style={styles.termGrid}>
               {snapshot.terms.map((term) => {
                 const pct = Math.round(term.current_mastery * 100);
@@ -326,6 +341,9 @@ export function StudentProgressModal({
               <Text style={styles.modalityHeaderSub}>
                 Picture (P), Audio (A), and Text (T) probe response distribution
               </Text>
+
+              {/* High Quality Modality Radar Spider Graph */}
+              <ModalityRadarChart modalities={snapshot.modalities} />
 
               {snapshot.modalities.map((mod) => (
                 <View key={mod.modality} style={styles.modalityRow}>

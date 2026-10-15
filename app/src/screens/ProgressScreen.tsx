@@ -20,6 +20,10 @@ import {
 import { StreakGrid } from '../components/StreakGrid';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 import { t } from '../utils/stringsLoader';
+import { computeStudentProgress, type StudentProgressSnapshot } from '../engine';
+import { BktTrajectoryChart } from '../components/BktTrajectoryChart';
+import { TermMasteryBarChart } from '../components/TermMasteryBarChart';
+import { ModalityRadarChart } from '../components/ModalityRadarChart';
 
 /**
  * ProgressScreen — child-safe progress & pace dashboard.
@@ -66,11 +70,17 @@ export function ProgressScreen({ route, navigation }: Props) {
   const [gridData, setGridData] = useState<any[]>([]);
   const [streakDays, setStreakDays] = useState(0);
   const [minutesThisWeek, setMinutesThisWeek] = useState(0);
+  const [studentProgress, setStudentProgress] = useState<StudentProgressSnapshot | null>(null);
 
   const reload = useCallback(async () => {
     try {
       const events = await listEvents(500);
       setSnap(getProgressSnapshot(events, profileId));
+      try {
+        setStudentProgress(computeStudentProgress(profileId, events));
+      } catch {
+        setStudentProgress(null);
+      }
 
       // Profile-specific streak computation: filter only this profile's events
       try {
@@ -168,6 +178,19 @@ export function ProgressScreen({ route, navigation }: Props) {
           minutesThisWeek={minutesThisWeek}
           gridData={gridData}
         />
+      )}
+
+      {/* High Quality Graphs */}
+      {studentProgress && (
+        <View style={styles.chartsContainer}>
+          <BktTrajectoryChart
+            history={studentProgress.concepts[0]?.history || [0.42]}
+            conceptTitle={studentProgress.concepts[0]?.title_en}
+            conceptTitleOr={studentProgress.concepts[0]?.title_or}
+          />
+          <TermMasteryBarChart terms={studentProgress.terms} />
+          <ModalityRadarChart modalities={studentProgress.modalities} />
+        </View>
       )}
 
       <TouchableOpacity
@@ -319,5 +342,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: spacing.lg,
     fontSize: typography.bodySmall.fontSize,
+  },
+  chartsContainer: {
+    gap: spacing.md,
+    marginVertical: spacing.md,
   },
 });
