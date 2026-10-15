@@ -1,7 +1,7 @@
 # FLOW.md — System Execution & Traceability Map
 > *"Bugs live in the gaps between files. If you can't see the flow, you can't see where it breaks — and neither can the AI."*
 
-This document maps how execution actually travels through **Padhai Pocket** across files, functions, modules, state boundaries, dual-client environments, and network hops. Every engineer and AI agent modifying this repository must consult and update this trace before and after changing any interface.
+This document maps how execution actually travels through **Padhai Pocket** across files, functions, modules, state boundaries, dual-client environments, offline hardware sensors, and network hops. Every engineer and AI agent modifying this repository must consult and update this trace before and after changing any interface.
 
 ---
 
@@ -48,19 +48,58 @@ flowchart TD
         DB -->|"12. Reactive subscription"| STR["Streak & Calendar Matrix<br/>(app/src/utils/streakHelper.ts)"]
         STR -->|"Render 4-week grid"| SG["Streak Grid UI<br/>(StreakGrid.tsx)"]
 
-        LS -->|"13. Sync tap / Online trigger"| SC["Sync Client<br/>(app/src/sync/syncClient.ts)"]
-        SC -->|"14. Device ID & Token"| DEV["Device Manager<br/>(app/src/utils/device.ts)"]
+        subgraph Visualizers ["Interactive Subject Visualizers & Vector Projections"]
+            MOT["Motion Path vs Displacement<br/>(MotionSimulation.tsx)"]
+            GRAV["Gravitation Earth vs Moon<br/>(Gravitation3DSimulation.tsx)"]
+            CHEM["Chemistry Acid-Base<br/>(Chemistry3DSimulation.tsx)"]
+            BIO["Biology Osmosis Turgor<br/>(Biology3DSimulation.tsx)"]
+            MATH["Maths Shadow Trigonometry<br/>(Maths3DSimulation.tsx)"]
+        end
+        LS -.-> Visualizers
+
+        subgraph JugaadLab ["Pocket Jugaad Lab (Offline Sensor Experiments)"]
+            JLAB["6 Sensor Experiments<br/>(app/src/engine/jugaadLab.ts)"]
+            JUI["Jugaad Lab Modal<br/>(JugaadLabModal.tsx)"]
+        end
+        LS <--> JugaadLab
+
+        subgraph ProgressTracker ["Student Progress & Mastery Analytics"]
+            PT["Snapshot Derivation<br/>(app/src/engine/progressTracker.ts)"]
+            SPM["Student Progress Modal<br/>(StudentProgressModal.tsx)"]
+            PIE["BKT Trajectory Pie & Trend<br/>(BktTrajectoryChart.tsx)"]
+            RADAR["3-Axis Modality Radar<br/>(ModalityRadarChart.tsx)"]
+            BAR["Term Mastery 70% Chart<br/>(TermMasteryBarChart.tsx)"]
+            MILE["Milestones & 4 Badges<br/>(Student Progress Card)"]
+        end
+        DB --> PT --> SPM
+        SPM --> PIE
+        SPM --> RADAR
+        SPM --> BAR
+        SPM --> MILE
+
+        subgraph AudioLayer ["Offline-First Odia Audio Layer"]
+            AUD_DATA["8 Embedded Base64 MP3s<br/>(app/src/audio/odiaAudioData.ts)"]
+            AUD_SVC["Audio Playback Service<br/>(app/src/audio/odiaAudio.ts)"]
+        end
+        LS --> AUD_SVC
+        AUD_DATA --> AUD_SVC
+
+        LS -->|"Sync trigger"| SC["Sync Client<br/>(app/src/sync/syncClient.ts)"]
+        SC -->|"Device ID & Token"| DEV["Device Manager<br/>(app/src/utils/device.ts)"]
     end
 
     subgraph BackendServer ["FastAPI Backend (backend/)"]
-        SC -->|"15. POST /v1/sync/events"| MW["Failure Injection Middleware<br/>(backend/failure_hooks.py)"]
+        SC -->|"POST /v1/sync/events"| MW["Failure Injection Middleware<br/>(backend/failure_hooks.py)"]
         MW --> EP["Event Ingestion Endpoint<br/>(backend/main.py)"]
-        EP -->|"16. Validate against schema"| ES["Shared Event Schema<br/>(shared/event.schema.json)"]
-        EP -->|"17. Deduplicate & persist"| STOR["Storage / Postgres<br/>(DemoStorage / schema.sql)"]
+        EP -->|"Validate schema"| ES["Shared Event Schema<br/>(shared/event.schema.json)"]
+        EP -->|"Deduplicate & dual-write"| STOR["Dual Storage Layer<br/>(Postgres / Supabase + Edge Mirror)"]
         
         EP -.->|"Async agent planning"| AG["LangGraph Agent Graph<br/>(backend/graph/graph.py)"]
         AG -->|"PLAN -> gen_explanation -> REFLECT"| LLM["Gemini Model / Rule Fallback"]
         AG -->|"4 Non-Merged Reflect Gates"| GATECHK["chunk_exists | glossary_terms<br/>readability | model_source_check"]
+
+        TTS["Neural Odia TTS Service<br/>(GET / POST /v1/tts)"]
+        AUD_SVC -.->|"Dynamic preview fallback"| TTS
     end
 ```
 
@@ -68,7 +107,7 @@ flowchart TD
 
 ## 2. End-to-End Execution Lifecycles
 
-### Path A: App Boot & Content Hydration
+### Path A: App Boot, Content Hydration & Database Initialization
 Execution flow when a learner opens the mobile application or evaluator web interface:
 
 ```text
@@ -83,6 +122,7 @@ Execution flow when a learner opens the mobile application or evaluator web inte
   │      │      └──> If missing: generates 'dev-' + uuidv4() (RFC 4122) and stores in SQLite/localStorage
   │      │
   │      ├──> initDb() [app/src/db/database.ts | database.web.ts]
+  │      │      ├──> Resets dbInitPromise error cache on retry to protect native app reloads
   │      │      ├──> Executes CREATE TABLE IF NOT EXISTS events (event_id PRIMARY KEY, ...)
   │      │      └──> Executes CREATE TABLE IF NOT EXISTS device_meta (key PRIMARY KEY, value)
   │      │
@@ -109,7 +149,7 @@ Execution flow when a learner opens the mobile application or evaluator web inte
 ---
 
 ### Path B: The Diagnostic Learning & Misconception Flow (Core Engine Loop)
-Execution flow when a learner answers a question:
+Execution flow when a learner answers a science question:
 
 ```text
 [Learner Taps Option Button in OptionButton.tsx]
@@ -156,7 +196,7 @@ Execution flow when a learner answers a question:
          │      │     ├──> Updates term mastery via updateTermMastery() if TERM_GAP
          │      │     ├──> finalLabel(set_labels, threshold) [app/src/engine/finalLabel.ts]
          │      │     └──> When verdict.done === true:
-         │      │            └──> Invokes Path E: D5 Resource Match Engine (see Path E below)
+         │      │            └──> Invokes Path C: D5 Resource Match Engine (see Path C below)
          │      │
          │      └── [At every step]:
          │            └──> buildEvent(...) [app/src/engine/eventBuilder.ts]
@@ -249,7 +289,7 @@ Detailed execution flow of the D5 Resource Match Engine (PRD §2.5 / §4.7):
          │            Sort descending by score; tie-break on resource_id.localeCompare()
          │            Returns: { selected, runner_up, ranked[], disqualified[] }
          │
-         ├──> 3. Emit ACT Event with D5 Payload [app/src/engine/index.ts: lines 474-488]:
+         ├──> 3. Emit ACT Event with D5 Payload [app/src/engine/index.ts]:
          │      emit('ACT', `REMEDIATION_${v.label}`, {
          │        final_label: v.label,
          │        agreement: v.agreement,
@@ -286,62 +326,113 @@ Detailed execution flow of the D5 Resource Match Engine (PRD §2.5 / §4.7):
 
 ---
 
-### Path D: Dynamic Streak & Diagnostic Calendar Matrix Flow
-Execution flow for the dynamic activity streak and rolling 4-week calendar matrix:
+### Path D: Pocket Jugaad Lab — Offline Hardware Sensor Experiment Flow
+Execution flow for the 6 real-world offline sensor physics and science labs:
 
 ```text
-[Local SQLite Event Insert Trigger: insertEvent()]
+[Learner Taps "Pocket Jugaad Lab" in LearnScreen.tsx OR Visualizer]
   │
-  └──> database.ts :: notifySubscribers()
+  └──> JugaadLabModal.tsx :: handleRunExperiment(experimentId)
          │
-         └──> LearnScreen.tsx :: refreshStreakData()
-                │
-                ├──> 1. Fetch Stored Events:
-                │      events = await listEvents(1000) [app/src/db/database.ts]
-                │
-                ├──> 2. Pass to Pure Computation Engine:
-                │      streakResult = computeStreakData(events, Date.now()) [app/src/utils/streakHelper.ts]
-                │
-                ├──> 3. Calculation Steps [streakHelper.ts]:
-                │      │
-                │      ├── a. Filter Learning Activities:
-                │      │     Filters for events where type === 'ACT' or node === 'ACT' or type === 'DIAGNOSIS'
-                │      │
-                │      ├── b. Aggregate Active Days:
-                │      │     Maps ISO timestamps to local 'YYYY-MM-DD' day keys
-                │      │     Calculates activity count, BKT mastery delta, and diagnostic gap types per day
-                │      │
-                │      ├── c. Calculate Current & Best Streak:
-                │      │     Checks today ('YYYY-MM-DD'). If no activity today, allows 1-day grace period for yesterday.
-                │      │     Counts backwards consecutive active days -> returns streakDays
-                │      │
-                │      ├── d. Calculate Week Learning Minutes:
-                │      │     Sums activity durations for current Monday-to-Sunday week
-                │      │
-                │      └── e. Build 4-Week Rolling Calendar Matrix (4 rows x 7 cols):
-                │            - Rows 0..2: 3 full preceding calendar weeks (Mon..Sun)
-                │            - Row 3: Current week (Mon..Sun)
-                │            - Level mapping: 0 (empty), 1 (1-2 acts), 2 (3-4 acts), 3 (5+ acts)
-                │            - Future days in current week strictly clamped to isFuture=true (dashed border)
-                │            - Today's cell marked with isToday=true (emerald focus ring)
-                │
-                ├──> 4. Dynamic Time-Aware Greeting:
-                │      greeting = getTimeOfDayGreeting(learnerName, currentHour) [streakHelper.ts]
-                │      ├── 05:00 - 11:59 -> "Good morning, Sunita"
-                │      ├── 12:00 - 16:59 -> "Good afternoon, Sunita"
-                │      ├── 17:00 - 20:59 -> "Good evening, Sunita"
-                │      └── 21:00 - 04:59 -> "Welcome back, Sunita"
-                │
-                └──> 5. UI Render in AppHeader.tsx & StreakGrid.tsx:
-                       ├──> Renders greeting banner with learner name
-                       ├──> Displays flame badge: "🔥 3 Day Streak"
-                       ├──> Displays "⏱️ 45m this week"
-                       └──> Renders interactive 4x7 heatmap grid with gap color indicators
+         ├──> 1. Select Experiment from JUGAAD_EXPERIMENTS [app/src/engine/jugaadLab.ts]:
+         │      ├── EXP-MOTION-RAMP: Accelerometer & Roll distance (v_final = 1.6 m/s, disp = 0.00m)
+         │      ├── EXP-GRAV-PENDULUM: Time-period sensor (T = 2.00s -> g = 9.87 m/s²)
+         │      ├── EXP-SOUND-CLAP: Microphone audio echo delta_t (340 m/s speed of sound)
+         │      ├── EXP-CHEM-TURMERIC: Camera RGB natural indicator (Acid: Yellow, Base: Reddish-Brown)
+         │      ├── EXP-BIO-OSMOSIS: Peel displacement mm (Hypotonic Endosmosis vs Hypertonic Exosmosis)
+         │      └── EXP-MATH-SHADOW: Inclinometer trigonometry (tan 45° -> height = 9.20m)
+         │
+         ├──> 2. Run Pure Experiment Turn:
+         │      result = runJugaadExperimentTurn(exp, trialInput, { now, seed, device_id })
+         │
+         ├──> 3. Noise & Signal Validation:
+         │      ├── Shaky/Noisy input: Fails signal_to_noise / physical_bounds gates
+         │      │     └──> Emits ACT: RETRY_STEADY_HAND (concept BKT protected, stays 0.42)
+         │      └── Clean input: All 4 REFLECT gates pass (bounds, signal, safety, groundedness)
+         │            └──> Emits ACT: JUGAAD_LAB_SUCCESS + boosts concept BKT (0.42 -> 0.7643)
+         │
+         ├──> 4. Event Persistence:
+         │      Emits event strictly conforming to shared/event.schema.json (12-hex hash, seq monotonic)
+         │      await insertEvent(labEvent) [app/src/db/database.ts]
+         │
+         └──> 5. UI Presentation:
+                ├── Animated SVG sensor readout (gauge dial, stopwatch, spring curve)
+                ├── Bilingual takeaway note in Odia and English
+                └── Mastery growth badge: "📈 Concept Mastery: 42% ➔ 76%"
 ```
 
 ---
 
-### Path E: Offline-First Synchronization Flow
+### Path E: High-Quality Progress Report & Learning Milestones Dashboard
+Execution flow when a learner or teacher reviews student progress:
+
+```text
+[User Taps Progress Button / Streak Badge in Header]
+  │
+  └──> LearnScreen.tsx :: setShowProgressModal(true)
+         │
+         ├──> 1. Fetch Local SQLite Events:
+         │      events = await listEvents(1000) [app/src/db/database.ts]
+         │
+         ├──> 2. Compute Progress Snapshot:
+         │      snapshot = computeStudentProgress(profileId, events, engineState) [progressTracker.ts]
+         │      ├── Filters events strictly by profile_id to eliminate sequence drift
+         │      ├── Computes Concept BKT Trajectory History (e.g. [0.42, 0.7643, 0.8597])
+         │      ├── Aggregates Vocabulary Bank BKT Masteries (Displacement, Distance, Speed)
+         │      ├── Computes 3-Modality Strengths (Picture, Audio, Text pass rates)
+         │      └── Derives autonomous next recommendation (e.g. Vocabulary follow-up)
+         │
+         ├──> 3. Render High-Quality Graphs:
+         │      ├── BktTrajectoryChart.tsx:
+         │      │     └── SVG Pie Donut Chart (with toggle to trajectory step line graph)
+         │      ├── ModalityRadarChart.tsx:
+         │      │     └── 3-Axis Polar Spider Radar Chart (P, A, T strengths)
+         │      └── TermMasteryBarChart.tsx:
+         │            └── Horizontal Vocabulary Mastery Bars with ★ 70% Goal reference line
+         │
+         ├──> 4. Render Polished Learning Milestones Bar & Badges:
+         │      ├── Level Indicator: 🚀 Level 2 Science Champion / Level 1 Physics Explorer
+         │      ├── Interactive Progress Bar: 0% Start ➔ ★ 70% Goal Pin ➔ 100% Expert
+         │      ├── Inspiring Growth Tip: Bilingual encouragement (zero deficit vocabulary)
+         │      └── 4 Achievement Badges (2x2 Grid):
+         │            ├── 🎯 ଧାରଣା ବିଜୟୀ (Concept Champion)
+         │            ├── 🧪 ଯୁଗାଡ଼ ଲ୍ୟାବ୍ ଅନୁସନ୍ଧାନୀ (Lab Explorer)
+         │            ├── 📖 ଶବ୍ଦକୋଷ ନିପୁଣ (Vocabulary Pro)
+         │            └── 🔥 ନିରନ୍ତର ଅଧ୍ୟୟନ (Habit Streak)
+         │
+         └──> 5. Discreet Collapsed Audit Drawer:
+                └── "⚙️ ଶିକ୍ଷକ / Judge Event Audit (FR-30 Verification)"
+                      └── Only expands on explicit tap to show raw sequence replay verification
+```
+
+---
+
+### Path F: Offline-First Hybrid Audio Pipeline
+Execution flow when Odia speech narration is triggered:
+
+```text
+[Audio Trigger: Sound Check / Probe Listen / Remediation Audio / Visualizer]
+  │
+  └──> odiaAudio.ts :: playOdiaVoice({ key, text, onStart, onEnd, onError })
+         │
+         ├──> 1. Stop Any Active Audio:
+         │      stopOdiaAudio() -> pauses HTML5 Audio / Native ExpoAudio / SpeechSynthesis
+         │
+         ├──> 2. Instant Offline Playback via Pre-rendered Embedded Base64 Data URI:
+         │      if (key && ODIA_AUDIO_BASE64[key]) [app/src/audio/odiaAudioData.ts]
+         │      ├── Web: new Audio(dataUri).play()
+         │      └── Native: writes to local FileSystem cache -> expo-audio player
+         │      └── 100% OFFLINE, ZERO NETWORK REQUIRED
+         │
+         └──> 3. Cloud Dynamic Synthesis Fallback (when online & custom text):
+                ├── GET / POST /v1/tts?text=... [FastAPI Backend]
+                ├── Phonetic Devanagari transliteration + neural synthesis + disk cache
+                └── If network drops: gracefully falls back to cached audio or text reading
+```
+
+---
+
+### Path G: Offline-First Synchronization & Cloud Dual-Write Flow
 Execution flow when events sync to the cloud:
 
 ```text
@@ -374,16 +465,15 @@ Execution flow when events sync to the cloud:
          │      │      ├──> verify_device_token(authorization) -> authenticates device
          │      │      ├──> For each event:
          │      │      │      ├──> jsonschema.validate(event, EVENT_SCHEMA)
-         │      │      │      │      └──> Schema fail: returns 422 Unprocessable Entity
          │      │      │      ├──> Deduplication check on (profile_id, seq) and event_id
-         │      │      │      └──> demo_storage.events[event_id] = event
-         │      │      └──> Returns 200 OK: { acked_ids: [ "evt-uuid-1", "evt-uuid-2", ... ] }
+         │      │      │      └──> storage_dual.write_event(event) (Postgres/Supabase + local mirror)
+         │      │      └──> Returns 200 OK: { acked: [...], duplicates: [...], rejected: [...] }
          │      │
          │      ├─── [NETWORK HOP: BACKEND -> CLIENT] ───
          │      │
          │      └──> 5. Acknowledgment Handling [app/src/sync/syncClient.ts]:
          │             ├──> On 200 OK:
-         │             │      markAcked(data.acked_ids) [app/src/db/database.ts]
+         │             │      markAcked(data.acked) [app/src/db/database.ts]
          │             │        └──> UPDATE events SET sync_state = 'ACKED' WHERE event_id IN (...)
          │             └──> On Network/HTTP Error:
          │                    markError(ids, error.message) [app/src/db/database.ts]
@@ -391,39 +481,6 @@ Execution flow when events sync to the cloud:
          │
          └──> refreshPending() [LearnScreen.tsx]
                 └──> Updates UI pending count to 0 in header badge
-```
-
----
-
-### Path F: Agentic Intelligence & Safety Verification Flow
-Execution flow when server-side AI evaluation or background generation runs:
-
-```text
-[Trigger: Backend LangGraph Execution via POST /v1/agent/plan]
-  │
-  └──> backend/graph/graph.py :: run_agent_workflow(plan_input)
-         │
-         ├──> 1. PLAN Node [plan_node()]
-         │      ├──> Privacy Gate: Asserts NO PII (no student_name, device_id, raw transcripts)
-         │      ├──> Input Contract: { candidate_concept_ids, mastery_bucket, tier_history }
-         │      ├──> Prompts: Uses PINNED_MODEL_ID ('gemini-2.5-flash') and PLAN_PROMPT_HASH
-         │      └──> Output Validation:
-         │             └──> If valid JSON { concept_id, tier, reason } -> planner_mode = "gemini"
-         │             └──> If malformed/offline/timeout -> fallback to rule_planner() (planner_mode = "rule")
-         │
-         ├──> 2. Explanation Generation [gen_explanation_node()]
-         │      ├──> Constrained strictly to verified textbook chunk: 'BSE9-PHYS-MOTION-S02'
-         │      └──> Emits candidate explanation and cited chunk ID
-         │
-         ├──> 3. REFLECT Node (Mandatory 4-Gate Check — Never Merged) [reflect_node()]
-         │      ├──> Gate 1: chunk_exists       == PASS | FAIL
-         │      ├──> Gate 2: glossary_terms     == PASS | FAIL
-         │      ├──> Gate 3: readability        == PASS | FAIL
-         │      └──> Gate 4: model_source_check == PASS | FAIL | UNAVAILABLE (offline fallback)
-         │
-         └──> 4. ACT Node [act_node()]
-                └──> If all 4 gates pass: releases explanation to delivery queue
-                └──> If any gate fails: falls back to canned approved textbook paragraph
 ```
 
 ---
@@ -445,100 +502,105 @@ Execution flow when server-side AI evaluation or background generation runs:
 | **11** | Engine FSM | Event Factory | [eventBuilder.ts:L30](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/engine/eventBuilder.ts#L30) `buildEvent()` | Event attributes | RFC4122 compliant event |
 | **12** | UI Screen | SQLite DB | [database.ts:L67](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/db/database.ts#L67) `insertEvent()` | `event` | `Promise<void>` |
 | **13** | SQLite Listener | Streak Engine | [streakHelper.ts:L140](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/utils/streakHelper.ts#L140) `computeStreakData()` | `events[], now` | `StreakComputationResult` |
-| **14** | UI Screen | Remediation UI | [RemediationCard.tsx:L19](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/components/RemediationCard.tsx#L19) | Matched resource props | Rendered JSX |
-| **15** | UI Screen | Live Telemetry | [JudgeTelemetryPanel.tsx:L120](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/components/JudgeTelemetryPanel.tsx#L120) | Engine state, events | Live inspector view |
-| **16** | UI Screen | Sync Manager | [syncClient.ts:L55](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/sync/syncClient.ts#L55) `syncPending()` | `SyncConfig` | `Promise<SyncResult>` |
-| **17** | Sync Manager | Backend API | [main.py:L140](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/backend/main.py#L140) `POST /v1/sync/events` | `{ device_id, events }` | `200 { acked_ids }` |
-| **18** | Backend API | Agent Graph | [graph.py:L271](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/backend/graph/graph.py#L271) `run_agent_workflow()` | `PlanInput` | Plan + 4-gate reflect output |
+| **14** | UI Screen | Progress Tracker | [progressTracker.ts:L170](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/engine/progressTracker.ts#L170) `computeStudentProgress()` | `profileId, events, engineState` | `StudentProgressSnapshot` |
+| **15** | UI Screen | Audio Service | [odiaAudio.ts:L227](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/audio/odiaAudio.ts#L227) `playOdiaVoice()` | `{ key, text }` | Instant audio playback |
+| **16** | UI Screen | Jugaad Lab | [jugaadLab.ts:L176](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/engine/jugaadLab.ts#L176) `runJugaadExperimentTurn()` | `exp, trialInput, ctx` | Lab results + events |
+| **17** | UI Screen | Sync Manager | [syncClient.ts:L55](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/app/src/sync/syncClient.ts#L55) `syncPending()` | `SyncConfig` | `Promise<SyncResult>` |
+| **18** | Sync Manager | Backend API | [main.py:L431](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/backend/main.py#L431) `POST /v1/sync/events` | `{ device_id, events }` | `200 { acked, duplicates, rejected }` |
+| **19** | Backend API | Agent Graph | [graph.py:L271](file:///c:/Users/piyus/OneDrive/Desktop/project/Padhai-Pocket/backend/graph/graph.py#L271) `run_agent_workflow()` | `PlanInput` | Plan + 4-gate reflect output |
 
 ---
 
-## 4. Active Execution Path Traceability (Branch: `feat/resource-match`)
-
-This section documents the touchpoints in the current active feature branch `feat/resource-match`:
+## 4. Complete System Feature & Milestone Traceability (Finale Release)
 
 ```text
-PATH MODIFICATION INVENTORY:
+COMPLETED SUBSYSTEM INVENTORY:
 
-1. [D5 Resource Match Engine & Ranker]
-   Files: app/src/engine/resourceMatch.ts & web-app-ui/src/engine/resourceMatch.ts
-   Export: matchResources(ctx, catalog), DEFAULT_RESOURCE_CATALOG
-   Called By: app/src/engine/index.ts (Case 3: confirmation done)
-   Invariants: FR-21 (pure module), FR-27 (pedagogical approval gate), FR-23 (audio gate),
-               FR-6 (offline network gate), FR-25 (anti-repetition gate).
-   Output: { selected, runner_up, ranked, disqualified } with 100-point utility scoring.
+1. [Deterministic Diagnostic Engine (FSM Core)]
+   - Files: app/src/engine/ (index.ts, seed.ts, table.ts, finalLabel.ts, branch.ts, bkt.ts)
+   - Features: Full-precision BKT chains (42% -> 22.48% -> 58.42% -> 85.97%), 3-way probe battery (P, A, T),
+               targeted confirmation gates (TX, PX, W), Mulberry32 deterministic PRNG seed, and pure nextAction FSM.
 
-2. [Engine FSM Integration & State Attachment]
-   Files: app/src/engine/index.ts & web-app-ui/src/engine/index.ts
-   Change: Case 3 invokes matchResources() when verdict.done is true.
-   Payload: Emits 'ACT' ('REMEDIATION_${v.label}') with resource_match payload.
-   State: Saves last_resource_match and updates used_resource_ids history on EngineState.
+2. [D5 Resource Match Engine & 100-Point Ranker]
+   - File: app/src/engine/resourceMatch.ts
+   - Features: 4 Hard Disqualification Gates (FR-27 pedagogical approval, FR-23 audio check, FR-6 offline mode,
+               FR-25 anti-repetition cycle bounds), 100-point utility scoring, and deterministic tie-breaking.
 
-3. [UI Remediation Card Wiring]
-   Files: app/src/components/RemediationCard.tsx & web-app-ui/src/components/RemediationCard.tsx
-   Called By: LearnScreen.tsx
-   Features: Displays matched resource title, modality badge ("🎯 KUI BRIDGE • 100 pts"),
-             and utility scoring reason breakdown pills.
+3. [Pocket Jugaad Lab (Offline Sensor Experiments)]
+   - File: app/src/engine/jugaadLab.ts & app/src/components/JugaadLabModal.tsx
+   - Features: 6 real-world sensor experiments (Motion Ramp, Gravitation Pendulum, Sound Clap,
+               Chemistry Turmeric, Biology Osmosis, Maths Shadow Inclinometer).
+               Sensor noise rejection protects BKT on shaky trials; clean trials boost concept mastery (0.42 -> 0.7643).
 
-4. [Judge Telemetry Panel Live Observer]
-   Files: app/src/components/JudgeTelemetryPanel.tsx & web-app-ui/src/components/JudgeTelemetryPanel.tsx
-   Features: Renders dedicated "D5: Resource Match Ranker (PRD §2.5 / §4.7)" card,
-             Rank #1 chosen resource, utility fit breakdown, runner-up score, and
-             disqualified alternatives audit table with gate rejection tags.
+4. [Interactive Subject Visualizers & Vector Projections]
+   - Files: MotionSimulation.tsx, Gravitation3DSimulation.tsx, Chemistry3DSimulation.tsx,
+            Biology3DSimulation.tsx, Maths3DSimulation.tsx
+   - Features: Pure interactive SVG simulations optimized for 4GB non-GPU rural Android devices without heavy WebGL.
+               Motion displays true curved path length vs straight-line displacement vector; Gravitation shows mass vs weight.
 
-5. [Dynamic Streak Computation & Diagnostic Matrix]
-   Files: app/src/utils/streakHelper.ts & web-app-ui/src/utils/streakHelper.ts
-   Components: StreakGrid.tsx, AppHeader.tsx, LearnScreen.tsx
-   Features: 4-week rolling calendar matrix (Mon..Sun x 4 weeks), intensity tiers (0..3),
-             dynamic streak count with 1-day grace period, and time-aware greetings
-             ("Good morning", "Good afternoon", "Good evening", "Welcome back").
+5. [High-Quality SVG Progress Report & Learning Milestones]
+   - Files: StudentProgressModal.tsx, BktTrajectoryChart.tsx, ModalityRadarChart.tsx, TermMasteryBarChart.tsx
+   - Features: BKT Pie/Donut with trend switch, 3-axis polar spider radar, vocabulary horizontal bar chart with 70% threshold,
+               level progression bar, milestone pin at 70%, 4 achievement badges, and collapsed audit drawer.
 
-6. [Dual-Workspace Architecture Parity]
-   Directories: app/ (React Native Mobile) & web-app-ui/ (Expo Web Chrome Demo)
-   Design: Full interface parity between native mobile learner app and desktop
-           split-screen evaluator environment with zero regressions.
+6. [Offline-First Neural Odia Audio & Base64 Embedded Assets]
+   - Files: app/src/audio/odiaAudio.ts & app/src/audio/odiaAudioData.ts
+   - Features: 8 pre-rendered Base64 neural MP3 audio clips embedded directly in the bundle for instant zero-network playback,
+               plus backend edge-tts transliteration disk-cached fallback when online.
+
+7. [Dual-Write Persistence & SQLite Initialization Resilience]
+   - Files: app/src/db/database.ts & backend/storage_dual.py
+   - Features: Local SQLite append-only event log with initialization retry error reset;
+               cloud Supabase mirror for evaluator telemetry and multi-device sync.
+
+8. [Shared Contracts & Documentation]
+   - Files: shared/ (openapi.yaml v1.1.0, event.schema.json, pack.schema.json, bkt_vectors.json, probe_vectors.json, README.md)
+   - Features: Cross-language invariant truth guaranteeing zero float drift (<= 5e-5) between TypeScript and Python.
 ```
 
 ---
 
-## 5. Trace Verification Rules for Developers and AI Agents
+## 5. Verification Rules for Developers and AI Agents
 
 Whenever making a code change in this repository, you MUST follow this verification routine:
 
-1. **Mobile & Engine Test Suite Verification**:
-   Execute the full Jest test suite across engine, streak, mobile, and resource match:
+1. **Frontend & Engine Test Suite Verification**:
+   Execute the full Jest test suite across engine, streak, mobile, graphs, and jugaad lab:
    ```bash
    cd app
    npm test
    ```
-   *Requirement: All 42/42 tests must pass.*
+   *Requirement: All 98/98 tests across 13 suites must pass.*
 
 2. **TypeScript Compilation Invariance**:
    Verify strict TypeScript compilation with zero type errors:
    ```bash
    cd app
-   ./node_modules/.bin/tsc --noEmit
+   npx tsc --noEmit
    ```
    *Requirement: 0 TypeScript errors.*
 
 3. **Backend API & LangGraph Pipeline Verification**:
-   Run the backend Pytest suite covering event synchronization and LangGraph safety gates:
+   Run the backend Pytest suite covering event synchronization, TTS, and LangGraph safety gates:
    ```bash
-   cd backend
-   python -c "import pytest; pytest.main(['tests/test_sync.py', 'tests/test_graph.py', '-v'])"
+   pytest backend/
    ```
-   *Requirement: All 14/14 tests must pass.*
+   *Requirement: All 18/18 tests must pass.*
 
 4. **Textbook & Content Pack Invariance**:
-   If modifying `content/motion_pack.json` or transcripts, run dual schema validation:
+   Validate content packs against both local domain rules and official schemas:
    ```bash
-   python content/tools/validate_pack.py --pack content/motion_pack.json
    python content/tools/run_validator_tests.py
    ```
-   *Requirement: Local pack integrity and shared schema checks must exit 0.*
+   *Requirement: All 18/18 validator tests must pass.*
 
-5. **Engine Purity Invariant (FR-21)**:
-   `app/src/engine/` must remain completely deterministic and side-effect free. Never call `Math.random()` or `Date.now()` inside the engine. All non-determinism must be injected via `EngineContext` (`now`, `seed`, `device_id`).
+5. **Cross-Language Vector Parity**:
+   Verify Python simulation mirror against shared BKT & probe golden vectors:
+   ```bash
+   python eval/test_vectors.py
+   ```
+   *Requirement: BKT vectors match: True, CandidateOf patterns match: True.*
 
-6. **Pedagogical Approval Invariant (FR-27 / D5)**:
-   The Resource Match Engine must reject any resource lacking human pedagogical approval (`status !== 'approved' && status !== 'demo_approved'`). Unreviewed cloud generations must never reach learners.
+6. **Child-Safety & Engine Purity Invariant (FR-13 & FR-21)**:
+   - Zero deficit vocabulary ("wrong", "gap", "diagnosis", "failed", "weak") in child-facing views.
+   - Zero unseeded non-determinism (`Math.random()`, `Date.now()`) inside `app/src/engine/`.
