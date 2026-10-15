@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EEF2F6',
+    backgroundColor: colors.border,
     overflow: 'hidden',
   },
   progressFill: {

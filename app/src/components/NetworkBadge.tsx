@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondaryLight,
   },
   offlineBox: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
   },
   icon: {
     fontSize: 12,

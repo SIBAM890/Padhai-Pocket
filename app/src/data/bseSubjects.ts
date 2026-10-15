@@ -83,7 +83,7 @@ export const BSE_SUBJECTS: BseSubject[] = [
     title: 'Physical Science (Physics)',
     titleOr: 'ଭୌତିକ ବିଜ୍ଞାନ',
     icon: '⚡',
-    accentColor: '#304FFE',
+    accentColor: '#C2410C',
     status: 'Full lesson ready',
     statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
     totalTopics: 4,
