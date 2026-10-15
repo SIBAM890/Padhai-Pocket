@@ -302,8 +302,8 @@ export const BSE_SUBJECTS: BseSubject[] = [
     accentColor: '#F59E0B',
     status: 'Full lesson ready',
     statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
-    totalTopics: 3,
-    readyTopics: 3,
+    totalTopics: 4,
+    readyTopics: 4,
     chapters: [
       {
         id: 'number_systems',
@@ -351,6 +351,25 @@ export const BSE_SUBJECTS: BseSubject[] = [
             estimatedMins: 5,
             chunkId: 'BSE9-MATH-POLY-S01',
             conceptId: 'zeroes_of_polynomial',
+          },
+        ],
+      },
+      {
+        id: 'equations_solver',
+        chapterNumber: 3,
+        title: 'Linear & Quadratic Equations (3D Visual Solver)',
+        titleOr: 'ଏକଘାତୀ ଓ ଦ୍ୱିଘାତ ସମୀକରଣ (3D ସମାଧାନ)',
+        topics: [
+          {
+            id: 'linear_equation_roots',
+            title: '3D Solver: 3x - 2y + 2 = 0 & Quadratic',
+            titleOr: '3D ସମୀକରଣ ସମାଧାନ (3x - 2y + 2 = 0)',
+            status: 'Full lesson ready',
+            statusOr: 'ସମ୍ପୂର୍ଣ୍ଣ ପାଠ ପ୍ରସ୍ତୁତ',
+            ready: true,
+            estimatedMins: 6,
+            chunkId: 'BSE9-MATH-EQ-S01',
+            conceptId: 'linear_quadratic_equations',
           },
         ],
       },
