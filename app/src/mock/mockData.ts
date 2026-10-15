@@ -68,7 +68,7 @@ export const mockSubjects: SubjectModule[] = [
     progressPercent: 80,
     completedLessons: 2,
     totalLessons: 4,
-    color: '#304FFE',
+    color: '#C2410C',
   },
   {
     id: 'sub_chemistry',

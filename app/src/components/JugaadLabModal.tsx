@@ -204,7 +204,7 @@ export function JugaadLabModal({
             <View style={styles.subjectTabsRow}>
               {(
                 [
-                  { id: 'physics', label: '⚡ ଭୌତିକ (Physics)', color: '#304FFE' },
+                  { id: 'physics', label: '⚡ ଭୌତିକ (Physics)', color: '#C2410C' },
                   { id: 'chemistry', label: '🧪 ରସାୟନ (Chemistry)', color: '#0F9D8A' },
                   { id: 'biology', label: '🌱 ଜୀବ (Biology)', color: '#16A34A' },
                   { id: 'maths', label: '📐 ଗଣିତ (Maths)', color: '#D97706' },
@@ -407,7 +407,7 @@ export function JugaadLabModal({
                               y1={100}
                               x2={x}
                               y2={y}
-                              stroke={s.db && s.db > 60 ? '#304FFE' : '#94A3B8'}
+                              stroke={s.db && s.db > 60 ? '#C2410C' : '#94A3B8'}
                               strokeWidth={3}
                             />
                           );
@@ -805,8 +805,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   badge: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#C7D2FE',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.full,
     paddingHorizontal: spacing.sm,
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#3730A3',
+    color: colors.primary,
   },
   closeBtn: {
     padding: spacing.xs,

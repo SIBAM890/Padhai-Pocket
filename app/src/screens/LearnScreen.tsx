@@ -1521,7 +1521,7 @@ const styles = StyleSheet.create({
   desktopContainer: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
     width: '100%',
     height: '100%',
   },
@@ -1537,7 +1537,7 @@ const styles = StyleSheet.create({
   telemetryPane: {
     flex: 1,
     height: '100%',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.background,
   },
   safe: {
     flex: 1,
@@ -1568,13 +1568,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   supportNote: {
-    backgroundColor: '#F5F7FF',
+    backgroundColor: colors.primaryLight,
     padding: spacing.md,
     borderRadius: radius.card,
     marginTop: spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E7FF',
+    borderColor: colors.border,
   },
   supportNoteText: {
     ...typography.caption,
@@ -1708,12 +1708,12 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   subjectPillBadge: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.primaryLight,
     paddingVertical: spacing.xs + 2,
     paddingHorizontal: spacing.sm + 4,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: colors.border,
   },
   subjectPillBadgeText: {
     ...typography.caption,

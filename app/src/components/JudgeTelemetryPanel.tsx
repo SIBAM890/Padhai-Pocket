@@ -511,7 +511,7 @@ export const JudgeTelemetryPanel: React.FC<JudgeTelemetryPanelProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.background,
     borderLeftWidth: 1,
     borderLeftColor: colors.border,
     padding: spacing.md,
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 6,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.border,
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 4,
@@ -946,27 +946,27 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   matchScoreBadge: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.xs,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: colors.border,
   },
   matchScoreText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#3730A3',
+    color: colors.primary,
   },
   resourceMatchContainer: {
     gap: spacing.sm,
   },
   selectedResourceBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.surfaceSubtle,
     borderRadius: radius.sm,
     padding: spacing.sm,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
   },
   resourceHeaderRow: {
     flexDirection: 'row',
@@ -977,14 +977,14 @@ const styles = StyleSheet.create({
   selectedResourceTag: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#059669',
+    color: colors.success,
     letterSpacing: 0.5,
   },
   resourceModalityPill: {
     fontSize: 9,
     fontWeight: '700',
-    backgroundColor: '#E0E7FF',
-    color: '#3730A3',
+    backgroundColor: colors.primaryLight,
+    color: colors.primary,
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
@@ -1038,12 +1038,12 @@ const styles = StyleSheet.create({
   runnerUpBox: {
     marginTop: 6,
     padding: 6,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surfaceSubtle,
     borderRadius: 4,
   },
   runnerUpText: {
     fontSize: 10,
-    color: '#475569',
+    color: colors.textSecondary,
   },
   disqualifiedBox: {
     backgroundColor: '#FFFBEB',

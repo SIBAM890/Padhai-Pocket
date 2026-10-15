@@ -5,52 +5,52 @@
 
 export const colors = {
   // Primary Backgrounds
-  background: '#FDF6E3',         // Warm cream canvas
+  background: '#FAF7F0',         // Warm parchment / cream canvas (matches screenshot #FAF7F0 / #F9F6ED)
   surface: '#FFFFFF',            // Crisp card surfaces (keep white)
-  surfaceAlt: '#F5EBD0',         // Nested panels, subtle sections
-  surfaceSubtle: '#F5EBD0',      // Input fields, table rows, tag backgrounds
-  surfaceBorder: '#E2E8F0',      // Soft clean dividers
+  surfaceAlt: '#F5EFEB',         // Warm sand beige panels / container sections
+  surfaceSubtle: '#F5EBE1',      // Soft warm sand input fields, telemetry boxes, tag backgrounds
+  surfaceBorder: '#EDE1CB',      // Soft warm sand dividers & borders (matches screenshot #EDE1CB)
   surfaceElevated: '#FFFFFF',    // Elevated white cards
   
   // Brand Palettes
-  primary: '#304FFE',            // Deep Blue / Soft Indigo (Refined & Modern)
-  primaryLight: '#E8ECFF',       // Soft indigo tint for pills & highlights
-  primaryDark: '#1A237E',        // Deep indigo headers
+  primary: '#C2410C',            // Terracotta / Burnt Orange (Rich clay action color)
+  primaryLight: '#FDEEE9',       // Soft warm peach / terracotta tint for pills & highlights
+  primaryDark: '#8C2B0E',        // Deep terracotta rust headers
   
   // Secondary Brand
-  secondary: '#0F9D8A',          // Calm Teal for learning progress & positive states
-  secondaryLight: '#E6F4F1',     // Soft teal tint
+  secondary: '#0D3F43',          // Deep Spruce / Forest Teal for prominent Odia titles & headers (matches screenshot #0D3F43 / #143F46)
+  secondaryLight: '#D9ECF2',     // Soft pastel sky blue tint for online pill & calm badges (matches screenshot #D9ECF2)
   
   // Feedback & Accents
-  success: '#22C55E',            // Energetic Green (used sparingly)
+  success: '#15803D',            // Deep calm forest green
   successLight: '#DCFCE7',
   
-  error: '#EF4444',              // Clean Red for errors and diagnostic flags
+  error: '#DC2626',              // Clean Red for errors and diagnostic flags
   errorLight: '#FEE2E2',
 
-  accent: '#FF6B5F',             // Warm Coral for milestones & streaks
-  accentLight: '#FFEBEA',
+  accent: '#EA580C',             // Warm terracotta amber for milestones & streaks
+  accentLight: '#FFEDD5',
   
-  warning: '#F59E0B',            // Warm Amber
+  warning: '#D97706',            // Warm golden amber
   warningLight: '#FEF3C7',
-  attention: '#F59E0B',
+  attention: '#D97706',
   attentionLight: '#FEF3C7',
   
   // Typography Colors
-  textPrimary: '#1E293B',        // Deep Charcoal (never pure black)
-  textSecondary: '#475569',      // Slate Body text
-  textMuted: '#64748B',          // Subtitles & captions
-  textDisabled: '#94A3B8',       // Disabled / inactive labels
-  textOnPrimary: '#FFFFFF',      // High contrast on dark buttons
+  textPrimary: '#143F46',        // Deep Dark Spruce / Charcoal (accessible contrast, matches screenshot #143F46)
+  textSecondary: '#57534E',      // Warm Stone Slate body text
+  textMuted: '#78716C',          // Warm muted stone for subtitles & captions
+  textDisabled: '#A8A29E',       // Warm muted grey for disabled / inactive labels
+  textOnPrimary: '#FFFFFF',      // High contrast on dark terracotta buttons
   
   // Borders
-  border: '#E2E8F0',
-  borderFocus: '#304FFE',
-  borderSuccess: '#22C55E',
-  borderTeal: '#0F9D8A',
+  border: '#EDE1CB',             // Soft warm tan border (matches screenshot #EDE1CB)
+  borderFocus: '#C2410C',        // Terracotta focus border
+  borderSuccess: '#15803D',
+  borderTeal: '#0D3F43',
 
   // Shadow Tint
-  shadowColor: '#0F172A',
+  shadowColor: '#451A03',        // Warm terracotta umber shadow tint
 };
 
 export const typography = {
