@@ -130,12 +130,14 @@ export default function LearnScreen({ navigation, route }: Props) {
       ? 'real_numbers'
       : chunkId === 'BSE9-MATH-POLY-S01' || chunkId === 'zeroes_of_polynomial'
       ? 'zeroes_of_polynomial'
+      : chunkId === 'BSE9-MATH-EQ-S01' || chunkId === 'linear_quadratic_equations' || chunkId === 'linear_equation_roots'
+      ? 'linear_quadratic_equations'
       : subject === 'chemistry'
       ? 'substitution_reaction'
       : subject === 'biology'
       ? 'cell_structure'
       : subject === 'maths' || subject === 'mathematics'
-      ? 'rational_irrational'
+      ? 'linear_quadratic_equations'
       : 'distance_vs_displacement');
 
   const backendBaseUrl = resolveApiBaseUrl();

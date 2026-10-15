@@ -14,6 +14,7 @@ import { Gravitation3DSimulation } from './Gravitation3DSimulation';
 import { Chemistry3DSimulation } from './Chemistry3DSimulation';
 import { Biology3DSimulation } from './Biology3DSimulation';
 import { Maths3DSimulation } from './Maths3DSimulation';
+import { Maths3DEquationSolver } from './Maths3DEquationSolver';
 import { colors, radius, shadows, spacing } from '../theme/theme';
 import { playOdiaVoice, stopOdiaAudio, type OdiaAudioKey } from '../audio/odiaAudio';
 
@@ -31,6 +32,7 @@ export function SubjectVisualizer({
   onOpenJugaadLab,
 }: SubjectVisualizerProps) {
   const [playingKey, setPlayingKey] = useState<OdiaAudioKey | null>(null);
+  const [mathsSubView, setMathsSubView] = useState<'EQUATION_SOLVER' | 'SPIRAL_TRIG'>('EQUATION_SOLVER');
 
   useEffect(() => {
     return () => {
@@ -78,14 +80,47 @@ export function SubjectVisualizer({
     );
   }
 
-  // 3. Mathematics Simulation (3D Number Spiral & 3D Shadow Trigonometry)
-  if (s === 'maths' || s === 'mathematics' || c.includes('math') || c.includes('rational')) {
+  // 3. Mathematics Simulation (3D Equation Solver 3x - 2y + 2 = 0 & 3D Number Spiral)
+  if (s === 'maths' || s === 'mathematics' || c.includes('math') || c.includes('rational') || c.includes('poly') || c.includes('eq')) {
     return (
-      <Maths3DSimulation
-        onOpenJugaadLab={onOpenJugaadLab}
-        playingVoice={playingKey === 'maths'}
-        onToggleVoice={() => handlePlayVoice('maths')}
-      />
+      <View>
+        <View style={styles.mathsNavRow}>
+          <Pressable
+            style={[styles.mathsNavBtn, mathsSubView === 'EQUATION_SOLVER' && styles.mathsNavBtnActive]}
+            onPress={() => setMathsSubView('EQUATION_SOLVER')}
+            accessibilityRole="button"
+            accessibilityLabel="Switch to 3D Equation Solver"
+          >
+            <Text style={[styles.mathsNavBtnText, mathsSubView === 'EQUATION_SOLVER' && styles.mathsNavBtnTextActive]}>
+              ⭐ ୩D ସମୀକରଣ (3x - 2y + 2 = 0)
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.mathsNavBtn, mathsSubView === 'SPIRAL_TRIG' && styles.mathsNavBtnActive]}
+            onPress={() => setMathsSubView('SPIRAL_TRIG')}
+            accessibilityRole="button"
+            accessibilityLabel="Switch to 3D Number Spiral & Trigonometry"
+          >
+            <Text style={[styles.mathsNavBtnText, mathsSubView === 'SPIRAL_TRIG' && styles.mathsNavBtnTextActive]}>
+              🌀 ୩D ସଂଖ୍ୟା ରେଖା ଓ ତ୍ରିକୋଣମିତି
+            </Text>
+          </Pressable>
+        </View>
+
+        {mathsSubView === 'EQUATION_SOLVER' ? (
+          <Maths3DEquationSolver
+            onOpenJugaadLab={onOpenJugaadLab}
+            playingVoice={playingKey === 'maths'}
+            onToggleVoice={() => handlePlayVoice('maths')}
+          />
+        ) : (
+          <Maths3DSimulation
+            onOpenJugaadLab={onOpenJugaadLab}
+            playingVoice={playingKey === 'maths'}
+            onToggleVoice={() => handlePlayVoice('maths')}
+          />
+        )}
+      </View>
     );
   }
 
@@ -243,5 +278,34 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  mathsNavRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  mathsNavBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mathsNavBtnActive: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+  },
+  mathsNavBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  mathsNavBtnTextActive: {
+    color: '#B45309',
+    fontWeight: '800',
   },
 });
