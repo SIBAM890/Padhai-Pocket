@@ -150,6 +150,28 @@ export default function LearnScreen({ navigation, route }: Props) {
     route?.params?.chunkId || route?.params?.topicId ? 'QUESTION_INTERACTION' : 'DASHBOARD'
   );
 
+  // Content pack hash
+  const packHash = getPackHash(subject);
+
+  // Deterministic Engine Context & State Ref (hoisted before useMemo to avoid TDZ ReferenceError)
+  const engineContextRef = useRef<EngineContext>({
+    now: Date.now(),
+    seed: 1806635391, // Golden seed for (prof_demo_01, distance_vs_displacement, A)
+    device_id: 'dev_tab_01',
+  });
+
+  const engineStateRef = useRef<EngineState>(
+    createInitialState(
+      profileId,
+      'sess_01',
+      conceptId,
+      0.42,
+      1,
+      forcedOffline ? 'OFFLINE' : networkMode,
+      packHash && packHash !== 'unbuilt' ? packHash.slice(0, 12) : 'e3b0c44298fc'
+    )
+  );
+
   // When a specific chunk or topic is navigated to, launch the question interaction & switch to Learn tab
   useEffect(() => {
     if (route?.params?.openJugaadLab) {
@@ -319,7 +341,6 @@ export default function LearnScreen({ navigation, route }: Props) {
   const probeItems = getProbeItems(subject, chunkId);
   const confirmItem = getConfirmItem(subject);
   const kuiGlossary = getKuiGlossary(subject);
-  const packHash = getPackHash(subject);
 
   // Fallback options list for robust MCQ rendering
   const defaultOptions = [
@@ -448,25 +469,6 @@ export default function LearnScreen({ navigation, route }: Props) {
   // Seeded probe sequence state (PRD §4.9)
   const [probeSequence, setProbeSequence] = useState<Array<'P' | 'A' | 'T'>>(['T', 'A', 'P']);
   const [probeIndex, setProbeIndex] = useState(0);
-
-  // Deterministic Engine Context & State Ref
-  const engineContextRef = useRef<EngineContext>({
-    now: Date.now(),
-    seed: 1806635391, // Golden seed for (prof_demo_01, distance_vs_displacement, A)
-    device_id: 'dev_tab_01',
-  });
-
-  const engineStateRef = useRef<EngineState>(
-    createInitialState(
-      profileId,
-      'sess_01',
-      conceptId,
-      0.42,
-      1,
-      forcedOffline ? 'OFFLINE' : networkMode,
-      packHash && packHash !== 'unbuilt' ? packHash.slice(0, 12) : 'e3b0c44298fc'
-    )
-  );
 
   // Keep engine state network mode and concept_id synchronized with actual status
   useEffect(() => {
