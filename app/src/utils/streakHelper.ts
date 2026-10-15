@@ -209,12 +209,12 @@ function analyzeDayEvents(dayEvents: StoredEvent[]): {
     badgeLetter = 'T';
   } else if (hasReading) {
     gapType = 'reading';
-    gapLabel = 'Audio Reading Gap';
+    gapLabel = 'Audio Reading Support';
     color = '#D97706';
     badgeLetter = 'R';
   } else if (hasConcept) {
     gapType = 'concept';
-    gapLabel = 'Concept Remediation';
+    gapLabel = 'Concept Foundation';
     color = '#4F46E5';
     badgeLetter = undefined;
   } else if (hasMastery) {

@@ -361,7 +361,7 @@ export const mockTraceEvents: TraceEventMock[] = [
     id: 'evt-104',
     node: 'REFLECT',
     action: 'CANDIDATE_RESOLVE',
-    description: 'Candidate gap resolved: Path length conflation with vector displacement',
+    description: 'Candidate focus resolved: Path length conflation with vector displacement',
     timestamp: '10:14:10 AM',
     status: 'PENDING',
     seq: 4,

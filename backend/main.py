@@ -297,6 +297,7 @@ async def get_tts(request: Request, text: Optional[str] = None, key: Optional[st
         )
 
     mp3_p = None
+    wav_p = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as mp3_f:
             mp3_p = mp3_f.name
