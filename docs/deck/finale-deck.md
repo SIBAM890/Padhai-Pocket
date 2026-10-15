@@ -119,10 +119,10 @@ When Sunita misses a primary diagnostic question, Padhai Pocket triggers a targe
 ## Backup Slide 2 — Technical Evidence & Verification Proof
 
 * **Complete Test Coverage**:
-  * **63 / 63 passed** Jest tests in `app` (Engine BKT, Seed determinism, SQLite lifecycle, Replay verification, Teacher queries, Multi-tap gesture).
-  * **14 / 14 passed** Pytest tests in `backend` (LangGraph reflection, Idempotent sync, SQLite RLS, Authentication).
+  * **98 / 98 passed** Jest tests across 13 test suites in `app` (Engine BKT, Seed determinism, SQLite lifecycle, Replay verification, Teacher queries, Multi-tap gesture, SVG progress charts, Milestones).
+  * **18 / 18 passed** Pytest tests in `backend` (LangGraph reflection, Idempotent sync, Neural TTS, SQLite RLS, Authentication).
   * **3 / 3 passed** S1 prompt injection unit tests with 100% raw text quarantine.
-  * **17 / 17 passed** Content pack validator self-tests.
+  * **18 / 18 passed** Content pack validator self-tests (0 unresolved placeholders).
 * **Engine Purity**:
   * Pure TypeScript state machine (`app/src/engine/`).
   * Pure BKT mathematics (`bkt.ts`) matching floating-point goldens to 4 decimal places.

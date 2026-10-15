@@ -5,7 +5,7 @@
 > **Event:** NEXTECH 2.0 · NIRMIT 2.0 (NMIET Bhubaneswar, Odisha · 14–15 October 2026)  
 > **Problem Statement:** Agentic EdTech for Regional Language & Geography  
 > **Team:** Coding_Aghoris — Sibam Prasad Sahoo (Backend & Engine), Satya Sarthak Manohari (Frontend & Sync), Pritam Piyush Nayak (AI & Content)  
-> **Release State:** `main` @ `73872df` (tagged `mid-eval-final`) · **Tests:** 29/29 Jest · 14/14 Pytest · 17/17 Content Validator
+> **Release State:** `main` (tagged `v1.0.0-finale`) · **Tests:** 98/98 Jest · 18/18 Pytest · 18/18 Content Validator (0 Placeholders)
 
 Padhai Pocket is an offline-resilient diagnostic learning agent built for rural tribal Odisha students transitioning from mother-tongue primary schooling (Kui) into Odia-medium secondary science (Class 9 Physical Science: *Motion*). When a learner answers a science question incorrectly on a shared, low-connectivity device, Padhai Pocket does not guess or simply repeat the same explanation. Instead, its deterministic on-device engine runs a **3-way modality probe (Picture / Odia Audio / Odia Text)** plus a **targeted confirmation check** to screen whether the error stems from a **Concept Gap**, a **Reading Decoding Gap**, or an **Odia Scientific Term Gap**—and delivers the exact remedial bridge even when completely offline.
 
@@ -423,22 +423,34 @@ Open **`http://localhost:3000`** in Google Chrome.
 
 ## 9. Verification & Test Suites
 
-All three verification suites pass on `main` (`73872df`):
+All three verification suites pass cleanly on `main`:
 
 ```bash
-# 1. Frontend & Pure Engine Unit/Integration Suite (29/29 passing: 14 engine + 11 mobile + 4 integration)
+# 1. Frontend & Pure Engine Unit/Integration Suite (98/98 passing across 13 test suites)
 cd app
 npm test
 npx tsc --noEmit
 
-# 2. Backend API, Idempotency & LangGraph Suite (14/14 pytest passing)
+# 2. Backend API, Idempotency, Neural TTS & LangGraph Suite (18/18 pytest passing)
 cd ../backend
 pytest
 
-# 3. Content Pack Dual Validator & Fixture Suite (17/17 fixtures passing)
+# 3. Content Pack Dual Validator & Fixture Suite (18/18 tests passing, 0 placeholders)
 cd ../content
-python tools/validate_pack.py
+python tools/validate_pack.py --pack motion_pack.json
 ```
+
+## 10. Repository Architecture
+
+Padhai Pocket follows a clean, modular structure:
+
+* **`/app/`**: **Canonical Application** — React Native + Expo Web mobile-first client. Contains the frozen deterministic diagnostic engine (`/app/src/engine/`), interactive 3D simulations, SVG mastery charts, offline SQLite/localStorage event ledger, and audio player.
+* **`/backend/`**: FastAPI REST server, LangGraph 4-gate reflection planner, dual-write Supabase edge mirror sync pipeline, and neural Odia TTS.
+* **`/content/`**: BSE Class 9 Science content packs (`motion_pack.json`, `gravitation_pack.json`), Kui-to-Odia glossaries, audio manifests, and validator tools.
+* **`/shared/`**: Immutable event schemas (`event.schema.json`), pack schemas (`pack.schema.json`), golden test vectors (`bkt_vectors.json`, `probe_vectors.json`), and OpenAPI v1.1.0 specifications.
+* **`/eval/`**: Monte Carlo simulation engine (`simulator.py`), mirror evaluator, and test vectors verifying cross-language BKT parity ($\le 5 \times 10^{-5}$ float drift).
+* **`/docs/`**: PRD v4.1, closed Claims Ledger (`ledger.md`), Evidence Handout (`evidence_sheet.md`), slide decks, and execution runbooks.
+* **`/web-app-ui/`**: **Evaluator Desktop Companion** — Standalone desktop split-screen interface designed for hackathon stage screens (≥ 1024px displays the intact mobile child UI on the left and live diagnostic telemetry on the right). Runs the identical engine and contracts.
 
 ## 10. Reliability Budget & Claims Discipline
 

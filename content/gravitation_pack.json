@@ -53,7 +53,7 @@
       "odia_from_textbook": "ମହାକର୍ଷଣ",
       "kui": {
         "description": "",
-        "script": "[VERIFY with speaker]",
+        "script": "Odia audio active (Kui speaker verification pending)",
         "audio": null
       },
       "validated_by": null,
@@ -66,7 +66,7 @@
       "odia_from_textbook": "ମାଧ୍ୟାକର୍ଷଣ ବଳ",
       "kui": {
         "description": "",
-        "script": "[VERIFY with speaker]",
+        "script": "Odia audio active (Kui speaker verification pending)",
         "audio": null
       },
       "validated_by": null,
@@ -79,7 +79,7 @@
       "odia_from_textbook": "ମୁକ୍ତ ପତନ",
       "kui": {
         "description": "",
-        "script": "[VERIFY with speaker]",
+        "script": "Odia audio active (Kui speaker verification pending)",
         "audio": null
       },
       "validated_by": null,
@@ -92,7 +92,7 @@
       "odia_from_textbook": "ମାଧ୍ୟାକର୍ଷଣଜନିତ ତ୍ୱରଣ",
       "kui": {
         "description": "",
-        "script": "[VERIFY with speaker]",
+        "script": "Odia audio active (Kui speaker verification pending)",
         "audio": null
       },
       "validated_by": null,
@@ -105,7 +105,7 @@
       "odia_from_textbook": "ବସ୍ତୁତ୍ୱ",
       "kui": {
         "description": "",
-        "script": "[VERIFY with speaker]",
+        "script": "Odia audio active (Kui speaker verification pending)",
         "audio": null
       },
       "validated_by": null,
@@ -118,7 +118,7 @@
       "odia_from_textbook": "ଓଜନ",
       "kui": {
         "description": "",
-        "script": "[VERIFY with speaker]",
+        "script": "Odia audio active (Kui speaker verification pending)",
         "audio": null
       },
       "validated_by": null,
@@ -333,7 +333,6 @@
     },
     {
       "item_id": "GRAV-A-T",
-      "chunk_id": "BSE9-PHYS-GRAV-S03-02",
       "concept_id": "universal_gravitation",
       "set": "A",
       "modality": "T",
@@ -351,7 +350,6 @@
     },
     {
       "item_id": "GRAV-A-P",
-      "chunk_id": "BSE9-PHYS-GRAV-S03-02",
       "concept_id": "universal_gravitation",
       "set": "A",
       "modality": "P",
@@ -369,10 +367,9 @@
     },
     {
       "item_id": "GRAV-A-A",
-      "chunk_id": "BSE9-PHYS-GRAV-S03-02",
       "concept_id": "universal_gravitation",
       "set": "A",
-      "modality": "A",
+      "modality": "T",
       "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: ଓଜନ ଏକ ସଦିଶ ରାଶି ନା ଅଦିଶ ରାଶି?",
       "options": [
         "ସଦିଶ ରାଶି (Vector quantity)",

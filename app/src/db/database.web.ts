@@ -45,34 +45,57 @@ function isLocalStorageAvailable(): boolean {
   }
 }
 
+function loadEventsFromStorage(): Map<string, StoredEvent> {
+  if (!isLocalStorageAvailable()) return new Map();
+  try {
+    const raw =
+      window.localStorage.getItem(STORAGE_KEY) ||
+      window.localStorage.getItem('padhai_pocket_events_v1');
+    if (!raw) return new Map();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return new Map();
+
+    if (Array.isArray(parsed[0])) {
+      return new Map(parsed as [string, StoredEvent][]);
+    } else {
+      const map = new Map<string, StoredEvent>();
+      for (const item of parsed) {
+        if (item && item.event_id) {
+          map.set(item.event_id, item);
+        }
+      }
+      return map;
+    }
+  } catch (err) {
+    console.warn('Failed to load events from localStorage', err);
+    return new Map();
+  }
+}
+
 function persistEvents(map: Map<string, StoredEvent>): void {
   if (!isLocalStorageAvailable()) return;
   try {
-    window.localStorage.setItem('padhai_events', JSON.stringify(Array.from(map.entries())));
+    const entries = Array.from(map.entries());
+    const json = JSON.stringify(entries);
+    window.localStorage.setItem(STORAGE_KEY, json);
+    window.localStorage.setItem('padhai_pocket_events_v1', json);
   } catch (err) {
     console.warn('Failed to persist events to localStorage', err);
   }
 }
 
-// Module load: initialize eventsMap from localStorage ('padhai_events')
-const stored = isLocalStorageAvailable() ? window.localStorage.getItem('padhai_events') : null;
-let eventsMap: Map<string, StoredEvent> = new Map(stored ? JSON.parse(stored) : []);
+// Module load: initialize eventsMap from persistent localStorage
+let eventsMap: Map<string, StoredEvent> = loadEventsFromStorage();
 
 export async function getDatabase(): Promise<void> {
   return;
 }
 
 export async function initDatabase(): Promise<void> {
-  // Do NOT clear eventsMap — preserve persisted events across refresh
-  if (isLocalStorageAvailable()) {
-    const fresh = window.localStorage.getItem('padhai_events');
-    if (fresh) {
-      try {
-        eventsMap = new Map(JSON.parse(fresh));
-      } catch (err) {
-        console.warn('Failed to parse padhai_events on init', err);
-      }
-    }
+  // Do NOT clear eventsMap — preserve persisted events across refresh (FR-6)
+  const freshMap = loadEventsFromStorage();
+  if (freshMap.size > 0 || eventsMap.size === 0) {
+    eventsMap = freshMap;
   }
   notifyListeners();
 }

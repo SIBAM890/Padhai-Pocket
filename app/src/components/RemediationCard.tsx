@@ -17,6 +17,41 @@ interface RemediationCardProps {
   onContinue: () => void;
 }
 
+/**
+ * Maps raw diagnostic engine reason codes (e.g. primary_need=TERM_GAP(+45))
+ * to child-safe, strength-first pedagogical labels (FR-13 compliance).
+ * Strictly strips clinical deficit words: 'gap', 'wrong', 'diagnosis', 'deficit', 'failed'.
+ */
+export function formatChildReason(raw: string): string {
+  const upper = raw.toUpperCase();
+  if (upper.includes('TERM') || upper.includes('GLOSSARY')) {
+    return '🌟 କୁଇ ଓ ଓଡ଼ିଆ ଶବ୍ଦ ସେତୁ · Word Bridge Match';
+  }
+  if (upper.includes('READING') || upper.includes('VISUAL')) {
+    return '🖼️ ଚିତ୍ର ଆଧାରିତ ସହଜ ବୁଝାମଣା · Visual Concept Match';
+  }
+  if (upper.includes('CONCEPT') || upper.includes('CORE') || upper.includes('TIER1')) {
+    return '🎯 ମୂଳ ଧାରଣା ସ୍ପଷ୍ଟତା · Core Concept Foundation';
+  }
+  if (upper.includes('AUDIO') || upper.includes('VOICE') || upper.includes('LISTEN')) {
+    return '🎧 ଶୁଣି ଶିଖିବା · Audio Guided Match';
+  }
+  if (upper.includes('HANDS_ON') || upper.includes('LAB') || upper.includes('SIMULATION')) {
+    return '🧪 ପ୍ରୟୋଗ ଓ ପରୀକ୍ଷା · Practical Lab Match';
+  }
+  // Fallback sanitizer: strictly strip any deficit words
+  const clean = raw
+    .replace(/primary_need=/gi, '')
+    .replace(/secondary_need=/gi, '')
+    .replace(/_GAP/gi, '_NEED')
+    .replace(/GAP/gi, 'FOCUS')
+    .replace(/DEFICIT/gi, 'SUPPORT')
+    .replace(/DIAGNOSIS/gi, 'FOCUS')
+    .replace(/WRONG/gi, 'RETRY')
+    .replace(/FAILED/gi, 'PRACTICE');
+  return `✨ ${clean}`;
+}
+
 export const RemediationCard: React.FC<RemediationCardProps> = ({
   conceptTitle = 'Understanding Displacement (ବିସ୍ଥାପନ)',
   explanation = 'Displacement is the straight-line distance between where you started and where you ended. If you walk 3 meters forward and 3 meters backward, you end up right at the starting line: 0 meters!',
@@ -75,11 +110,11 @@ export const RemediationCard: React.FC<RemediationCardProps> = ({
 
       {resourceReasons && resourceReasons.length > 0 && (
         <View style={styles.reasonsContainer}>
-          <Text style={styles.reasonsLabel}>Why this lesson was selected:</Text>
+          <Text style={styles.reasonsLabel}>ଶିଖିବାର ସୁବିଧା · Learning Match Focus:</Text>
           <View style={styles.reasonsRow}>
             {resourceReasons.map((r, idx) => (
               <View key={idx} style={styles.reasonPill}>
-                <Text style={styles.reasonText}>{r}</Text>
+                <Text style={styles.reasonText}>{formatChildReason(r)}</Text>
               </View>
             ))}
           </View>
