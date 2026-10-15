@@ -34,15 +34,18 @@ describe('Pocket Jugaad Lab — Offline Hardware Sensor Physics Lab Agent', () =
     packHash: 'pack_mock_hash_123',
   };
 
-  test('T1: All 3 experiments exist in JUGAAD_EXPERIMENTS with valid chunk IDs and Odia descriptions', () => {
-    expect(JUGAAD_EXPERIMENTS.length).toBe(3);
+  test('T1: All 6 experiments exist in JUGAAD_EXPERIMENTS with valid chunk IDs and Odia descriptions across Physics, Chemistry, Biology, and Maths', () => {
+    expect(JUGAAD_EXPERIMENTS.length).toBe(6);
     const ids = JUGAAD_EXPERIMENTS.map((e) => e.id);
     expect(ids).toContain('EXP-MOTION-RAMP');
     expect(ids).toContain('EXP-GRAV-PENDULUM');
     expect(ids).toContain('EXP-SOUND-CLAP');
+    expect(ids).toContain('EXP-CHEM-TURMERIC');
+    expect(ids).toContain('EXP-BIO-OSMOSIS');
+    expect(ids).toContain('EXP-MATH-SHADOW');
 
     for (const exp of JUGAAD_EXPERIMENTS) {
-      expect(exp.chunk_id).toMatch(/^BSE9-PHYS-/);
+      expect(exp.chunk_id).toMatch(/^BSE9-(PHYS|CHEM|BIO|MATH)-/);
       expect(exp.village_jugaad_or.length).toBeGreaterThan(10);
       expect(exp.village_jugaad_en.length).toBeGreaterThan(10);
       expect(exp.missing_lab_gear.length).toBeGreaterThan(5);
@@ -176,5 +179,78 @@ describe('Pocket Jugaad Lab — Offline Hardware Sensor Physics Lab Agent', () =
     const res2 = runJugaadExperimentTurn(input);
 
     expect(JSON.stringify(res1)).toBe(JSON.stringify(res2));
+  });
+
+  test('T9: Chemistry EXP-CHEM-TURMERIC computes Yellow for Acid and Reddish-Brown for Base with student takeaway', () => {
+    // 1. Basic Lime Water trial (pH = 11.5)
+    const baseSamples = [{ t_ms: 0, ph: 11.5 }, { t_ms: 50, ph: 11.5 }];
+    const resBase = calculateJugaadMetrics('EXP-CHEM-TURMERIC', baseSamples);
+    expect(resBase.metrics.ph_value).toBe(11.5);
+    expect(resBase.metrics.observed_color).toBe('Reddish-Brown');
+    expect(resBase.metrics.solution_nature).toBe('Basic');
+    expect(resBase.metrics.student_takeaway_en).toContain('By taking value pH = 11.5');
+    expect(resBase.metrics.student_takeaway_or).toContain('pH = 11.5');
+
+    // 2. Acidic Lemon Juice trial (pH = 2.5)
+    const acidSamples = [{ t_ms: 0, ph: 2.5 }, { t_ms: 50, ph: 2.5 }];
+    const resAcid = calculateJugaadMetrics('EXP-CHEM-TURMERIC', acidSamples);
+    expect(resAcid.metrics.ph_value).toBe(2.5);
+    expect(resAcid.metrics.observed_color).toBe('Yellow');
+    expect(resAcid.metrics.solution_nature).toBe('Acidic');
+    expect(resAcid.metrics.student_takeaway_en).toContain('By taking value pH = 2.5');
+
+    // 3. Full agent loop with BKT boost
+    const turnResult = runJugaadExperimentTurn({
+      ...baseParams,
+      experimentId: 'EXP-CHEM-TURMERIC',
+      samples: generateSyntheticSensorSamples('EXP-CHEM-TURMERIC', 'clean'),
+      hypothesisCorrect: true,
+      currentMastery: 0.42,
+    });
+    expect(turnResult.allPassed).toBe(true);
+    expect(turnResult.masteryAfter).toBe(0.7643);
+  });
+
+  test('T10: Biology EXP-BIO-OSMOSIS computes Endosmosis (+6.8mm, Turgid) for 0% salt and Exosmosis (-5.5mm, Flaccid) for 20% salt', () => {
+    // 1. Pure water outside (0% salt) -> Endosmosis
+    const cleanSamples = generateSyntheticSensorSamples('EXP-BIO-OSMOSIS', 'clean');
+    const resPure = calculateJugaadMetrics('EXP-BIO-OSMOSIS', cleanSamples);
+    expect(resPure.metrics.salt_pct).toBe(0);
+    expect(resPure.metrics.osmosis_type).toBe('Endosmosis');
+    expect(resPure.metrics.final_height_mm).toBe(16.8);
+    expect(resPure.metrics.turgidity_state).toBe('Turgid');
+    expect(resPure.metrics.student_takeaway_en).toContain('By taking outside salt = 0%');
+
+    // 2. Heavy brine outside (20% salt) -> Exosmosis
+    const brineSamples = [{ t_ms: 0, salt_pct: 20 }, { t_ms: 50, salt_pct: 20 }];
+    const resBrine = calculateJugaadMetrics('EXP-BIO-OSMOSIS', brineSamples);
+    expect(resBrine.metrics.salt_pct).toBe(20);
+    expect(resBrine.metrics.osmosis_type).toBe('Exosmosis');
+    expect(resBrine.metrics.final_height_mm).toBe(4.5);
+    expect(resBrine.metrics.turgidity_state).toBe('Flaccid');
+    expect(resBrine.metrics.student_takeaway_en).toContain('By taking outside salt = 20%');
+  });
+
+  test('T11: Maths EXP-MATH-SHADOW computes height 9.20m for angle 45° and distance 8m', () => {
+    const cleanSamples = generateSyntheticSensorSamples('EXP-MATH-SHADOW', 'clean');
+    const res = calculateJugaadMetrics('EXP-MATH-SHADOW', cleanSamples);
+    expect(res.metrics.tilt_angle_deg).toBe(45);
+    expect(res.metrics.distance_m).toBe(8);
+    expect(res.metrics.tan_theta).toBe(1.0);
+    expect(res.metrics.calculated_height_m).toBe(9.20);
+    expect(res.metrics.student_takeaway_en).toContain('By taking tilt angle = 45°');
+    expect(res.metrics.student_takeaway_en).toContain('9.2 meters');
+  });
+
+  test('T12: Student takeaways are generated for all 6 experiments in both Odia and English', () => {
+    for (const exp of JUGAAD_EXPERIMENTS) {
+      const samples = generateSyntheticSensorSamples(exp.id, 'clean');
+      const { metrics } = calculateJugaadMetrics(exp.id, samples);
+      expect(metrics.student_takeaway_en).toBeDefined();
+      expect(metrics.student_takeaway_en!.length).toBeGreaterThan(15);
+      expect(metrics.student_takeaway_or).toBeDefined();
+      expect(metrics.student_takeaway_or!.length).toBeGreaterThan(15);
+      expect(metrics.student_takeaway_en).toMatch(/By taking/i);
+    }
   });
 });
