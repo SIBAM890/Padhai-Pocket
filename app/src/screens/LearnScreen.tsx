@@ -263,6 +263,17 @@ export default function LearnScreen({ navigation, route }: Props) {
         }
       }
 
+      // Hydrate used_resource_ids from past ACT remediation events (Gate 4 / FR-25 anti-repetition)
+      const usedIds = (allEvents || [])
+        .filter((e: any) => e.node === 'ACT' && e.output?.resource_match?.selected_id)
+        .map((e: any) => e.output.resource_match.selected_id);
+      if (usedIds.length > 0 && engineStateRef.current) {
+        engineStateRef.current.used_resource_ids = Array.from(new Set([
+          ...(engineStateRef.current.used_resource_ids ?? []),
+          ...usedIds,
+        ]));
+      }
+
       const computed = computeStreakData(allEvents || [], demoMode);
       setStreakState(computed);
       setStoredEvents(allEvents || []);

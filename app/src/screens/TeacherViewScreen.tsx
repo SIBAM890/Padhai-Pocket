@@ -310,6 +310,26 @@ export function TeacherViewScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {/* Quick-Launch: Manage Offline Subject Packs & Resources */}
+        <TouchableOpacity
+          style={styles.resourceManagerCard}
+          onPress={() => navigation?.navigate?.('ResourceManager')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.rmCardHeader}>
+            <Text style={styles.rmCardIcon}>📦</Text>
+            <View style={styles.rmCardTitleCol}>
+              <Text style={styles.rmCardTitle}>Manage Offline Subject Packs & Resources</Text>
+              <Text style={styles.rmCardSubtitle}>
+                ପାଠ୍ୟ ଉପକରଣ ଓ ଅଫଲାଇନ୍ ପ୍ୟାକ୍ · 4 REFLECT Guardrails · SHA-256 Verifier
+              </Text>
+            </View>
+            <View style={styles.rmCardBadge}>
+              <Text style={styles.rmCardBadgeText}>BSE Odisha →</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
         {/* SECTION 2 — Mastery (Concept & Term) */}
         <View style={styles.card}>
           <Text style={styles.sectionHeader}>MASTERY BREAKDOWN (BKT)</Text>
@@ -626,6 +646,48 @@ const styles = StyleSheet.create({
   noticeText: {
     fontSize: typography.bodySmall.fontSize,
     color: colors.textSecondary,
+  },
+  resourceManagerCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: radius.card,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: '#93C5FD',
+    marginBottom: spacing.md,
+    ...shadows.card,
+  },
+  rmCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rmCardIcon: {
+    fontSize: 26,
+    marginRight: spacing.sm,
+  },
+  rmCardTitleCol: {
+    flex: 1,
+  },
+  rmCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E3A8A',
+  },
+  rmCardSubtitle: {
+    fontSize: 11,
+    color: '#3B82F6',
+    marginTop: 2,
+  },
+  rmCardBadge: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    marginLeft: spacing.xs,
+  },
+  rmCardBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1D4ED8',
   },
   card: {
     backgroundColor: colors.surface,

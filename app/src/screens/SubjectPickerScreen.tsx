@@ -98,8 +98,17 @@ export default function SubjectPickerScreen({ navigation, route, onSelectTopic }
           >
             <Text style={styles.backButtonText}>← ଶିକ୍ଷଣ ପୃଷ୍ଠା (Back to Learn)</Text>
           </TouchableOpacity>
-          <View style={styles.boardBadge}>
-            <Text style={styles.boardBadgeText}>BSE ODISHA • ୯ମ ଶ୍ରେଣୀ</Text>
+          <View style={styles.topBarRight}>
+            <TouchableOpacity
+              style={styles.resourceManagerPill}
+              onPress={() => navigation?.navigate?.('ResourceManager')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.resourceManagerPillText}>📦 Resource Manager (ପାଠ୍ୟ ଉପକରଣ)</Text>
+            </TouchableOpacity>
+            <View style={styles.boardBadge}>
+              <Text style={styles.boardBadgeText}>BSE ODISHA • ୯ମ ଶ୍ରେଣୀ</Text>
+            </View>
           </View>
         </View>
 
@@ -368,6 +377,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
     letterSpacing: 0.5,
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 4,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  resourceManagerPill: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: '#93C5FD',
+  },
+  resourceManagerPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1D4ED8',
   },
   header: {
     marginBottom: spacing.lg,

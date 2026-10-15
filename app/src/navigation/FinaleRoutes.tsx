@@ -26,6 +26,7 @@ export const FINALE_ROUTES = {
   ProfilePicker: 'ProfilePicker',
   Trace: 'Trace',
   RawLog: 'RawLog',
+  ResourceManager: 'ResourceManager',
 } as const;
 
 export type FinaleRouteName = (typeof FINALE_ROUTES)[keyof typeof FINALE_ROUTES];
@@ -38,6 +39,7 @@ export type FinaleStackParamList = {
   ProfilePicker: undefined;
   Trace: undefined;
   RawLog: undefined;
+  ResourceManager: undefined;
 };
 
 type ScreenNavProp = NativeStackNavigationProp<FinaleStackParamList>;

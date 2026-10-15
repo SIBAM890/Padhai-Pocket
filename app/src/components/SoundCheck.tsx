@@ -155,15 +155,19 @@ const styles = StyleSheet.create({
   btn: {
     flex: 1,
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     borderRadius: radius.button,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 52,
   },
   primaryBtn: {
     backgroundColor: colors.primary,
   },
   primaryBtnText: {
     ...typography.button,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   secondaryBtn: {
     backgroundColor: '#F1F5F9',
@@ -171,5 +175,6 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     ...typography.button,
     color: colors.textPrimary,
+    textAlign: 'center',
   },
 });

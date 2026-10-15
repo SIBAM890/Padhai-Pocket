@@ -7,6 +7,7 @@ import RawLogScreen from './src/screens/RawLogScreen';
 import ProgressScreen from './src/screens/ProgressScreen';
 import TeacherViewScreen from './src/screens/TeacherViewScreen';
 import SubjectPickerScreen from './src/screens/SubjectPickerScreen';
+import ResourceManagerScreen from './src/screens/ResourceManagerScreen';
 import { SplashScreen } from './src/components/SplashScreen';
 import { GlobalErrorBoundary } from './src/errorBoundary/GlobalErrorBoundary';
 import { initDatabase } from './src/db/database';
@@ -22,6 +23,7 @@ export type RootStackParamList = {
   RawLog: undefined;
   Progress: { profileId: string };
   TeacherView: { profileId: string };
+  ResourceManager: undefined;
 };
 
 export { FINALE_ROUTES };
@@ -73,6 +75,7 @@ export default function App() {
           <Stack.Screen name="RawLog" component={RawLogScreen} />
           <Stack.Screen name="Progress" component={ProgressScreen} />
           <Stack.Screen name="TeacherView" component={TeacherViewScreen} />
+          <Stack.Screen name="ResourceManager" component={ResourceManagerScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </GlobalErrorBoundary>
