@@ -1,11 +1,16 @@
 openapi: 3.0.3
 info:
   title: Padhai Pocket Backend API
-  description: Backend and Sync API for offline-resilient diagnostic agent (PRD v4.0 §7.3, §7.4)
-  version: 1.0.0
+  description: "Backend, Agentic LangGraph Planner, and Sync API for offline-resilient diagnostic EdTech agent (PRD v4.0 §7.3, §7.4). Built for NEXTECH 2.0 / NIRMIT 2.0 by Coding_Aghoris."
+  version: 1.1.0
+  contact:
+    name: Coding_Aghoris (NEXTECH 2.0)
+    url: https://github.com/NEXTECH-2-0/CODING-AGHORIS
 servers:
   - url: http://localhost:8000
     description: Local / development server
+  - url: https://padhai-pocket-backend.onrender.com
+    description: Production Cloud Edge server
 paths:
   /healthz:
     get:
@@ -259,6 +264,170 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/agent/plan:
+    post:
+      summary: LangGraph Agentic Diagnostic Remediation Planner
+      description: Runs the multi-stage LangGraph planning & reflection pipeline across candidate concepts, mastery tiers, and curriculum chunks with 4 reflection gates.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - candidate_concept_ids
+                - mastery_bucket
+              properties:
+                candidate_concept_ids:
+                  type: array
+                  items:
+                    type: string
+                  example: ["BSE9-PHYS-MOTION-S02"]
+                mastery_bucket:
+                  type: string
+                  enum: [low, mid, high]
+                  example: mid
+                tier_history:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2]
+              additionalProperties: false
+      responses:
+        '200':
+          description: Plan generated and verified by all 4 REFLECT gates
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - action
+                  - tier
+                  - chunk_id
+                properties:
+                  action:
+                    type: string
+                    example: "ACT_TEACH_TIER1"
+                  tier:
+                    type: integer
+                    example: 1
+                  chunk_id:
+                    type: string
+                    example: "BSE9-PHYS-MOTION-S02"
+                  reasoning:
+                    type: string
+                    example: "Concept mastery 0.42 warrants foundational Tier-1 remediation."
+
+  /v1/tts:
+    get:
+      summary: Neural Odia Dialect Text-to-Speech
+      description: Returns pre-recorded or dynamically synthesized high-definition Odia speech MP3 with disk caching.
+      parameters:
+        - name: text
+          in: query
+          required: false
+          description: Odia Unicode text string to synthesize (max 600 chars)
+          schema:
+            type: string
+        - name: key
+          in: query
+          required: false
+          description: Predefined curriculum audio key (e.g. motion, sound_check, remediation)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audio stream MP3
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Missing text or key parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Neural Odia Dialect Text-to-Speech (POST variant)
+      description: Accepts JSON body with text or key for long prompts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                key:
+                  type: string
+              additionalProperties: false
+      responses:
+        '200':
+          description: Audio stream MP3
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+
+  /v1/events/profile/{profile_id}:
+    get:
+      summary: Profile Event Stream Hydration
+      description: Fetches full ordered event log for a given learner profile ID from cloud Supabase or edge mirror storage to hydrate local client state.
+      parameters:
+        - name: profile_id
+          in: path
+          required: true
+          description: Learner profile ID
+          schema:
+            type: string
+            example: "prof_demo_01"
+      responses:
+        '200':
+          description: List of stored learning events for profile
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - events
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                additionalProperties: false
+
+  /seed-demo:
+    post:
+      summary: Evaluator Demo Data Seeder
+      description: Automatically populates database with golden student demo profiles (Sunita, Amit, Rupa) and pre-computed mastery event sequences for live judging.
+      responses:
+        '200':
+          description: Demo profiles seeded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - seeded
+                  - students
+                  - events
+                properties:
+                  seeded:
+                    type: boolean
+                    example: true
+                  students:
+                    type: integer
+                    example: 3
+                  events:
+                    type: integer
+                    example: 42
+                additionalProperties: false
 
 components:
   securitySchemes:
