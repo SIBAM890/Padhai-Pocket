@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, Path, Circle, G, Polygon } from 'react-native-svg';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SCREEN_HEIGHT = typeof Dimensions?.get === 'function' ? (Dimensions.get('window')?.height ?? 800) : 800;
 import {
   JUGAAD_EXPERIMENTS,
   ExperimentId,

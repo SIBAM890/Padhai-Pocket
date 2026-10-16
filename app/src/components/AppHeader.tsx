@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { colors, typography, spacing, radius, shadows } from '../theme/theme';
 import { NetworkBadge } from './NetworkBadge';
 import { MaleHumanIcon, FemaleHumanIcon, UserIcon } from './AppIcons';
@@ -31,19 +31,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.textContainer}>
-        <Text style={styles.greeting}>{greeting}</Text>
-        <Text style={styles.subgreeting}>{subgreeting}</Text>
-      </View>
-
-      <View style={styles.rightGroup}>
-        {supabaseConnected && !forcedOffline && (
-          <View style={styles.supabasePill}>
-            <Text style={styles.supabaseDot}>●</Text>
-            <Text style={styles.supabaseText}>Synced with Supabase</Text>
-          </View>
-        )}
-        <NetworkBadge mode={networkMode} forcedOffline={forcedOffline} />
+      <View style={styles.userSection}>
         <Pressable
           style={styles.avatarButton}
           onPress={onAvatarPress}
@@ -58,6 +46,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <UserIcon size={24} color={colors.primary} />
           )}
         </Pressable>
+        <View style={styles.textContainer}>
+          <Text style={styles.greeting} numberOfLines={1}>{greeting}</Text>
+          <Text style={styles.subgreeting} numberOfLines={1}>{subgreeting}</Text>
+        </View>
+      </View>
+
+      <View style={styles.rightGroup}>
+        {supabaseConnected && !forcedOffline && (
+          <View style={styles.supabasePill}>
+            <Text style={styles.supabaseDot}>●</Text>
+            <Text style={styles.supabaseText}>Synced</Text>
+          </View>
+        )}
+        <NetworkBadge mode={networkMode} forcedOffline={forcedOffline} />
       </View>
     </View>
   );
@@ -68,12 +70,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: Platform?.OS === 'android' ? 6 : spacing.xs,
+    paddingBottom: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  avatarButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm + 2,
+    ...shadows.subtle,
   },
   textContainer: {
     flex: 1,
-    paddingRight: spacing.sm,
   },
   greeting: {
     ...typography.h2,
@@ -87,7 +108,8 @@ const styles = StyleSheet.create({
   rightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs + 2,
+    marginRight: Platform?.OS === 'android' ? 8 : 0,
   },
   supabasePill: {
     flexDirection: 'row',
@@ -109,16 +131,5 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: '#2E7D32',
     fontWeight: '600',
-  },
-  avatarButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primaryLight,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.subtle,
   },
 });

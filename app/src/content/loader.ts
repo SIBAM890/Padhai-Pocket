@@ -42,7 +42,7 @@ export function getPackForSubject(subject?: string, chunkId?: string): any {
   if (s === 'biology' || c?.includes('bio') || c?.includes('cell') || c?.includes('tissue') || c?.includes('mitosis')) {
     return biologyPack || motionPack;
   }
-  if (s === 'maths' || s === 'mathematics' || c?.includes('math') || c?.includes('rational') || c?.includes('real') || c?.includes('poly')) {
+  if (s === 'maths' || s === 'mathematics' || c?.includes('math') || c?.includes('rational') || c?.includes('real') || c?.includes('poly') || c?.includes('eq') || c?.includes('linear')) {
     return mathsPack || motionPack;
   }
   if (c?.includes('grav') || c === 'mass_and_weight' || c === 'mass_vs_weight' || c?.includes('universal')) {

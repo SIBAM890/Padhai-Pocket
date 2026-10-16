@@ -48,6 +48,20 @@
       "source_page": 30,
       "status": "demo_approved",
       "reviewed_by": "Satya"
+    },
+    {
+      "chunk_id": "BSE9-MATH-EQ-S01",
+      "concept_id": "linear_quadratic_equations",
+      "title_or": "୩-D ସମୀକରଣ ସମାଧାନ (3x - 2y + 2 = 0 ଏବଂ ଦ୍ୱିଘାତ ସମୀକରଣ)",
+      "odia_text": "ଏକଘାତୀ ସମୀକରଣ ax + by + c = 0 (3x - 2y + 2 = 0) ର X-ଅକ୍ଷ ଛେଦବିନ୍ଦୁ (Root on X-axis) ପାଇବା ପାଇଁ y = 0 ରଖିଲେ x = -2/3 ମିଳେ ଏବଂ Y-ଅକ୍ଷ ଛେଦବିନ୍ଦୁ ପାଇବା ପାଇଁ x = 0 ରଖିଲେ y = 1 ମିଳେ । ଦ୍ୱିଘାତ ସମୀକରଣ 3x² - 5x + 2 = 0 ର ପ୍ରଭେଦକ b² - 4ac = 1 ହୋଇଥିବାରୁ ଏହାର ଦୁଇଟି ମୂଳ x = 1 ଏବଂ x = 2/3 ମିଳେ ।",
+      "terms": [
+        "T_ROOT_EQ",
+        "T_INTERCEPT",
+        "T_QUADRATIC_ROOT"
+      ],
+      "source_page": 45,
+      "status": "demo_approved",
+      "reviewed_by": "Satya"
     }
   ],
   "terms": [
@@ -97,6 +111,45 @@
       "kui": {
         "description": "ବହୁପଦୀ ମୂଲ୍ୟ ଶୂନ କରୁଥିବା ସଂଖ୍ୟା",
         "script": "ବହୁପଦୀର ଶୂନ୍ୟ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_ROOT_EQ",
+      "en": "Root / Solution",
+      "odia_from_textbook": "ମୂଳ / ସମାଧାନ",
+      "kui": {
+        "description": "ରେଖାଟି ଅକ୍ଷକୁ ଯେଉଁଠି କାଟେ / ଉତ୍ତର ବିନ୍ଦୁ",
+        "script": "ମୂଳ / ସମାଧାନ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_INTERCEPT",
+      "en": "Intercept",
+      "odia_from_textbook": "ଛେଦବିନ୍ଦୁ",
+      "kui": {
+        "description": "ଅକ୍ଷକୁ ଛେଦ କରୁଥିବା ବିନ୍ଦୁ",
+        "script": "ଛେଦବିନ୍ଦୁ",
+        "audio": null
+      },
+      "validated_by": "Satya",
+      "dialect": null,
+      "status": "approved"
+    },
+    {
+      "term_id": "T_QUADRATIC_ROOT",
+      "en": "Quadratic Roots",
+      "odia_from_textbook": "ଦ୍ୱିଘାତ ମୂଳ",
+      "kui": {
+        "description": "ଦ୍ୱିଘାତ ସମୀକରଣର ଦୁଇଟି ସମାଧାନ",
+        "script": "ଦ୍ୱିଘାତ ମୂଳ",
         "audio": null
       },
       "validated_by": "Satya",
@@ -270,6 +323,91 @@
         "ସହଗ",
         "ଘାତ",
         "ଧ୍ରୁବକ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-EQ-T1",
+      "chunk_id": "BSE9-MATH-EQ-S01",
+      "concept_id": "linear_quadratic_equations",
+      "set": "A",
+      "modality": "T",
+      "stem": "3x - 2y + 2 = 0 ସମୀକରଣରେ X-ଅକ୍ଷର ଛେଦବିନ୍ଦୁ (Root on X-axis ଯେଉଁଠି y = 0) ଏବଂ Y-ଅକ୍ଷର ଛେଦବିନ୍ଦୁ (ଯେଉଁଠି x = 0) କେତେ?",
+      "options": [
+        "X-ମୂଳ: x = -2/3 ଏବଂ Y-ମୂଳ: y = 1",
+        "X-ମୂଳ: x = 2/3 ଏବଂ Y-ମୂଳ: y = -1",
+        "X-ମୂଳ: x = 1 ଏବଂ Y-ମୂଳ: y = -2/3",
+        "ଉଭୟ ମୂଳ ଶୂନ (0, 0)"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-EQ-P1",
+      "chunk_id": "BSE9-MATH-EQ-S01",
+      "concept_id": "linear_quadratic_equations",
+      "set": "A",
+      "modality": "P",
+      "stem": "3D ଗ୍ରାଫ୍ରେ 3x - 2y + 2 = 0 ରେଖାଟି X-ଅକ୍ଷ ଓ Y-ଅକ୍ଷକୁ କେଉଁ ବିନ୍ଦୁରେ ଛେଦ କରେ?",
+      "options": [
+        "X-ଅକ୍ଷରେ (-2/3, 0) ଏବଂ Y-ଅକ୍ଷରେ (0, 1)",
+        "X-ଅକ୍ଷରେ (1, 0) ଏବଂ Y-ଅକ୍ଷରେ (0, -2/3)",
+        "X-ଅକ୍ଷରେ (2, 0) ଏବଂ Y-ଅକ୍ଷରେ (0, 3)",
+        "ଉଭୟ ଅକ୍ଷରେ (0, 0)"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-EQ-A1",
+      "chunk_id": "BSE9-MATH-EQ-S01",
+      "concept_id": "linear_quadratic_equations",
+      "set": "A",
+      "modality": "A",
+      "stem": "ଶୁଣନ୍ତୁ ଏବଂ କୁହନ୍ତୁ: 3x - 2y + 2 = 0 ସମୀକରଣରେ y = 0 ରଖିଲେ x ର ମୂଲ୍ୟ କେତେ ହେବ?",
+      "options": [
+        "x = -2/3",
+        "x = 2/3",
+        "x = 1",
+        "x = -1"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-EQ-T2",
+      "chunk_id": "BSE9-MATH-EQ-S01",
+      "concept_id": "linear_quadratic_equations",
+      "set": "A",
+      "modality": "T",
+      "stem": "ସାଧାରଣ ଭାଷାରେ 'ରେଖାଟି ଅକ୍ଷକୁ ଯେଉଁଠି କାଟେ / ଉତ୍ତର ବିନ୍ଦୁ' କୁ ଗାଣିତିକ ପରିଭାଷାରେ କ'ଣ କୁହାଯାଏ?",
+      "options": [
+        "ମୂଳ / ସମାଧାନ (Root / Solution) ଏବଂ ଛେଦବିନ୍ଦୁ (Intercept)",
+        "କେବଳ ଦୂରତା",
+        "ବିସ୍ଥାପନ ଏବଂ ବେଗ",
+        "ଅସୀମ ବିନ୍ଦୁ"
+      ],
+      "correct": 0,
+      "audio": null,
+      "misconception_tag": null
+    },
+    {
+      "item_id": "MATH-QUAD-T1",
+      "chunk_id": "BSE9-MATH-EQ-S01",
+      "concept_id": "linear_quadratic_equations",
+      "set": "A",
+      "modality": "T",
+      "stem": "ଦ୍ୱିଘାତ ସମୀକରଣ 3x² - 5x + 2 = 0 ର ପ୍ରଭେଦକ (Discriminant Δ) ଏବଂ ମୂଳଦ୍ୱୟ କେତେ?",
+      "options": [
+        "Δ = 1, ମୂଳ ଦୁଇଟି: x = 1 ଏବଂ x = 2/3",
+        "Δ = 0, ଗୋଟିଏ ମାତ୍ର ମୂଳ: x = 1",
+        "Δ = -1, କୌଣସି ବାସ୍ତବ ମୂଳ ନାହିଁ",
+        "Δ = 4, ମୂଳ ଦୁଇଟି: x = 2 ଏବଂ x = -2"
       ],
       "correct": 0,
       "audio": null,

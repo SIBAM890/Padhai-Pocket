@@ -130,12 +130,14 @@ export default function LearnScreen({ navigation, route }: Props) {
       ? 'real_numbers'
       : chunkId === 'BSE9-MATH-POLY-S01' || chunkId === 'zeroes_of_polynomial'
       ? 'zeroes_of_polynomial'
+      : chunkId === 'BSE9-MATH-EQ-S01' || chunkId === 'linear_quadratic_equations' || chunkId === 'linear_equation_roots'
+      ? 'linear_quadratic_equations'
       : subject === 'chemistry'
       ? 'substitution_reaction'
       : subject === 'biology'
       ? 'cell_structure'
       : subject === 'maths' || subject === 'mathematics'
-      ? 'rational_irrational'
+      ? 'linear_quadratic_equations'
       : 'distance_vs_displacement');
 
   const backendBaseUrl = resolveApiBaseUrl();
@@ -259,6 +261,17 @@ export default function LearnScreen({ navigation, route }: Props) {
         } catch (fetchErr) {
           console.warn('Hydration from Supabase skipped:', fetchErr);
         }
+      }
+
+      // Hydrate used_resource_ids from past ACT remediation events (Gate 4 / FR-25 anti-repetition)
+      const usedIds = (allEvents || [])
+        .filter((e: any) => e.node === 'ACT' && e.output?.resource_match?.selected_id)
+        .map((e: any) => e.output.resource_match.selected_id);
+      if (usedIds.length > 0 && engineStateRef.current) {
+        engineStateRef.current.used_resource_ids = Array.from(new Set([
+          ...(engineStateRef.current.used_resource_ids ?? []),
+          ...usedIds,
+        ]));
       }
 
       const computed = computeStreakData(allEvents || [], demoMode);
